@@ -82,7 +82,7 @@ _databricks_template = {
 }
 
 
-def create_databricks_config(package_name: str):
+def create_databricks_config(path: str, package_name: str):
     if shutil.which("databricks") is None:
         raise Exception("databricks CLI is not installed")
 
@@ -114,6 +114,8 @@ def create_databricks_config(package_name: str):
             assets_dir.as_posix(),
             "--config-file",
             template_params.name,
+            "--output-dir",
+            path,
         ]
     )
 
