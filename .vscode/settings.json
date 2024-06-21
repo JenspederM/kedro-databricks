@@ -1,0 +1,14 @@
+{
+  "python.testing.pytestArgs": [
+    "tests",
+    "--log-format=\"%(asctime)s %(levelname)s %(message)s\"",
+    "--log-date-format=\"%Y-%m-%d %H:%M:%S\"",
+    "--cov-report=xml:coverage.xml",
+    "--cov-report=term-missing",
+    "--cov=kedro_databricks",
+    "--no-cov-on-fail",
+    "-ra"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}
