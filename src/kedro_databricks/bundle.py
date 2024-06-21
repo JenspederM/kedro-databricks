@@ -13,12 +13,12 @@ from kedro_databricks.utils import (
     _sort_dict,
 )
 
-DEFAULT = "__default__"
+DEFAULT = "default"
 
 log = logging.getLogger(__name__)
 
 
-def _create_task(name, depends_on=None, job_cluster_id=None):
+def _create_task(name, depends_on, job_cluster_id):
     """Create a Databricks task for a given node.
 
     Args:
@@ -31,8 +31,6 @@ def _create_task(name, depends_on=None, job_cluster_id=None):
     """
     ## Follows the Databricks REST API schema. See "tasks" in the link below
     ## https://docs.databricks.com/api/workspace/jobs/create
-    if depends_on is None:
-        depends_on = []
 
     task = {
         "task_key": name,
@@ -82,16 +80,16 @@ def _create_workflow(name: str, pipeline: Pipeline):
 
 def _validate(workflow: dict[str, Any]) -> tuple[bool, str]:
     job_clusters = workflow.get("job_clusters", [])
+    errors = []
     for cluster in job_clusters:
         if cluster.get("new_cluster") is not None:
-            spark_env = cluster["new_cluster"]["spark_env_vars"]
+            spark_env = cluster["new_cluster"].get("spark_env_vars", {})
             if "KEDRO_LOGGING_CONFIG" not in spark_env:
-                return (
-                    False,
-                    f"KEDRO_LOGGING_CONFIG not found in spark_env_vars for cluster {cluster}",
+                errors.append(
+                    f"KEDRO_LOGGING_CONFIG not found in spark_env_vars for cluster \"{cluster.get('job_cluster_key')}\""
                 )
 
-    return True, ""
+    return errors
 
 
 def apply_resource_overrides(
@@ -99,6 +97,10 @@ def apply_resource_overrides(
 ):
     conf_default = config.get(default_key, {})
     task_default = conf_default.get("tasks", [])
+
+    errors = _validate(conf_default)
+    if len(errors) > 0:
+        raise ValueError(f"Default configuration is not valid: {', '.join(errors)}")
 
     if len(task_default) > 0:
         if len(task_default) > 1:
@@ -110,11 +112,12 @@ def apply_resource_overrides(
             raise ValueError(f"depends_on cannot be set in {default_key}.")
 
     for name, resource in resources.items():
+        log.debug(f"Applying overrides for pipeline '{name}'.")
         wf = resource["resources"]["jobs"][name]
-        is_valid, error = _validate(wf)
+        errors = _validate(wf)
 
-        if not is_valid:
-            raise ValueError(f"Workflow {name} is not valid: {error}")
+        if len(errors) > 0:
+            raise ValueError(f"Workflow {name} is not valid: {', '.join(errors)}")
 
         wf_conf = config.get(name, conf_default)
         if wf_conf.get("name") is not None:
