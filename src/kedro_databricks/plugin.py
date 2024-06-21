@@ -7,14 +7,14 @@ from kedro.config import MissingConfigException
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.context import KedroContext
 from kedro.framework.session import KedroSession
-from kedro.framework.project import pipelines, PACKAGE_NAME, configure_project
+from kedro.framework.project import pipelines, configure_project
+from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.bundle import generate_resources, apply_resource_overrides
 from kedro_databricks.init import create_databricks_config, write_default_config
 
 DEFAULT_RUN_ENV = "local"
 DEFAULT_CONFIG_KEY = "default"
-
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 
 
@@ -55,14 +55,14 @@ def _load_config(context: KedroContext) -> dict[str, Any]:
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
 @click.pass_obj
 def init(
-    metadata,
+    metadata: ProjectMetadata,
     default: str,
 ):
     """Initialize the Databricks bundle"""
     path = metadata.project_path
     conf_path = path / "conf" / "base" / "databricks.yml"
-    create_databricks_config(PACKAGE_NAME)
-    write_default_config(conf_path, default, PACKAGE_NAME)
+    create_databricks_config(path, metadata.package_name)
+    write_default_config(conf_path, default, metadata.package_name)
 
 
 @databricks_commands.command()
@@ -71,14 +71,14 @@ def init(
 @click.option("--overwrite", default=True, help="Overwrite the existing resources")
 @click.pass_obj
 def bundle(
-    metadata,
+    metadata: ProjectMetadata,
     default: str,
     env: str,
     overwrite: bool,
 ):
     """Bundle the pipeline for Databricks"""
     log = logging.getLogger(metadata.package_name)
-    pipeline_resources = generate_resources(pipelines, PACKAGE_NAME)
+    pipeline_resources = generate_resources(pipelines, metadata.package_name)
 
     with KedroSession.create(project_path=metadata.project_path, env=env) as session:
         context = session.load_context()
@@ -93,7 +93,7 @@ def bundle(
         pipeline_resources,
         resource_overrides,
         default_key=default,
-        package_name=PACKAGE_NAME,
+        package_name=metadata.package_name,
     )
 
     resources_dir = metadata.project_path / "resources"
@@ -113,14 +113,12 @@ def bundle(
 
 @databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
-@click.option("-p", "--package-name", default=PACKAGE_NAME)
 @click.option("-c", "--conf-source")
 @click.option("-n", "--nodes")
 @click.pass_obj
 def run(
-    _,
+    metadata: ProjectMetadata,
     env: str,
-    package_name: str,
     conf_source: str,
     nodes: str,
 ):
@@ -128,6 +126,6 @@ def run(
     logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
     logging.getLogger("py4j.py4j.clientserver").setLevel(logging.ERROR)
 
-    configure_project(package_name)
+    configure_project(metadata.package_name)
     with KedroSession.create(env=env, conf_source=conf_source) as session:
         session.run(node_names=nodes)
