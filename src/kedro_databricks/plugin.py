@@ -68,7 +68,7 @@ def init(
 @databricks_commands.command()
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
-@click.option("--overwrite", default=True, help="Overwrite the existing resources")
+@click.option("--overwrite", default=False, help="Overwrite the existing resources")
 @click.pass_obj
 def bundle(
     metadata: ProjectMetadata,
@@ -105,7 +105,7 @@ def bundle(
         if p.exists() and not overwrite:
             raise KeyError(f"Resource '{name}' already exists. Skipping.")
 
-        with open(resources_dir / f"{name}.yml", "w") as f:
+        with open(p, "w") as f:
             log.info(f"Writing resource '{name}'")
             yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
 
