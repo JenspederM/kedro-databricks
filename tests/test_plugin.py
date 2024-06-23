@@ -1,6 +1,8 @@
+import pytest
 from kedro_databricks.plugin import commands
 
 import logging
+import yaml
 
 log = logging.getLogger(__name__)
 
@@ -42,3 +44,28 @@ def test_databricks_bundle(kedro_project, cli_runner, metadata):
         files,
         "Resource files not created",
     )
+
+    docs = []
+    for p in files:
+        with open(resource_dir / p) as f:
+            doc = yaml.safe_load(f)
+            docs.append(doc)
+
+    for doc, fname in zip(docs, files):
+        assert doc.get("resources") is not None
+
+        jobs = doc["resources"]["jobs"]
+        assert len(jobs) == 1
+
+        job = jobs.get(fname.split(".")[0])
+        assert job is not None
+
+        tasks = job.get("tasks")
+        assert tasks is not None
+        assert len(tasks) == 5
+
+        for i, task in enumerate(tasks):
+            assert task.get("task_key") == f"node{i}"
+
+    result = cli_runner.invoke(commands, command, obj=metadata)
+    assert result.exit_code == 1, (result.exit_code, result.stdout)
