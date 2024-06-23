@@ -20,3 +20,25 @@ def test_databricks_init(kedro_project, cli_runner, metadata):
     assert (
         override_path.exists()
     ), f"Resource Overrides at {override_path} does not exist"
+
+
+def test_databricks_bundle(kedro_project, cli_runner, metadata):
+    """Test the `bundle` command"""
+    command = ["databricks", "bundle"]
+    result = cli_runner.invoke(commands, command, obj=metadata)
+
+    resource_dir = kedro_project / "resources"
+
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert resource_dir.exists(), "Resource directory not created"
+    assert resource_dir.is_dir(), "Resource directory is not a directory"
+
+    files = [p.name for p in resource_dir.rglob("*")]
+
+    assert files == [
+        f"{metadata.package_name}.yml",
+        f"{metadata.package_name}_ds.yml",
+    ], (
+        files,
+        "Resource files not created",
+    )
