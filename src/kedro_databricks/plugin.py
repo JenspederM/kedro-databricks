@@ -103,8 +103,7 @@ def bundle(
         p = resources_dir / f"{name}.yml"
 
         if p.exists() and not overwrite:
-            log.warning(f"Resource '{name}' already exists. Skipping.")
-            continue
+            raise KeyError(f"Resource '{name}' already exists. Skipping.")
 
         with open(resources_dir / f"{name}.yml", "w") as f:
             log.info(f"Writing resource '{name}'")
