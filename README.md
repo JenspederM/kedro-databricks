@@ -58,7 +58,24 @@ default: # will be applied to all workflows
     tasks: # will be applied to all tasks in each workflow
         - task_key: default
           job_cluster_key: default
+
+<workflow-name>:
+    job_clusters: # will only be applied to the specified workflow
+        - job_cluster_key: high-concurrency
+          new_cluster:
+            spark_version: 7.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+                KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+    tasks: 
+        - task_key: default # will be applied to all tasks in the specified workflow
+          job_cluster_key: high-concurrency
+        - task_key: <my-task> # will only be applied to the specified task in the specified workflow
+          job_cluster_key: high-concurrency
 ```
+
+The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
 
 ### Generation
 
@@ -72,8 +89,8 @@ This command will generate the following files:
 
 ```
 ├── resources/
-│   ├── <project-name>.yml # Asset Bundle resources definition corresponds to `kedro run`
-│   └── <project-name-<pipeline-name>>.yml # Asset Bundle resources definition for each pipeline corresponds to `kedro run --pipeline <pipeline-name>`
+│   ├── <project>.yml # Asset Bundle resources definition corresponds to `kedro run`
+│   └── <project-pipeline>.yml # Asset Bundle resources definition for each pipeline corresponds to `kedro run --pipeline <pipeline-name>`
 ```
 
 The generated resources definition files are used to define the resources required to run the Kedro pipeline on Databricks.
