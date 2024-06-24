@@ -7,6 +7,10 @@ dependencies = ["kedro>=0.19.0"]
 readme = "README.md"
 requires-python = ">= 3.8"
 
+[project.urls]
+Homepage = "https://github.com/jenspederm/kedro-databricks"
+Issues = "https://github.com/jenspederm/kedro-databricks/issues"
+
 [project.entry-points."kedro.project_commands"]
 databricks = "kedro_databricks.plugin:commands"
 
