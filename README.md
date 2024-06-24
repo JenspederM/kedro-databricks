@@ -89,8 +89,8 @@ This command will generate the following files:
 
 ```
 ├── resources/
-│   ├── <project-name>.yml # Asset Bundle resources definition corresponds to `kedro run`
-│   └── <project-name-<pipeline-name>>.yml # Asset Bundle resources definition for each pipeline corresponds to `kedro run --pipeline <pipeline-name>`
+│   ├── <project>.yml # Asset Bundle resources definition corresponds to `kedro run`
+│   └── <project-pipeline>.yml # Asset Bundle resources definition for each pipeline corresponds to `kedro run --pipeline <pipeline-name>`
 ```
 
 The generated resources definition files are used to define the resources required to run the Kedro pipeline on Databricks.
