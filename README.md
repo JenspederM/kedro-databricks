@@ -75,6 +75,8 @@ default: # will be applied to all workflows
           job_cluster_key: high-concurrency
 ```
 
+The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
+
 ### Generation
 
 To generate Asset Bundle resources definition, run:
