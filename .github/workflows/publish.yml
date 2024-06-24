@@ -33,7 +33,8 @@ jobs:
           rye sync --no-lock
       - name: Build package
         run: rye build
+      - name: list
+        run: ls -la
       # retrieve your distributions here
-
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
