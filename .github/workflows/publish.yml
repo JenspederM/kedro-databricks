@@ -1,0 +1,40 @@
+# .github/workflows/ci-cd.yml
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+      - master
+jobs:
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12.2"]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kedro-databricks-dev
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v3
+        id: setup-rye
+        with:
+          enable-cache: true
+          cache-prefix: ${{ matrix.python-version }}
+      - name: Pin python-version ${{ matrix.python-version }}
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: rye pin ${{ matrix.python-version }}
+      - name: Install dependencies
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: |
+          rye sync --no-lock
+      - name: Build package
+        run: rye build
+      - name: list
+        run: ls -la
+      # retrieve your distributions here
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
