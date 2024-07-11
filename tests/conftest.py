@@ -7,23 +7,22 @@ https://docs.pytest.org/en/latest/fixture.html
 
 from __future__ import annotations
 
-import os
 import logging
-
+import os
 from pathlib import Path
+
 from click.testing import CliRunner
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
+from kedro_databricks import LOGGING_NAME
 from pytest import fixture
 
-
-log = logging.getLogger(__name__)
+log = logging.getLogger(LOGGING_NAME)
 
 
 @fixture(name="cli_runner", scope="session")
 def cli_runner():
     runner = CliRunner()
-    cwd = Path.cwd()
     with runner.isolated_filesystem():
         # fp = cwd / "kedro_databricks/airflow_dag_template.j2"
         # copyfile(fp.resolve(), Path("./airflow_dag.j2").resolve())
@@ -43,7 +42,7 @@ def _create_kedro_settings_py(file_name: Path, patterns: list[str]):
     file_name.write_text(content)
 
 
-@fixture(scope="session")
+@fixture(scope="function")
 def kedro_project(cli_runner):
     CliRunner().invoke(
         # Supply name, tools, and example to skip interactive prompts
@@ -96,7 +95,7 @@ def register_pipelines():
     return project_path
 
 
-@fixture(scope="session")
+@fixture(scope="function")
 def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()

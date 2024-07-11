@@ -1,0 +1,83 @@
+# .github/workflows/ci-cd.yml
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12.2"]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kedro-databricks-dev
+    steps:
+      - uses: actions/checkout@v4
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+      - uses: databricks/setup-cli@main
+      - uses: eifinger/setup-rye@v3
+        id: setup-rye
+        with:
+          version: "0.29.0"
+          enable-cache: true
+          cache-prefix: ${{ matrix.python-version }}
+      - name: Pin python-version ${{ matrix.python-version }}
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: rye pin ${{ matrix.python-version }}
+      - name: Install dependencies
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: |
+          rye sync --no-lock
+      - name: Lint code
+        run: rye lint
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          rye test
+        env:
+          DATABRICKS_HOST: ${{ secrets.HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.SP_TOKEN }}
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        python-version: ["3.12.2"]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kedro-databricks
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+      - uses: databricks/setup-cli@main
+      - uses: eifinger/setup-rye@v3
+        id: setup-rye
+        with:
+          version: "0.29.0"
+          enable-cache: true
+          cache-prefix: ${{ matrix.python-version }}
+      - name: Pin python-version ${{ matrix.python-version }}
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: rye pin ${{ matrix.python-version }}
+      - name: Install dependencies
+        if: steps.setup-rye.outputs.cache-hit != 'true'
+        run: |
+          rye sync --no-lock
+      - name: Build package
+        run: rye build
+      - name: list
+        run: ls -la
+      # retrieve your distributions here
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

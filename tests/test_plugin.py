@@ -1,10 +1,10 @@
-import pytest
+import logging
+
+import yaml
+from kedro_databricks import LOGGING_NAME
 from kedro_databricks.plugin import commands
 
-import logging
-import yaml
-
-log = logging.getLogger(__name__)
+log = logging.getLogger(LOGGING_NAME)
 
 
 def test_databricks_init(kedro_project, cli_runner, metadata):
@@ -26,6 +26,20 @@ def test_databricks_init(kedro_project, cli_runner, metadata):
 
 def test_databricks_bundle(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
+    bundle_fail = ["databricks", "bundle", "--default", "_deault"]
+    result = cli_runner.invoke(commands, bundle_fail, obj=metadata)
+    assert result.exit_code == 1, (result.exit_code, result.stdout)
+
+    init_cmd = ["databricks", "init"]
+    result = cli_runner.invoke(commands, init_cmd, obj=metadata)
+
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert metadata.project_path.exists(), "Project path not created"
+    assert metadata.project_path.is_dir(), "Project path is not a directory"
+
+    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
+    assert override_path.exists(), "Override file not created"
+
     command = ["databricks", "bundle"]
     result = cli_runner.invoke(commands, command, obj=metadata)
 
@@ -36,28 +50,26 @@ def test_databricks_bundle(kedro_project, cli_runner, metadata):
     assert resource_dir.is_dir(), "Resource directory is not a directory"
 
     files = [p.name for p in resource_dir.rglob("*")]
+    files.sort()
 
     assert files == [
         f"{metadata.package_name}.yml",
         f"{metadata.package_name}_ds.yml",
-    ], (
-        files,
-        "Resource files not created",
-    )
+    ], f"Resource files not created: {', '.join(files)}"
 
-    docs = []
+    resources = []
     for p in files:
         with open(resource_dir / p) as f:
-            doc = yaml.safe_load(f)
-            docs.append(doc)
+            resource = yaml.safe_load(f)
+            resources.append(resource)
 
-    for doc, fname in zip(docs, files):
-        assert doc.get("resources") is not None
+    for resource, file_name in zip(resources, files):
+        assert resource.get("resources") is not None
 
-        jobs = doc["resources"]["jobs"]
+        jobs = resource["resources"]["jobs"]
         assert len(jobs) == 1
 
-        job = jobs.get(fname.split(".")[0])
+        job = jobs.get(file_name.split(".")[0])
         assert job is not None
 
         tasks = job.get("tasks")
@@ -66,6 +78,24 @@ def test_databricks_bundle(kedro_project, cli_runner, metadata):
 
         for i, task in enumerate(tasks):
             assert task.get("task_key") == f"node{i}"
+            assert task.get("job_cluster_key") == "default"
 
-    result = cli_runner.invoke(commands, command, obj=metadata)
+
+def test_deploy(kedro_project, cli_runner, metadata):
+    """Test the `deploy` command"""
+    deploy_fail = ["databricks", "deploy"]
+    result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
+
+
+#     init_cmd = ["databricks", "init"]
+#     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
+#     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+#     bundle_cmd = ["databricks", "bundle"]
+#     result = cli_runner.invoke(commands, bundle_cmd, obj=metadata)
+#     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+#     deploy_cmd = ["databricks", "deploy"]
+#     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+#     assert result.exit_code == 0, (result.exit_code, result.stdout)

@@ -55,6 +55,8 @@ markupsafe==2.1.5
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
+mergedeep==1.3.4
+    # via kedro-databricks
 more-itertools==10.2.0
     # via kedro
 omegaconf==2.3.0
