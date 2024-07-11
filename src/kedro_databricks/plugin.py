@@ -10,10 +10,9 @@ from kedro.framework.project import configure_project, pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks import LOGGING_NAME
 from kedro_databricks.bundle import apply_resource_overrides, generate_resources
 from kedro_databricks.deploy import deploy_to_databricks
-from kedro_databricks.init import create_databricks_config, write_default_config
+from kedro_databricks.init import write_bundle_template, write_override_template
 
 DEFAULT_RUN_ENV = "dev"
 DEFAULT_CONFIG_KEY = "default"
@@ -32,7 +31,7 @@ def databricks_commands():
 
 
 def _load_config(context: KedroContext) -> dict[str, Any]:
-    log = logging.getLogger(LOGGING_NAME)
+    log = logging.getLogger(context._package_name)
     # Backwards compatibility for ConfigLoader that does not support `config_patterns`
     config_loader = context.config_loader
     if not hasattr(config_loader, "config_patterns"):
@@ -62,13 +61,8 @@ def init(
     default: str,
 ):
     """Initialize Databricks Asset Bundle configuration"""
-
-    # Load context to initialize logging
-    with KedroSession.create(project_path=metadata.project_path) as session:
-        session.load_context()
-
-    create_databricks_config(metadata)
-    write_default_config(metadata, default)
+    write_bundle_template(metadata)
+    write_override_template(metadata, default)
 
 
 @databricks_commands.command()
@@ -83,8 +77,8 @@ def bundle(
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
-    log = logging.getLogger(LOGGING_NAME)
-    pipeline_resources = generate_resources(pipelines, metadata.package_name)
+    log = logging.getLogger(metadata.package_name)
+    pipeline_resources = generate_resources(pipelines, metadata)
 
     # If the configuration directory does not exist, Kedro will not load any configuration
     conf_dir = metadata.project_path / "conf" / env
@@ -123,16 +117,23 @@ def bundle(
 
 @databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
-@click.option("-b", "--bundle/--no-bundle", default=False, help=ENV_HELP)
+@click.option(
+    "-b",
+    "--bundle/--no-bundle",
+    default=False,
+    help="Bundle the project before deploying",
+)
+@click.option("-b", "--debug/--no-debug", default=False, help="Enable debug mode")
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,
     env: str,
     bundle: bool,
+    debug: bool,
 ):
     """Deploy the asset bundle to Databricks"""
     # Load context to initialize logging
-    deploy_to_databricks(metadata, env, bundle)
+    deploy_to_databricks(metadata, env, bundle, debug=debug)
 
 
 @databricks_commands.command()

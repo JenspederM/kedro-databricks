@@ -7,10 +7,6 @@ from pathlib import Path
 
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks import LOGGING_NAME
-
-log = logging.getLogger(LOGGING_NAME)
-
 _bundle_config_template = """
 # This is a Databricks asset bundle definition for dab.
 # See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
@@ -107,7 +103,9 @@ _bundle_override_template = """
 """
 
 
-def create_databricks_config(metadata: ProjectMetadata):
+def write_bundle_template(metadata: ProjectMetadata):
+    log = logging.getLogger(metadata.package_name)
+    log.info("Creating Databricks asset bundle configuration...")
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
@@ -163,7 +161,9 @@ def create_databricks_config(metadata: ProjectMetadata):
     shutil.rmtree(assets_dir)
 
 
-def write_default_config(metadata: ProjectMetadata, default_key: str):
+def write_override_template(metadata: ProjectMetadata, default_key: str):
+    log = logging.getLogger(metadata.package_name)
+    log.info("Creating Databricks asset bundle override configuration...")
     p = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
     if not p.exists():
         with open(p, "w") as f:

@@ -1,10 +1,5 @@
-import logging
-
 import yaml
-from kedro_databricks import LOGGING_NAME
 from kedro_databricks.plugin import commands
-
-log = logging.getLogger(LOGGING_NAME)
 
 
 def test_databricks_init(kedro_project, cli_runner, metadata):
