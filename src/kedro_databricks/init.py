@@ -110,6 +110,10 @@ def create_databricks_config(path: str, package_name: str):
         raise Exception("databricks CLI is not installed")
 
     config = {"project_name": package_name, "project_slug": package_name}
+    config_path = Path(path) / "databricks.yml"
+    if config_path.exists():
+        log.info(f"Found existing Databricks configuration at {config_path}")
+        return
 
     assets_dir = tempfile.mkdtemp()
     assets_dir = Path(assets_dir)
