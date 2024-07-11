@@ -9,6 +9,8 @@ log = logging.getLogger(LOGGING_NAME)
 
 def test_databricks_init(kedro_project, cli_runner, metadata):
     """Test the `init` command"""
+    (kedro_project / "databricks.yml").unlink(missing_ok=True)
+    (kedro_project / "conf" / "base" / "databricks.yml").unlink(missing_ok=True)
     command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=metadata)
 
@@ -22,6 +24,10 @@ def test_databricks_init(kedro_project, cli_runner, metadata):
     assert (
         override_path.exists()
     ), f"Resource Overrides at {override_path} does not exist"
+
+    command = ["databricks", "init"]
+    result = cli_runner.invoke(commands, command, obj=metadata)
+    assert result.exit_code == 1, (result.exit_code, result.stdout)
 
 
 def test_databricks_bundle(kedro_project, cli_runner, metadata):

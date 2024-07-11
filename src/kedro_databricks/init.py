@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from kedro.framework.startup import ProjectMetadata
+
 from kedro_databricks import LOGGING_NAME
 
 log = logging.getLogger(LOGGING_NAME)
@@ -105,15 +107,14 @@ _bundle_override_template = """
 """
 
 
-def create_databricks_config(path: str, package_name: str):
+def create_databricks_config(metadata: ProjectMetadata):
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
-    config = {"project_name": package_name, "project_slug": package_name}
-    config_path = Path(path) / "databricks.yml"
-    if config_path.exists():
-        log.info(f"Found existing Databricks configuration at {config_path}")
-        return
+    config = {
+        "project_name": metadata.package_name,
+        "project_slug": metadata.package_name,
+    }
 
     assets_dir = tempfile.mkdtemp()
     assets_dir = Path(assets_dir)
@@ -129,6 +130,12 @@ def create_databricks_config(path: str, package_name: str):
     template_params.write(json.dumps(config).encode())
     template_params.close()
 
+    config_path = metadata.project_path / "databricks.yml"
+    if config_path.exists():
+        raise FileExistsError(
+            f"{config_path} already exists. To reinitialize, delete the file and try again."
+        )
+
     # We utilize the databricks CLI to create the bundle configuration.
     # This is a bit hacky, but it allows the plugin to tap into the authentication
     # mechanism of the databricks CLI and thereby avoid the need to store credentials
@@ -142,7 +149,7 @@ def create_databricks_config(path: str, package_name: str):
             "--config-file",
             template_params.name,
             "--output-dir",
-            path,
+            metadata.project_path.as_posix(),
         ],
         stdout=subprocess.PIPE,
         check=False,
@@ -156,12 +163,12 @@ def create_databricks_config(path: str, package_name: str):
     shutil.rmtree(assets_dir)
 
 
-def write_default_config(path: str, default_key: str, package_name: str):
-    p = Path(path)
+def write_default_config(metadata: ProjectMetadata, default_key: str):
+    p = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
     if not p.exists():
         with open(p, "w") as f:
             f.write(
                 _bundle_override_template.format(
-                    default_key="default", package_name="package_name"
+                    default_key=default_key, package_name="package_name"
                 )
             )

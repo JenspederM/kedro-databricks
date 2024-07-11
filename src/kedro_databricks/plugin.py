@@ -67,10 +67,8 @@ def init(
     with KedroSession.create(project_path=metadata.project_path) as session:
         session.load_context()
 
-    path = metadata.project_path
-    conf_path = path / "conf" / "base" / "databricks.yml"
-    create_databricks_config(path, metadata.package_name)
-    write_default_config(conf_path, default, metadata.package_name)
+    create_databricks_config(metadata)
+    write_default_config(metadata, default)
 
 
 @databricks_commands.command()
