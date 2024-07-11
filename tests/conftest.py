@@ -7,17 +7,13 @@ https://docs.pytest.org/en/latest/fixture.html
 
 from __future__ import annotations
 
-import logging
 import os
 from pathlib import Path
 
 from click.testing import CliRunner
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
-from kedro_databricks import LOGGING_NAME
 from pytest import fixture
-
-log = logging.getLogger(LOGGING_NAME)
 
 
 @fixture(name="cli_runner", scope="session")

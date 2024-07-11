@@ -232,10 +232,10 @@ def test_generate_workflow():
     assert _create_workflow("workflow1", pipeline) == workflow
 
 
-def test_generate_resources():
+def test_generate_resources(metadata):
     from kedro_databricks.bundle import generate_resources
 
-    assert generate_resources({"__default__": Pipeline([])}) == {}
+    assert generate_resources({"__default__": Pipeline([])}, metadata) == {}
 
 
 def test_apply_resource_overrides():

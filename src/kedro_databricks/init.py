@@ -5,9 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from kedro_databricks import LOGGING_NAME
-
-log = logging.getLogger(LOGGING_NAME)
+from kedro.framework.startup import ProjectMetadata
 
 _bundle_config_template = """
 # This is a Databricks asset bundle definition for dab.
@@ -85,7 +83,7 @@ _bundle_init_template = {
 }
 
 _bundle_override_template = """
-# Files named ´databricks*´ or `databricks/**` will be used to apply overrides to the
+# Files named `databricks*` or `databricks/**` will be used to apply overrides to the
 # generated asset bundle resources. The overrides should be specified according to the
 # Databricks REST API's `Create a new job` endpoint. To learn more, visit their
 # documentation at https://docs.databricks.com/api/workspace/jobs/create
@@ -105,11 +103,16 @@ _bundle_override_template = """
 """
 
 
-def create_databricks_config(path: str, package_name: str):
+def write_bundle_template(metadata: ProjectMetadata):
+    log = logging.getLogger(metadata.package_name)
+    log.info("Creating Databricks asset bundle configuration...")
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
-    config = {"project_name": package_name, "project_slug": package_name}
+    config = {
+        "project_name": metadata.package_name,
+        "project_slug": metadata.package_name,
+    }
 
     assets_dir = tempfile.mkdtemp()
     assets_dir = Path(assets_dir)
@@ -125,6 +128,12 @@ def create_databricks_config(path: str, package_name: str):
     template_params.write(json.dumps(config).encode())
     template_params.close()
 
+    config_path = metadata.project_path / "databricks.yml"
+    if config_path.exists():
+        raise FileExistsError(
+            f"{config_path} already exists. To reinitialize, delete the file and try again."
+        )
+
     # We utilize the databricks CLI to create the bundle configuration.
     # This is a bit hacky, but it allows the plugin to tap into the authentication
     # mechanism of the databricks CLI and thereby avoid the need to store credentials
@@ -138,7 +147,7 @@ def create_databricks_config(path: str, package_name: str):
             "--config-file",
             template_params.name,
             "--output-dir",
-            path,
+            metadata.project_path.as_posix(),
         ],
         stdout=subprocess.PIPE,
         check=False,
@@ -152,12 +161,14 @@ def create_databricks_config(path: str, package_name: str):
     shutil.rmtree(assets_dir)
 
 
-def write_default_config(path: str, default_key: str, package_name: str):
-    p = Path(path)
+def write_override_template(metadata: ProjectMetadata, default_key: str):
+    log = logging.getLogger(metadata.package_name)
+    log.info("Creating Databricks asset bundle override configuration...")
+    p = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
     if not p.exists():
         with open(p, "w") as f:
             f.write(
                 _bundle_override_template.format(
-                    default_key="default", package_name="package_name"
+                    default_key=default_key, package_name="package_name"
                 )
             )

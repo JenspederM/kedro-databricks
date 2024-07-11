@@ -3,9 +3,9 @@ import logging
 from typing import Any
 
 from kedro.framework.project import PACKAGE_NAME
+from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
-from kedro_databricks import LOGGING_NAME
 from kedro_databricks.utils import (
     TASK_KEY_ORDER,
     WORKFLOW_KEY_ORDER,
@@ -14,8 +14,6 @@ from kedro_databricks.utils import (
 )
 
 DEFAULT = "default"
-
-log = logging.getLogger(LOGGING_NAME)
 
 
 def _create_task(name: str, depends_on: list[node]) -> dict[str, Any]:
@@ -225,7 +223,7 @@ def apply_resource_overrides(
 
 
 def generate_resources(
-    pipelines: dict[str, Pipeline], package_name=PACKAGE_NAME
+    pipelines: dict[str, Pipeline], metadata: ProjectMetadata
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -238,13 +236,15 @@ def generate_resources(
     Returns:
         dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
     """
+    log = logging.getLogger(metadata.package_name)
 
+    package = metadata.package_name
     workflows = {}
     for name, pipeline in pipelines.items():
         if len(pipeline.nodes) == 0:
             continue
 
-        wf_name = f"{package_name}_{name}" if name != "__default__" else package_name
+        wf_name = f"{package}_{name}" if name != "__default__" else package
         wf = _create_workflow(wf_name, pipeline)
         log.debug(f"Workflow '{wf_name}' created successfully.")
         log.debug(wf)
