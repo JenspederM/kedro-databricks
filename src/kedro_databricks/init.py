@@ -85,7 +85,7 @@ _bundle_init_template = {
 }
 
 _bundle_override_template = """
-# Files named ´databricks*´ or `databricks/**` will be used to apply overrides to the
+# Files named `databricks*` or `databricks/**` will be used to apply overrides to the
 # generated asset bundle resources. The overrides should be specified according to the
 # Databricks REST API's `Create a new job` endpoint. To learn more, visit their
 # documentation at https://docs.databricks.com/api/workspace/jobs/create
