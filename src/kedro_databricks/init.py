@@ -1,12 +1,15 @@
-from pathlib import Path
+import json
+import logging
+import shutil
 import subprocess
 import tempfile
-import json
-import shutil
+from pathlib import Path
 
-import yaml
+from kedro_databricks import LOGGING_NAME
 
-_template = """
+log = logging.getLogger(LOGGING_NAME)
+
+_bundle_config_template = """
 # This is a Databricks asset bundle definition for dab.
 # See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
 bundle:
@@ -58,8 +61,8 @@ targets:
     {{end -}}
 """
 
-_databricks_template = {
-    "welcome_message": "Welcome to the Databricks Kedro Bundle. For detailed information on project generation, see the README at https://github.com/jenspederm/databricks-kedro-bundle.",
+_bundle_init_template = {
+    "welcome_message": "Creating a Databricks asset bundle definition...",
     "min_databricks_cli_version": "v0.212.2",
     "properties": {
         "project_name": {
@@ -78,12 +81,32 @@ _databricks_template = {
             "hidden": True,
         },
     },
-    "success_message": "\n*** Kedro Asset Bundle created in '{{.project_name}}' directory! ***\n\nPlease refer to the README.md for further instructions on getting started.",
+    "success_message": "\n*** Asset Bundle successfully created for '{{.project_name}}'! ***",
 }
+
+_bundle_override_template = """
+# Files named ´databricks*´ or `databricks/**` will be used to apply overrides to the
+# generated asset bundle resources. The overrides should be specified according to the
+# Databricks REST API's `Create a new job` endpoint. To learn more, visit their
+# documentation at https://docs.databricks.com/api/workspace/jobs/create
+
+{default_key}:
+    job_clusters:
+        - job_cluster_key: {default_key}
+          new_cluster:
+              spark_version: 14.3.x-scala2.12
+              node_type_id: Standard_DS4_v2
+              num_workers: 1
+              spark_env_vars:
+                  KEDRO_LOGGING_CONFIG: f"/dbfs/FileStore/{package_name}/conf/logging.yml"
+    tasks:
+        - task_key: {default_key}
+          job_cluster_key: {default_key}
+"""
 
 
 def create_databricks_config(path: str, package_name: str):
-    if shutil.which("databricks") is None:
+    if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
     config = {"project_name": package_name, "project_slug": package_name}
@@ -91,12 +114,12 @@ def create_databricks_config(path: str, package_name: str):
     assets_dir = tempfile.mkdtemp()
     assets_dir = Path(assets_dir)
     with open(assets_dir / "databricks_template_schema.json", "w") as f:
-        f.write(json.dumps(_databricks_template))
+        f.write(json.dumps(_bundle_init_template))
 
     template_dir = assets_dir / "template"
     template_dir.mkdir(exist_ok=True)
     with open(f"{template_dir}/databricks.yml.tmpl", "w") as f:
-        f.write(_template)
+        f.write(_bundle_config_template)
 
     template_params = tempfile.NamedTemporaryFile(delete=False)
     template_params.write(json.dumps(config).encode())
@@ -106,7 +129,7 @@ def create_databricks_config(path: str, package_name: str):
     # This is a bit hacky, but it allows the plugin to tap into the authentication
     # mechanism of the databricks CLI and thereby avoid the need to store credentials
     # in the plugin.
-    subprocess.call(
+    result = subprocess.run(
         [
             "databricks",
             "bundle",
@@ -116,36 +139,25 @@ def create_databricks_config(path: str, package_name: str):
             template_params.name,
             "--output-dir",
             path,
-        ]
+        ],
+        stdout=subprocess.PIPE,
+        check=False,
     )
+
+    if result.returncode != 0:
+        raise Exception(
+            f"Failed to create Databricks asset bundle configuration: {result.stdout}"
+        )
 
     shutil.rmtree(assets_dir)
 
 
 def write_default_config(path: str, default_key: str, package_name: str):
-    with open(path, "w") as f:
-        try:
-            conf = yaml.safe_load(f)
-            if conf is None:
-                conf = {}
-        except:
-            conf = {}
-
-        conf[default_key] = {
-            "job_clusters": [
-                {
-                    "job_cluster_key": default_key,
-                    "new_cluster": {
-                        "spark_version": "14.3.x-scala2.12",
-                        "node_type_id": "Standard_D4ds_v4",
-                        "num_workers": 1,
-                        "spark_env_vars": {
-                            "KEDRO_LOGGING_CONFIG": f"/dbfs/FileStore/{package_name}/conf/logging.yml",
-                        },
-                    },
-                }
-            ],
-            "tasks": [{"task_key": default_key, "job_cluster_key": default_key}],
-        }
-
-        yaml.dump(conf, f, default_flow_style=False, indent=4, sort_keys=False)
+    p = Path(path)
+    if not p.exists():
+        with open(p, "w") as f:
+            f.write(
+                _bundle_override_template.format(
+                    default_key="default", package_name="package_name"
+                )
+            )

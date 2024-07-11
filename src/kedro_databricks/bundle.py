@@ -1,11 +1,11 @@
+import copy
 import logging
-
 from typing import Any
 
 from kedro.framework.project import PACKAGE_NAME
-from kedro.pipeline import Pipeline
+from kedro.pipeline import Pipeline, node
 
-from kedro_databricks.utils import WORKFLOW_KEY_ORDER, _sort_dict
+from kedro_databricks import LOGGING_NAME
 from kedro_databricks.utils import (
     TASK_KEY_ORDER,
     WORKFLOW_KEY_ORDER,
@@ -15,16 +15,15 @@ from kedro_databricks.utils import (
 
 DEFAULT = "default"
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(LOGGING_NAME)
 
 
-def _create_task(name, depends_on, job_cluster_id):
+def _create_task(name: str, depends_on: list[node]) -> dict[str, Any]:
     """Create a Databricks task for a given node.
 
     Args:
         name (str): name of the node
         depends_on (List[Node]): list of nodes that the task depends on
-        job_cluster_id (str): ID of the job cluster to run the task on
 
     Returns:
         Dict[str, Any]: a Databricks task
@@ -34,7 +33,6 @@ def _create_task(name, depends_on, job_cluster_id):
 
     task = {
         "task_key": name,
-        "job_cluster_key": job_cluster_id,
         "libraries": [{"whl": "../dist/*.whl"}],
         "depends_on": [{"task_key": dep.name} for dep in depends_on],
         "python_wheel_task": {
@@ -54,7 +52,7 @@ def _create_task(name, depends_on, job_cluster_id):
     return _sort_dict(task, TASK_KEY_ORDER)
 
 
-def _create_workflow(name: str, pipeline: Pipeline):
+def _create_workflow(name: str, pipeline: Pipeline) -> dict[str, Any]:
     """Create a Databricks workflow for a given pipeline.
 
     Args:
@@ -69,7 +67,7 @@ def _create_workflow(name: str, pipeline: Pipeline):
     workflow = {
         "name": name,
         "tasks": [
-            _create_task(node.name, depends_on=deps, job_cluster_id="default")
+            _create_task(node.name, depends_on=deps)
             for node, deps in pipeline.node_dependencies.items()
         ],
         "format": "MULTI_TASK",
@@ -78,80 +76,150 @@ def _create_workflow(name: str, pipeline: Pipeline):
     return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
 
-def _validate(workflow: dict[str, Any]) -> tuple[bool, str]:
-    job_clusters = workflow.get("job_clusters", [])
-    errors = []
-    for cluster in job_clusters:
-        if cluster.get("new_cluster") is not None:
-            spark_env = cluster["new_cluster"].get("spark_env_vars", {})
-            if "KEDRO_LOGGING_CONFIG" not in spark_env:
-                errors.append(
-                    f"KEDRO_LOGGING_CONFIG not found in spark_env_vars for cluster \"{cluster.get('job_cluster_key')}\""
-                )
+def _update_list(
+    old: list[dict[str, Any]],
+    new: list[dict[str, Any]],
+    lookup_key: str,
+    default: dict[str, Any] = {},
+):
+    assert isinstance(
+        old, list
+    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
+    assert isinstance(
+        new, list
+    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
+    from mergedeep import merge
 
-    return errors
+    old_obj = {curr.pop(lookup_key): curr for curr in old}
+    new_obj = {update.pop(lookup_key): update for update in new}
+    keys = set(old_obj.keys()).union(set(new_obj.keys()))
+
+    for key in keys:
+        update = copy.deepcopy(default)
+        update.update(new_obj.get(key, {}))
+        new = merge(old_obj.get(key, {}), update)
+        old_obj[key] = new
+
+    return [{lookup_key: k, **v} for k, v in old_obj.items()]
+
+
+def _apply_overrides(
+    workflow: dict[str, Any],
+    overrides: dict[str, Any],
+    default_task: dict[str, Any] = {},
+):
+    from mergedeep import merge
+
+    workflow["description"] = workflow.get("description", overrides.get("description"))
+    workflow["health"] = merge(workflow.get("health", {}), overrides.get("health", {}))
+    workflow["edit_mode"] = workflow.get("edit_mode", overrides.get("edit_mode"))
+    workflow["max_concurrent_runs"] = workflow.get(
+        "max_concurrent_runs", overrides.get("max_concurrent_runs")
+    )
+    workflow["timeout_seconds"] = workflow.get(
+        "timeout_seconds", overrides.get("timeout_seconds")
+    )
+
+    workflow["email_notifications"] = merge(
+        workflow.get("email_notifications", {}),
+        overrides.get("email_notifications", {}),
+    )
+    workflow["webhook_notifications"] = merge(
+        workflow.get("webhook_notifications", {}),
+        overrides.get("webhook_notifications", {}),
+    )
+    workflow["notification_settings"] = merge(
+        workflow.get("notification_settings", {}),
+        overrides.get("notification_settings", {}),
+    )
+    workflow["schedule"] = merge(
+        workflow.get("schedule", {}), overrides.get("schedule", {})
+    )
+    workflow["trigger"] = merge(
+        workflow.get("trigger", {}), overrides.get("trigger", {})
+    )
+    workflow["continuous"] = merge(
+        workflow.get("continuous", {}), overrides.get("continuous", {})
+    )
+    workflow["git_source"] = merge(
+        workflow.get("git_source", {}), overrides.get("git_source", {})
+    )
+    workflow["tags"] = merge(workflow.get("tags", {}), overrides.get("tags", {}))
+    workflow["queue"] = merge(workflow.get("queue", {}), overrides.get("queue", {}))
+    workflow["run_as"] = merge(workflow.get("run_as", {}), overrides.get("run_as", {}))
+    workflow["deployment"] = merge(
+        workflow.get("deployment", {}), overrides.get("deployment", {})
+    )
+
+    workflow["access_control_list"] = merge(
+        workflow.get("access_control_list", {}),
+        overrides.get("access_control_list", {}),
+    )
+
+    workflow["tasks"] = _update_list(
+        workflow.get("tasks", []), overrides.get("tasks", []), "task_key", default_task
+    )
+    workflow["job_clusters"] = _update_list(
+        workflow.get("job_clusters", []),
+        overrides.get("job_clusters", []),
+        "job_cluster_key",
+    )
+    workflow["parameters"] = _update_list(
+        workflow.get("parameters", []), overrides.get("parameters", []), "name"
+    )
+    workflow["environments"] = _update_list(
+        workflow.get("environments", []),
+        overrides.get("environments", []),
+        "environment_key",
+    )
+
+    workflow["format"] = "MULTI_TASK"
+
+    new_workflow = {}
+    for k, v in workflow.items():
+        if v is None:
+            continue
+        elif isinstance(v, (dict, list)):
+            if len(v) == 0:
+                continue
+        new_workflow[k] = v
+
+    return new_workflow
+
+
+def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
+    for d in lst:
+        if d.get(lookup) == key:
+            return d
 
 
 def apply_resource_overrides(
-    resources: dict, config: dict, default_key: str = DEFAULT, package_name=PACKAGE_NAME
+    resources: dict[str, Any], overrides: dict[str, Any], default_key: str = DEFAULT
 ):
-    conf_default = config.get(default_key, {})
-    task_default = conf_default.get("tasks", [])
-
-    errors = _validate(conf_default)
-    if len(errors) > 0:
-        raise ValueError(f"Default configuration is not valid: {', '.join(errors)}")
-
-    if len(task_default) > 0:
-        if len(task_default) > 1:
-            raise ValueError(f"Only one {default_key} task configuration is allowed.")
-        task_default = task_default[0]
-        if task_default.get("task_key") != default_key:
-            raise ValueError(f"task_key cannot be set in {default_key}.")
-        if task_default.get("depends_on") is not None:
-            raise ValueError(f"depends_on cannot be set in {default_key}.")
+    default_workflow = overrides.pop(default_key, {})
+    default_tasks = default_workflow.get("tasks", [])
+    default_task = _get_value_by_key(default_tasks, "task_key", default_key)
+    if default_task:
+        del default_task["task_key"]
+    else:
+        default_task = {}
 
     for name, resource in resources.items():
-        log.debug(f"Applying overrides for pipeline '{name}'.")
-        wf = resource["resources"]["jobs"][name]
-        errors = _validate(wf)
-
-        if len(errors) > 0:
-            raise ValueError(f"Workflow {name} is not valid: {', '.join(errors)}")
-
-        wf_conf = config.get(name, conf_default)
-        if wf_conf.get("name") is not None:
-            raise ValueError("name cannot be set in the pipeline configuration.")
-
-        task_conf = wf_conf.pop("tasks", None)
-        if task_conf is not None:
-            task_conf = {task.pop("task_key"): task for task in task_conf}
-            task_default = task_conf.get(default_key, task_default)
-
-            if any(v.get("task_key") is not None for v in task_conf.values()):
-                raise ValueError(f"task_key cannot be overwritten.")
-            if any(v.get("depends_on") is not None for v in task_conf.values()):
-                raise ValueError(f"depends_on cannot be overwritten.")
-
-            wf_tasks = wf.get("tasks", [])
-            for task in wf_tasks:
-                task_conf = task_conf.get(task["task_key"], task_default)
-                task.update(task_conf)
-            wf["tasks"] = wf_tasks
-
-        spark_env_vars = (
-            wf_conf.get("job_clusters", [{}])[0]
-            .get("new_cluster", {})
-            .get("spark_env_vars", {})
+        workflow = resource["resources"]["jobs"][name]
+        workflow_overrides = copy.deepcopy(default_workflow)
+        workflow_overrides.update(overrides.get(name, {}))
+        task_overrides = workflow_overrides.pop("tasks", [])
+        workflow_default_task = _get_value_by_key(
+            task_overrides, "task_key", default_key
         )
+        if workflow_default_task:
+            del workflow_default_task["task_key"]
+        else:
+            workflow_default_task = copy.deepcopy(default_task)
 
-        if "KEDRO_LOGGING_CONFIG" not in spark_env_vars:
-            spark_env_vars["KEDRO_LOGGING_CONFIG"] = (
-                f"/dbfs/FileStore/{package_name}/conf/logging.yml"
-            )
-
-        wf.update(wf_conf)
-        resource["resources"]["jobs"][name] = _sort_dict(wf, WORKFLOW_KEY_ORDER)
+        resources[name]["resources"]["jobs"][name] = _apply_overrides(
+            workflow, workflow_overrides, default_task=workflow_default_task
+        )
 
     return resources
 
@@ -171,19 +239,21 @@ def generate_resources(
         dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
     """
 
-    jobs = {}
-
+    workflows = {}
     for name, pipeline in pipelines.items():
-        if len(pipeline.nodes) > 0:
-            wf_name = (
-                f"{package_name}_{name}" if name != "__default__" else package_name
-            )
-            wf = _create_workflow(wf_name, pipeline)
-            log.debug(f"Workflow '{wf_name}' created successfully.")
-            log.debug(wf)
-            jobs[wf_name] = wf
+        if len(pipeline.nodes) == 0:
+            continue
 
-    resources = {name: {"resources": {"jobs": {name: wf}}} for name, wf in jobs.items()}
+        wf_name = f"{package_name}_{name}" if name != "__default__" else package_name
+        wf = _create_workflow(wf_name, pipeline)
+        log.debug(f"Workflow '{wf_name}' created successfully.")
+        log.debug(wf)
+        workflows[wf_name] = wf
+
+    resources = {
+        name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
+    }
+
     log.info("Databricks resources generated successfully.")
     log.debug(resources)
     return resources
