@@ -102,6 +102,40 @@ _bundle_override_template = """
           job_cluster_key: {default_key}
 """
 
+_databricks_run_template = """
+import argparse
+import logging
+
+from kedro.framework.project import configure_project
+from kedro.framework.session import KedroSession
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env", dest="env", type=str)
+    parser.add_argument("--conf-source", dest="conf_source", type=str)
+    parser.add_argument("--package-name", dest="package_name", type=str)
+    parser.add_argument("--nodes", dest="nodes", type=str)
+
+    args = parser.parse_args()
+    env = args.env
+    conf_source = args.conf_source
+    package_name = args.package_name
+    nodes = args.nodes
+
+    # https://kb.databricks.com/notebooks/cmd-c-on-object-id-p0.html
+    logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
+    logging.getLogger("py4j.py4j.clientserver").setLevel(logging.ERROR)
+
+    configure_project(package_name)
+    with KedroSession.create(env=env, conf_source=conf_source) as session:
+        session.run(node_names=[node.strip() for node in nodes.split(",")])
+
+
+if __name__ == "__main__":
+    main()
+"""
+
 
 def write_bundle_template(metadata: ProjectMetadata):
     log = logging.getLogger(metadata.package_name)
@@ -172,3 +206,17 @@ def write_override_template(metadata: ProjectMetadata, default_key: str):
                     default_key=default_key, package_name="package_name"
                 )
             )
+
+
+def write_databricks_run_script(metadata: ProjectMetadata):
+    log = logging.getLogger(metadata.package_name)
+    log.info("Creating Databricks run script...")
+    p = (
+        Path(metadata.project_path)
+        / "src"
+        / metadata.package_name
+        / "databricks_run.py"
+    )
+
+    with open(p, "w") as f:
+        f.write(_databricks_run_template)
