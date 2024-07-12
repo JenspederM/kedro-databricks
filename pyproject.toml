@@ -44,6 +44,7 @@ addopts = """
     --cov=kedro_databricks
     --no-cov-on-fail
     --cov-fail-under=70
+    --ignore-glob="develop-eggs/*"
     -ra"""
 
 
