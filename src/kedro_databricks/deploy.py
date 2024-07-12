@@ -26,6 +26,8 @@ def deploy_to_databricks(
     _upload_project_config(metadata)
     _upload_project_data(metadata)
     deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
+    if debug:
+        deploy_cmd.append("--debug")
     result = subprocess.run(deploy_cmd, check=True, capture_output=True)
     if result.returncode != 0:
         raise Exception(f"Failed to deploy the project: {result.stderr}")
