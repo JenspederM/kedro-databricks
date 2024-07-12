@@ -6,13 +6,18 @@ import yaml
 from kedro.config import MissingConfigException
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.context import KedroContext
-from kedro.framework.project import configure_project, pipelines
+from kedro.framework.project import pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.bundle import apply_resource_overrides, generate_resources
 from kedro_databricks.deploy import deploy_to_databricks
-from kedro_databricks.init import write_bundle_template, write_override_template
+from kedro_databricks.init import (
+    substitute_catalog_paths,
+    write_bundle_template,
+    write_databricks_run_script,
+    write_override_template,
+)
 
 DEFAULT_RUN_ENV = "dev"
 DEFAULT_CONFIG_KEY = "default"
@@ -63,6 +68,8 @@ def init(
     """Initialize Databricks Asset Bundle configuration"""
     write_bundle_template(metadata)
     write_override_template(metadata, default)
+    write_databricks_run_script(metadata)
+    substitute_catalog_paths(metadata)
 
 
 @databricks_commands.command()
@@ -134,23 +141,3 @@ def deploy(
     """Deploy the asset bundle to Databricks"""
     # Load context to initialize logging
     deploy_to_databricks(metadata, env, bundle, debug=debug)
-
-
-@databricks_commands.command()
-@click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
-@click.option("-c", "--conf-source")
-@click.option("-n", "--nodes")
-@click.pass_obj
-def run(
-    metadata: ProjectMetadata,
-    env: str,
-    conf_source: str,
-    nodes: str,
-):
-    """Run the project on Databricks"""
-    logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
-    logging.getLogger("py4j.py4j.clientserver").setLevel(logging.ERROR)
-
-    configure_project(metadata.package_name)
-    with KedroSession.create(env=env, conf_source=conf_source) as session:
-        session.run(node_names=[node.strip() for node in nodes.split(",")])

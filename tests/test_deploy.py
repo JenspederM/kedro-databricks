@@ -9,6 +9,9 @@ def test_deploy_go_to_project(kedro_project):
     project_path = _go_to_project(kedro_project)
     assert os.getcwd() == str(project_path), "Failed to change to project directory"
 
+    with pytest.raises(FileNotFoundError):
+        _go_to_project("/tmp/non_existent_path" + str(os.getpid()))
+
 
 def test_deploy_validate_databricks_config(kedro_project, cli_runner, metadata):
     from kedro_databricks.deploy import _go_to_project, _validate_databricks_config
