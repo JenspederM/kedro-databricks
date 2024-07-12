@@ -13,6 +13,7 @@ from kedro.framework.startup import ProjectMetadata
 from kedro_databricks.bundle import apply_resource_overrides, generate_resources
 from kedro_databricks.deploy import deploy_to_databricks
 from kedro_databricks.init import (
+    substitute_catalog_paths,
     write_bundle_template,
     write_databricks_run_script,
     write_override_template,
@@ -68,6 +69,7 @@ def init(
     write_bundle_template(metadata)
     write_override_template(metadata, default)
     write_databricks_run_script(metadata)
+    substitute_catalog_paths(metadata)
 
 
 @databricks_commands.command()
