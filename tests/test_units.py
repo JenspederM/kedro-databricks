@@ -1,5 +1,6 @@
 import copy
 
+import pytest
 from kedro.pipeline import Pipeline, node
 
 
@@ -252,3 +253,29 @@ def test_apply_resource_overrides():
     assert apply_resource_overrides(resources, mix_overrides, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply mixed overrides"
+
+
+def test_run_cmd():
+    import subprocess
+
+    from kedro_databricks.utils import run_cmd
+
+    with pytest.raises(Exception) as e:
+        cmd = ["ls", "non_existent_file"]
+        run_cmd(cmd)
+        assert "Failed to run command" in str(
+            e.value
+        ), f"Failed to raise exception: {cmd}"
+        raise e
+
+    with pytest.raises(Exception) as e:
+        cmd = ["ls", "non_existent_file"]
+        run_cmd(cmd, msg="Custom message")
+        assert "Custom message" in str(e.value), f"Failed to raise exception: {cmd}"
+        raise e
+
+    run_cmd(["ls", "non_existent_file"], warn=True)
+    run_cmd(["ls", "non_existent_file"], msg="Custom message", warn=True)
+
+    result = run_cmd(["ls", "."])
+    assert isinstance(result, subprocess.CompletedProcess)

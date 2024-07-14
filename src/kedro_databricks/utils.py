@@ -1,3 +1,5 @@
+import logging
+import subprocess
 from typing import Any
 
 TASK_KEY_ORDER = [
@@ -19,6 +21,32 @@ WORKFLOW_KEY_ORDER = [
     "job_clusters",
     "tasks",
 ]
+
+
+def run_cmd(
+    cmd: list[str], msg: str | None = None, warn: bool = False
+) -> subprocess.CompletedProcess:
+    """Run a shell command.
+
+    Args:
+        cmds (List[str]): list of commands to run
+        msg (str, optional): message to raise if the command fails
+        warn (bool): whether to log a warning if the command fails
+    """
+
+    if msg is None:
+        msg = "Failed to run command"
+
+    try:
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, check=False)
+        for line in result.stdout.decode().split("\n"):
+            logging.info(line)
+        return result
+    except Exception as e:
+        if warn:
+            logging.warning(f"{msg}: {e}")
+        else:
+            raise Exception(f"{msg}: {e}")
 
 
 def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:

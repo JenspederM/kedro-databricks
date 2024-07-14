@@ -1,11 +1,12 @@
 import logging
 import os
 import shutil
-import subprocess
 import tarfile
 from pathlib import Path
 
 from kedro.framework.startup import ProjectMetadata
+
+from kedro_databricks.utils import run_cmd
 
 
 def deploy_to_databricks(
@@ -14,6 +15,17 @@ def deploy_to_databricks(
     bundle: bool = True,
     debug: bool = False,
 ):
+    """Deploy the project to Databricks.
+
+    Will bundle the project, upload the configuration and data to Databricks,
+    and deploy the project to the specified environment.
+
+    Args:
+        metadata (ProjectMetadata): metadata of the project
+        env (str): environment to deploy to
+        bundle (bool): whether to bundle the project before deploying
+        debug (bool): whether to run the deployment in debug mode
+    """
     log = logging.getLogger(metadata.package_name)
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
@@ -28,9 +40,7 @@ def deploy_to_databricks(
     deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
     if debug:
         deploy_cmd.append("--debug")
-    result = subprocess.run(deploy_cmd, check=True, capture_output=True)
-    if result.returncode != 0:
-        raise Exception(f"Failed to deploy the project: {result.stderr}")
+    run_cmd(deploy_cmd, msg="Failed to deploy the project")
     log.info("Project deployed successfully!")
 
 
@@ -54,18 +64,18 @@ def _upload_project_data(metadata: ProjectMetadata):  # pragma: no cover
     log = logging.getLogger(metadata.package_name)
     log.info("Upload project data to Databricks...")
     data_path = metadata.project_path / "data"
-    if data_path.exists():
-        copy_data_cmd = [
-            "databricks",
-            "fs",
-            "cp",
-            "-r",
-            str(data_path),
-            f"dbfs:/FileStore/{metadata.package_name}/data",
-        ]
-        result = subprocess.run(copy_data_cmd, check=False, capture_output=True)
-        if result.returncode != 0:
-            raise Exception(f"Failed to copy data to Databricks: {result.stderr}")
+    if not data_path.exists():
+        log.warning(f"Data path {data_path} does not exist")
+        return
+    copy_data_cmd = [
+        "databricks",
+        "fs",
+        "cp",
+        "-r",
+        str(data_path),
+        f"dbfs:/FileStore/{metadata.package_name}/data",
+    ]
+    run_cmd(copy_data_cmd, msg="Failed to copy data to Databricks")
 
 
 def _upload_project_config(metadata: ProjectMetadata):  # pragma: no cover
@@ -76,19 +86,11 @@ def _upload_project_config(metadata: ProjectMetadata):  # pragma: no cover
     ) as f:
         f.extractall("dist/")
 
-    try:
-        remove_cmd = [
-            "databricks",
-            "fs",
-            "rm",
-            "-r",
-            f"dbfs:/FileStore/{metadata.package_name}",
-        ]
-        result = subprocess.run(remove_cmd, check=False)
-        if result.returncode != 0:
-            log.warning(f"Failed to remove existing project: {result.stderr}")
-    except Exception as e:
-        log.warning(f"Failed to remove existing project: {e}")
+    run_cmd(
+        ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{metadata.package_name}"],
+        msg="Failed to create project directory on Databricks",
+        warn=True,
+    )
 
     conf_path = metadata.project_path / "dist" / "conf"
     if not conf_path.exists():
@@ -102,18 +104,14 @@ def _upload_project_config(metadata: ProjectMetadata):  # pragma: no cover
         str(conf_path),
         f"dbfs:/FileStore/{metadata.package_name}/conf",
     ]
-    result = subprocess.run(copy_conf_cmd, check=False, capture_output=True)
-    if result.returncode != 0:
-        raise Exception(f"Failed to copy configuration to Databricks: {result.stderr}")
+    run_cmd(copy_conf_cmd, msg="Failed to copy configuration to Databricks")
 
 
 def _bundle_project(metadata: ProjectMetadata, env):
     log = logging.getLogger(metadata.package_name)
     log.info("Bundling the project...")
     bundle_cmd = ["kedro", "databricks", "bundle", "--env", env]
-    result = subprocess.run(bundle_cmd, capture_output=True, check=True)
-    if result.returncode != 0:
-        raise Exception(f"Failed to bundle the project: {result.stderr}")
+    run_cmd(bundle_cmd, msg="Failed to bundle the project")
 
 
 def _build_project(metadata: ProjectMetadata):
@@ -121,7 +119,5 @@ def _build_project(metadata: ProjectMetadata):
     log.info("Building the project...")
     _go_to_project(metadata.project_path)
     build_cmd = ["kedro", "package"]
-    result = subprocess.run(build_cmd, capture_output=True, check=True)
-    if result.returncode != 0:
-        raise Exception(f"Failed to build the project: {result.stderr}")
+    result = run_cmd(build_cmd, msg="Failed to build the project")
     return result

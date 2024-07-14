@@ -2,12 +2,13 @@ import json
 import logging
 import re
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
+
+from kedro_databricks.utils import run_cmd
 
 _bundle_config_template = """
 # This is a Databricks asset bundle definition for dab.
@@ -178,7 +179,8 @@ def write_bundle_template(metadata: ProjectMetadata):
     # This is a bit hacky, but it allows the plugin to tap into the authentication
     # mechanism of the databricks CLI and thereby avoid the need to store credentials
     # in the plugin.
-    result = subprocess.run(
+
+    run_cmd(
         [
             "databricks",
             "bundle",
@@ -189,14 +191,8 @@ def write_bundle_template(metadata: ProjectMetadata):
             "--output-dir",
             metadata.project_path.as_posix(),
         ],
-        stdout=subprocess.PIPE,
-        check=False,
+        msg="Failed to create Databricks asset bundle configuration",
     )
-
-    if result.returncode != 0:  # pragma: no cover
-        raise Exception(
-            f"Failed to create Databricks asset bundle configuration: {result.stdout}"
-        )
 
     shutil.rmtree(assets_dir)
 
