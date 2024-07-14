@@ -37,6 +37,7 @@ def deploy_to_databricks(
         _bundle_project(metadata, env)
     _upload_project_config(metadata)
     _upload_project_data(metadata)
+    log.info("Deploying the project to Databricks...")
     deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
     if debug:
         deploy_cmd.append("--debug")
@@ -62,7 +63,7 @@ def _validate_databricks_config(project_path):
 
 def _upload_project_data(metadata: ProjectMetadata):  # pragma: no cover
     log = logging.getLogger(metadata.package_name)
-    log.info("Upload project data to Databricks...")
+    log.info("Uploading project data to Databricks...")
     data_path = metadata.project_path / "data"
     if not data_path.exists():
         log.warning(f"Data path {data_path} does not exist")
@@ -80,7 +81,7 @@ def _upload_project_data(metadata: ProjectMetadata):  # pragma: no cover
 
 def _upload_project_config(metadata: ProjectMetadata):  # pragma: no cover
     log = logging.getLogger(metadata.package_name)
-    log.info("Upload project configuration to Databricks...")
+    log.info("Uploading project configuration to Databricks...")
     with tarfile.open(
         metadata.project_path / f"dist/conf-{metadata.package_name}.tar.gz"
     ) as f:
