@@ -109,7 +109,6 @@ def _apply_overrides(
     from mergedeep import merge
 
     workflow["description"] = workflow.get("description", overrides.get("description"))
-    workflow["health"] = merge(workflow.get("health", {}), overrides.get("health", {}))
     workflow["edit_mode"] = workflow.get("edit_mode", overrides.get("edit_mode"))
     workflow["max_concurrent_runs"] = workflow.get(
         "max_concurrent_runs", overrides.get("max_concurrent_runs")
@@ -118,6 +117,7 @@ def _apply_overrides(
         "timeout_seconds", overrides.get("timeout_seconds")
     )
 
+    workflow["health"] = merge(workflow.get("health", {}), overrides.get("health", {}))
     workflow["email_notifications"] = merge(
         workflow.get("email_notifications", {}),
         overrides.get("email_notifications", {}),
@@ -175,11 +175,8 @@ def _apply_overrides(
 
     new_workflow = {}
     for k, v in workflow.items():
-        if v is None:
+        if v is None or (isinstance(v, (dict, list)) and len(v) == 0):
             continue
-        elif isinstance(v, (dict, list)):
-            if len(v) == 0:
-                continue
         new_workflow[k] = v
 
     return new_workflow
