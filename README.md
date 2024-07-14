@@ -65,8 +65,8 @@ default: # will be applied to all workflows
         - task_key: default
           job_cluster_key: default
 
-<workflow-name>:
-    job_clusters: # will only be applied to the specified workflow
+<workflow-name>: # will only be applied to the workflow with the specified name
+    job_clusters:
         - job_cluster_key: high-concurrency
           new_cluster:
             spark_version: 7.3.x-scala2.12
