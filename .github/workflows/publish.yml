@@ -13,9 +13,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12.2"]
-    environment:
-      name: pypi
-      url: https://pypi.org/p/kedro-databricks-dev
     steps:
       - uses: actions/checkout@v4
       # Download the Databricks CLI.
@@ -41,8 +38,8 @@ jobs:
           source .venv/bin/activate
           rye test
         env:
-          DATABRICKS_HOST: ${{ secrets.HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.SP_TOKEN }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
