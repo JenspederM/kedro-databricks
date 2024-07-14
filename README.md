@@ -10,9 +10,15 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 
 The plugin provides a new `kedro-databricks` CLI command group with the following commands:
 
-- `kedro databricks init`: Initialize a Kedro project for Databricks. 
+- `kedro databricks init`: Initialize a Kedro project for Databricks.
 - `kedro databricks bundle`: Generate Asset Bundle resources definition.
 - `kedro databricks deploy`: Deploy a Kedro project to Databricks.
+
+## Prerequisites
+
+- `Databricks CLI` must be installed and configured. See [Databricks CLI](https://docs.databricks.com/dev-tools/cli/index.html) for more information.
+  - [Click here for help on installation](https://docs.databricks.com/en/dev-tools/cli/install.html)
+  - [Click here for help on configuration](https://docs.databricks.com/en/dev-tools/cli/authentication.html)
 
 ## Installation
 
@@ -59,8 +65,8 @@ default: # will be applied to all workflows
         - task_key: default
           job_cluster_key: default
 
-<workflow-name>:
-    job_clusters: # will only be applied to the specified workflow
+<workflow-name>: # will only be applied to the workflow with the specified name
+    job_clusters:
         - job_cluster_key: high-concurrency
           new_cluster:
             spark_version: 7.3.x-scala2.12
@@ -68,7 +74,7 @@ default: # will be applied to all workflows
             num_workers: 2
             spark_env_vars:
                 KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-    tasks: 
+    tasks:
         - task_key: default # will be applied to all tasks in the specified workflow
           job_cluster_key: high-concurrency
         - task_key: <my-task> # will only be applied to the specified task in the specified workflow
