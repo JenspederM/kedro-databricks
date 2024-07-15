@@ -1,0 +1,41 @@
+# .github/workflows/ci-cd.yml
+on:
+  pull_request: {}
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+      - uses: databricks/setup-cli@main
+      - uses: eifinger/setup-rye@v3
+        id: setup-rye
+        with:
+          version: "0.29.0"
+          cache-prefix: ${{ matrix.python-version }}
+      - name: Pin python-version ${{ matrix.python-version }}
+        run: rye pin ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          rye sync --no-lock
+      - name: List files
+        run: ls -la
+      - name: Lint code
+        run: rye lint
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          rye test
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

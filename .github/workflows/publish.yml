@@ -1,6 +1,5 @@
 # .github/workflows/ci-cd.yml
 on:
-  pull_request: {}
   push:
     branches:
       - main
@@ -22,13 +21,9 @@ jobs:
         id: setup-rye
         with:
           version: "0.29.0"
-          enable-cache: true
-          cache-prefix: ${{ matrix.python-version }}
       - name: Pin python-version ${{ matrix.python-version }}
-        if: steps.setup-rye.outputs.cache-hit != 'true'
         run: rye pin ${{ matrix.python-version }}
       - name: Install dependencies
-        if: steps.setup-rye.outputs.cache-hit != 'true'
         run: |
           rye sync --no-lock
       - name: Lint code
@@ -40,6 +35,10 @@ jobs:
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
