@@ -175,7 +175,7 @@ def _apply_overrides(
 
     new_workflow = {}
     for k, v in workflow.items():
-        if v is None or (isinstance(v, (dict, list)) and len(v) == 0):
+        if v is None or (isinstance(v, dict | list) and len(v) == 0):
             continue
         new_workflow[k] = v
 
@@ -243,7 +243,7 @@ def generate_resources(
 
         wf_name = f"{package}_{name}" if name != "__default__" else package
         wf = _create_workflow(wf_name, pipeline)
-        log.debug(f"Workflow '{wf_name}' created successfully.")
+        log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
         workflows[wf_name] = wf
 
@@ -251,6 +251,6 @@ def generate_resources(
         name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
     }
 
-    log.info("Databricks resources generated successfully.")
+    log.info("Databricks resources successfully generated.")
     log.debug(resources)
     return resources
