@@ -3,9 +3,8 @@ from typing import Any
 
 import click
 import yaml
-from kedro.config import MissingConfigException
+from kedro.config import AbstractConfigLoader, MissingConfigException
 from kedro.framework.cli.utils import ENV_HELP
-from kedro.framework.context import KedroContext
 from kedro.framework.project import pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
@@ -35,10 +34,11 @@ def databricks_commands():
     pass
 
 
-def _load_config(context: KedroContext) -> dict[str, Any]:
-    log = logging.getLogger(context._package_name)
+def _load_config(
+    config_loader: AbstractConfigLoader, package_name: str
+) -> dict[str, Any]:
+    log = logging.getLogger(package_name)
     # Backwards compatibility for ConfigLoader that does not support `config_patterns`
-    config_loader = context.config_loader
     if not hasattr(config_loader, "config_patterns"):
         return config_loader.get("databricks*", "databricks/**")  # pragma: no cover
 
@@ -93,8 +93,10 @@ def bundle(
         conf_dir.mkdir(parents=True)
 
     with KedroSession.create(project_path=metadata.project_path, env=env) as session:
-        context = session.load_context()
-        resource_overrides = _load_config(context)
+        resource_overrides = _load_config(
+            config_loader=session._get_config_loader(),
+            package_name=session._package_name,
+        )
 
     if default.startswith("_"):
         raise ValueError(
