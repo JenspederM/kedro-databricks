@@ -10,7 +10,13 @@ if [ -z "$1" ]; then
 fi
 
 if test -d "$CUR_PATH/$1"; then
-  echo "Directory $1 already exists. Removing it."
+  echo "Directory $1 already exists."
+  read -p "Do you want to remove is? (y/n)?" choice
+  case "$choice" in
+    y|Y ) echo "yes";;
+    n|N ) echo "no"; exit 0;;
+    * ) echo "invalid"; exit 1;;
+  esac
   rm -rf "$CUR_PATH/$1"
 fi
 
