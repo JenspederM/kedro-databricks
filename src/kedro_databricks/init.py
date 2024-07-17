@@ -29,9 +29,9 @@ include:
   - resources/**/*.yaml
 
 targets:
-  # The 'dev' target, used for development purposes.
-  # Whenever a developer deploys using 'dev', they get their own copy.
-  dev:
+  # The 'local' target, used for development purposes.
+  # Whenever a developer deploys using 'local', they get their own copy.
+  local:
     # We use 'mode: development' to make sure everything deployed to this target gets a prefix
     # like '[dev my_user_name]'. Setting this mode also disables any schedules and
     # automatic triggers for jobs and enables the 'development' mode for Delta Live Tables pipelines.
@@ -128,7 +128,7 @@ def main():
     env = args.env
     conf_source = args.conf_source
     package_name = args.package_name
-    nodes = args.nodes
+    nodes = [node.strip() for node in args.nodes.split(",")]
 
     # https://kb.databricks.com/notebooks/cmd-c-on-object-id-p0.html
     logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
@@ -136,8 +136,10 @@ def main():
 
     configure_project(package_name)
     with KedroSession.create(env=env, conf_source=conf_source) as session:
-        session.run(node_names=[node.strip() for node in nodes.split(",")])
-
+        if len(nodes) > 0:
+            session.run(node_names=nodes)
+        else:
+            session.run()
 
 if __name__ == "__main__":
     main()
@@ -145,8 +147,8 @@ if __name__ == "__main__":
 
 
 def write_bundle_template(metadata: ProjectMetadata):
+    MSG = "Creating Databricks asset bundle configuration"
     log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks asset bundle configuration...")
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
@@ -171,9 +173,10 @@ def write_bundle_template(metadata: ProjectMetadata):
 
     config_path = metadata.project_path / "databricks.yml"
     if config_path.exists():
-        raise FileExistsError(
-            f"{config_path} already exists. To reinitialize, delete the file and try again."
+        log.warning(
+            f"{MSG}: {config_path} already exists. To reinitialize, delete the file and try again."  # noqa: E501
         )
+        return
 
     # We utilize the databricks CLI to create the bundle configuration.
     # This is a bit hacky, but it allows the plugin to tap into the authentication
@@ -193,31 +196,37 @@ def write_bundle_template(metadata: ProjectMetadata):
         ],
         msg="Failed to create Databricks asset bundle configuration",
     )
-
+    log.info(f"{MSG}: Asset bundle configuration created at {config_path}")
     shutil.rmtree(assets_dir)
 
 
 def write_override_template(metadata: ProjectMetadata, default_key: str):
+    MSG = "Creating Databricks asset bundle override configuration"
     log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks asset bundle override configuration...")
-    p = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
-    if not p.exists():
-        with open(p, "w") as f:
-            f.write(
-                _bundle_override_template.format(
-                    default_key=default_key, package_name=metadata.package_name
-                )
+    override_path = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
+    if override_path.exists():
+        log.warning(
+            f"{MSG}: {override_path} already exists. To reinitialize, delete the file and try again."  # noqa: E501
+        )
+        return
+
+    with open(override_path, "w") as f:
+        f.write(
+            _bundle_override_template.format(
+                default_key=default_key, package_name=metadata.package_name
             )
+        )
+    log.info(f"{MSG}: Asset bundle override configuration created at {override_path}")
 
 
 def write_databricks_run_script(metadata: ProjectMetadata):
     log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks run script...")
     project = metadata.project_path
     package = metadata.package_name
     script_path = project / "src" / package / "databricks_run.py"
     toml_path = project / "pyproject.toml"
 
+    log.info(f"Creating Databricks run script at {script_path}")
     with open(script_path, "w") as f:
         f.write(_databricks_run_template)
 
@@ -229,6 +238,7 @@ def write_databricks_run_script(metadata: ProjectMetadata):
         scripts["databricks_run"] = f"{package}.databricks_run:main"
         toml["project"]["scripts"] = scripts
 
+    log.info(f"Adding Databricks run script to {toml_path}")
     with open(toml_path, "w") as f:
         tomlkit.dump(toml, f)
 
