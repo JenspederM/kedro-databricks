@@ -8,6 +8,16 @@ from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.utils import run_cmd
 
+_INVALID_CONFIG_MSG = """
+No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
+
+You can initialize the Databricks bundle by running:
+
+```
+kedro databricks init
+```
+"""
+
 
 def deploy_to_databricks(
     metadata: ProjectMetadata,
@@ -26,23 +36,27 @@ def deploy_to_databricks(
         bundle (bool): whether to bundle the project before deploying
         debug (bool): whether to run the deployment in debug mode
     """
-    log = logging.getLogger(metadata.package_name)
+    MSG = "Deploying to Databricks"
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
     project_path = _go_to_project(metadata.project_path)
     _validate_databricks_config(project_path)
-    _build_project(metadata)
+    _build_project(metadata, MSG=MSG)
     if bundle is True:
-        _bundle_project(metadata, env)
-    _upload_project_config(metadata)
-    _upload_project_data(metadata)
-    log.info("Deploying the project to Databricks...")
+        _bundle_project(metadata, env, MSG=MSG)
+    _create_dbfs_dir(metadata, MSG=MSG)
+    _upload_project_config(metadata, MSG=MSG)
+    _upload_project_data(metadata, MSG=MSG)
+    log.info(f"{MSG}: Running `databricks bundle deploy --target {env}`")
     deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
     if debug:
         deploy_cmd.append("--debug")
-    run_cmd(deploy_cmd, msg="Failed to deploy the project")
-    log.info("Project deployed successfully!")
+    run_cmd(deploy_cmd, msg=MSG)
+    log.info(f"{MSG}: Deployment to Databricks succeeded")
 
 
 def _go_to_project(path):
@@ -55,70 +69,68 @@ def _go_to_project(path):
 
 def _validate_databricks_config(project_path):
     if not (project_path / "databricks.yml").exists():
-        raise FileNotFoundError(
-            f"Configuration file {project_path / 'databricks.yml'} does not exist"
-        )
+        raise FileNotFoundError(_INVALID_CONFIG_MSG)
     return True
 
 
-def _upload_project_data(metadata: ProjectMetadata):  # pragma: no cover
-    log = logging.getLogger(metadata.package_name)
-    log.info("Uploading project data to Databricks...")
-    data_path = metadata.project_path / "data"
-    if not data_path.exists():
-        log.warning(f"Data path {data_path} does not exist")
-        return
-    copy_data_cmd = [
-        "databricks",
-        "fs",
-        "cp",
-        "-r",
-        str(data_path),
-        f"dbfs:/FileStore/{metadata.package_name}/data",
-    ]
-    run_cmd(copy_data_cmd, msg="Failed to copy data to Databricks")
-
-
-def _upload_project_config(metadata: ProjectMetadata):  # pragma: no cover
-    log = logging.getLogger(metadata.package_name)
-    log.info("Uploading project configuration to Databricks...")
-    with tarfile.open(
-        metadata.project_path / f"dist/conf-{metadata.package_name}.tar.gz"
-    ) as f:
-        f.extractall("dist/")
-
+def _create_dbfs_dir(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
     run_cmd(
         ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{metadata.package_name}"],
-        msg="Failed to create project directory on Databricks",
+        msg=MSG,
         warn=True,
     )
 
-    conf_path = metadata.project_path / "dist" / "conf"
-    if not conf_path.exists():
-        raise FileNotFoundError(f"Configuration path {conf_path} does not exist")
 
-    copy_conf_cmd = [
-        "databricks",
-        "fs",
-        "cp",
-        "-r",
-        str(conf_path),
-        f"dbfs:/FileStore/{metadata.package_name}/conf",
-    ]
-    run_cmd(copy_conf_cmd, msg="Failed to copy configuration to Databricks")
+def _upload_project_data(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
+    target_path = f"dbfs:/FileStore/{package_name}/data"
+    source_path = project_path / "data"
+    if not source_path.exists():
+        log.warning(f"Data path {source_path} does not exist")
+        return
+
+    log.info(
+        f"{MSG}: Uploading {source_path.relative_to(project_path)} to {target_path}"
+    )
+    run_cmd(
+        ["databricks", "fs", "cp", "-r", source_path.as_posix(), target_path], msg=MSG
+    )
+    log.info(f"{MSG}: Data uploaded to {target_path}")
 
 
-def _bundle_project(metadata: ProjectMetadata, env):
+def _upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
+
+    with tarfile.open(project_path / f"dist/conf-{package_name}.tar.gz") as f:
+        f.extractall("dist/")
+
+    target_path = f"dbfs:/FileStore/{package_name}/conf"
+    source_path = project_path / "dist" / "conf"
+    if not source_path.exists():
+        raise FileNotFoundError(f"Configuration path {source_path} does not exist")
+
+    log.info(f"{MSG}: Uploading configuration to Databricks")
+    run_cmd(
+        ["databricks", "fs", "cp", "-r", source_path.as_posix(), target_path], msg=MSG
+    )
+    log.info(f"{MSG}: Configuration uploaded to {target_path}")
+
+
+def _bundle_project(metadata: ProjectMetadata, env: str, MSG: str):  # pragma: no cover
     log = logging.getLogger(metadata.package_name)
-    log.info("Bundling the project...")
+    log.info(f"{MSG}: Running `kedro databricks bundle --env {env}`")
     bundle_cmd = ["kedro", "databricks", "bundle", "--env", env]
-    run_cmd(bundle_cmd, msg="Failed to bundle the project")
+    run_cmd(bundle_cmd, msg=MSG)
 
 
-def _build_project(metadata: ProjectMetadata):
+def _build_project(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
     log = logging.getLogger(metadata.package_name)
-    log.info("Building the project...")
+    log.info(f"{MSG}: Building the project")
     _go_to_project(metadata.project_path)
     build_cmd = ["kedro", "package"]
-    result = run_cmd(build_cmd, msg="Failed to build the project")
+    result = run_cmd(build_cmd, msg=MSG)
     return result

@@ -29,9 +29,9 @@ include:
   - resources/**/*.yaml
 
 targets:
-  # The 'dev' target, used for development purposes.
-  # Whenever a developer deploys using 'dev', they get their own copy.
-  dev:
+  # The 'local' target, used for development purposes.
+  # Whenever a developer deploys using 'local', they get their own copy.
+  local:
     # We use 'mode: development' to make sure everything deployed to this target gets a prefix
     # like '[dev my_user_name]'. Setting this mode also disables any schedules and
     # automatic triggers for jobs and enables the 'development' mode for Delta Live Tables pipelines.
@@ -128,7 +128,7 @@ def main():
     env = args.env
     conf_source = args.conf_source
     package_name = args.package_name
-    nodes = args.nodes
+    nodes = [node.strip() for node in args.nodes.split(",")]
 
     # https://kb.databricks.com/notebooks/cmd-c-on-object-id-p0.html
     logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
@@ -136,8 +136,10 @@ def main():
 
     configure_project(package_name)
     with KedroSession.create(env=env, conf_source=conf_source) as session:
-        session.run(node_names=[node.strip() for node in nodes.split(",")])
-
+        if len(nodes) > 0:
+            session.run(node_names=nodes)
+        else:
+            session.run()
 
 if __name__ == "__main__":
     main()
@@ -145,14 +147,16 @@ if __name__ == "__main__":
 
 
 def write_bundle_template(metadata: ProjectMetadata):
-    log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks asset bundle configuration...")
+    MSG = "Creating databricks configuration"
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
 
     config = {
-        "project_name": metadata.package_name,
-        "project_slug": metadata.package_name,
+        "project_name": package_name,
+        "project_slug": package_name,
     }
 
     assets_dir = tempfile.mkdtemp()
@@ -169,11 +173,10 @@ def write_bundle_template(metadata: ProjectMetadata):
     template_params.write(json.dumps(config).encode())
     template_params.close()
 
-    config_path = metadata.project_path / "databricks.yml"
+    config_path = project_path / "databricks.yml"
     if config_path.exists():
-        raise FileExistsError(
-            f"{config_path} already exists. To reinitialize, delete the file and try again."
-        )
+        log.warning(f"{MSG}: {config_path.relative_to(project_path)} already exists.")
+        return
 
     # We utilize the databricks CLI to create the bundle configuration.
     # This is a bit hacky, but it allows the plugin to tap into the authentication
@@ -189,55 +192,66 @@ def write_bundle_template(metadata: ProjectMetadata):
             "--config-file",
             template_params.name,
             "--output-dir",
-            metadata.project_path.as_posix(),
+            project_path.as_posix(),
         ],
-        msg="Failed to create Databricks asset bundle configuration",
+        msg=MSG,
     )
-
+    log.info(f"{MSG}: Wrote {config_path.relative_to(project_path)}")
     shutil.rmtree(assets_dir)
 
 
 def write_override_template(metadata: ProjectMetadata, default_key: str):
-    log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks asset bundle override configuration...")
-    p = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
-    if not p.exists():
-        with open(p, "w") as f:
-            f.write(
-                _bundle_override_template.format(
-                    default_key=default_key, package_name=metadata.package_name
-                )
+    MSG = "Creating bundle override configuration"
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
+    override_path = Path(project_path) / "conf" / "base" / "databricks.yml"
+    if override_path.exists():
+        log.warning(f"{MSG}: {override_path.relative_to(project_path)} already exists.")
+        return
+
+    with open(override_path, "w") as f:
+        f.write(
+            _bundle_override_template.format(
+                default_key=default_key, package_name=package_name
             )
+        )
+    log.info(f"{MSG}: Wrote {override_path.relative_to(project_path)}")
 
 
 def write_databricks_run_script(metadata: ProjectMetadata):
-    log = logging.getLogger(metadata.package_name)
-    log.info("Creating Databricks run script...")
-    project = metadata.project_path
-    package = metadata.package_name
-    script_path = project / "src" / package / "databricks_run.py"
-    toml_path = project / "pyproject.toml"
+    MSG = "Creating Databricks run script"
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
+    script_path = project_path / "src" / package_name / "databricks_run.py"
+    toml_path = project_path / "pyproject.toml"
 
     with open(script_path, "w") as f:
         f.write(_databricks_run_template)
+    log.info(f"{MSG}: Wrote {script_path.relative_to(project_path)}")
 
     with open(toml_path) as f:
         toml = tomlkit.load(f)
 
     scripts = toml.get("project", {}).get("scripts", {})
     if "databricks_run" not in scripts:
-        scripts["databricks_run"] = f"{package}.databricks_run:main"
+        scripts["databricks_run"] = f"{package_name}.databricks_run:main"
         toml["project"]["scripts"] = scripts
 
+    log.info(f"{MSG}: Added script to {toml_path.relative_to(project_path)}")
     with open(toml_path, "w") as f:
         tomlkit.dump(toml, f)
 
 
 def substitute_catalog_paths(metadata: ProjectMetadata):
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
     envs = ["base", "local", "dev", "qa", "prod"]
     regex = r"(/dbfs/FileStore/)(.*)(/data.*)"
     for env in envs:
-        path = Path(f"conf/{env}/catalog.yml")
+        path = Path(project_path / f"conf/{env}/catalog.yml")
 
         if not path.exists():
             continue
@@ -247,7 +261,12 @@ def substitute_catalog_paths(metadata: ProjectMetadata):
 
         new_content = []
         for line in content:
-            new_line = re.sub(regex, f"\\g<1>{metadata.package_name}\\g<3>", line)
+            new_line = re.sub(regex, f"\\g<1>{package_name}\\g<3>", line)
+            if new_line != line:
+                log.info(
+                    f"{path.relative_to(project_path)}: "
+                    f"Substituted: {line.strip()} -> {new_line.strip()}"
+                )
             new_content.append(new_line)
 
         with open(path, "w") as f:

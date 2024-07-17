@@ -30,5 +30,5 @@ def test_deploy_validate_databricks_config(kedro_project, cli_runner, metadata):
 def test_deploy_build_project(metadata):
     from kedro_databricks.deploy import _build_project
 
-    result = _build_project(metadata)
+    result = _build_project(metadata, "Test Build Project")
     assert result.returncode == 0, (result.returncode, result.stdout)

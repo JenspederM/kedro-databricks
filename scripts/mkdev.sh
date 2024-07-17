@@ -42,6 +42,6 @@ source .venv/bin/activate
 # Install the project dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install $WHL
+pip install $WHL --force-reinstall
 code .
 popd
