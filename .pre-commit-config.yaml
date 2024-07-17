@@ -1,4 +1,10 @@
 repos:
+- repo: local
+  hooks:
+    - id: validate-codecov
+      name: Validate Codecov
+      language: system
+      entry: bash ./scripts/validate_codecov.sh
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v2.3.0
   hooks:
