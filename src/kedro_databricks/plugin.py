@@ -84,12 +84,15 @@ def bundle(
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
-    log = logging.getLogger(metadata.package_name)
-    pipeline_resources = generate_resources(pipelines, metadata)
+    MSG = "Create Asset Bundle Resources"
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
 
     # If the configuration directory does not exist, Kedro will not load any configuration
     conf_dir = metadata.project_path / "conf" / env
     if not conf_dir.exists():
+        log.warning(f"{MSG}: Creating {conf_dir.relative_to(project_path)}")
         conf_dir.mkdir(parents=True)
 
     with KedroSession.create(project_path=metadata.project_path, env=env) as session:
@@ -103,24 +106,30 @@ def bundle(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
         )
 
+    pipeline_resources = generate_resources(pipelines, metadata)
+
     bundle_resources = apply_resource_overrides(
         pipeline_resources,
         resource_overrides,
         default_key=default,
     )
 
-    resources_dir = metadata.project_path / "resources"
+    resources_dir = project_path / "resources"
     resources_dir.mkdir(exist_ok=True)
 
     for name, resource in bundle_resources.items():
+        MSG = f"Writing resource '{name}'"
         p = resources_dir / f"{name}.yml"
 
         if p.exists() and not overwrite:  # pragma: no cover
-            log.warning(f"Resource '{name}' already exists. Skipping.")
+            log.warning(
+                f"{MSG}: {p.relative_to(project_path)} already exists."
+                " Use --overwrite to replace."
+            )
             continue
 
         with open(p, "w") as f:
-            log.info(f"Writing resource '{name}' to {p}")
+            log.info(f"{MSG}: Wrote {p.relative_to(project_path)}")
             yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
 
 
