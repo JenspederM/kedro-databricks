@@ -22,7 +22,7 @@ def test_databricks_init(kedro_project, cli_runner, metadata):
 
     command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 1, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
 def test_databricks_bundle(kedro_project, cli_runner, metadata):

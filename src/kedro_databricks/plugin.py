@@ -18,7 +18,7 @@ from kedro_databricks.init import (
     write_override_template,
 )
 
-DEFAULT_RUN_ENV = "dev"
+DEFAULT_RUN_ENV = "local"
 DEFAULT_CONFIG_KEY = "default"
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 
@@ -120,7 +120,7 @@ def bundle(
             continue
 
         with open(p, "w") as f:
-            log.info(f"Writing resource '{name}'")
+            log.info(f"Writing resource '{name}' to {p}")
             yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
 
 
