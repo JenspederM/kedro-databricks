@@ -8,6 +8,16 @@ from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.utils import run_cmd
 
+_INVALID_CONFIG_MSG = """
+No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
+
+You can initialize the Databricks bundle by running:
+
+```
+kedro databricks init
+```
+"""
+
 
 def deploy_to_databricks(
     metadata: ProjectMetadata,
@@ -55,9 +65,7 @@ def _go_to_project(path):
 
 def _validate_databricks_config(project_path):
     if not (project_path / "databricks.yml").exists():
-        raise FileNotFoundError(
-            f"Configuration file {project_path / 'databricks.yml'} does not exist"
-        )
+        raise FileNotFoundError(_INVALID_CONFIG_MSG)
     return True
 
 
