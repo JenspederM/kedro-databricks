@@ -95,7 +95,16 @@ def _upload_project_data(metadata: ProjectMetadata, MSG: str):  # pragma: no cov
         f"{MSG}: Uploading {source_path.relative_to(project_path)} to {target_path}"
     )
     run_cmd(
-        ["databricks", "fs", "cp", "-r", source_path.as_posix(), target_path], msg=MSG
+        [
+            "databricks",
+            "fs",
+            "cp",
+            "-r",
+            "--overwrite",
+            source_path.as_posix(),
+            target_path,
+        ],
+        msg=MSG,
     )
     log.info(f"{MSG}: Data uploaded to {target_path}")
 
@@ -115,7 +124,16 @@ def _upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no c
 
     log.info(f"{MSG}: Uploading configuration to Databricks")
     run_cmd(
-        ["databricks", "fs", "cp", "-r", source_path.as_posix(), target_path], msg=MSG
+        [
+            "databricks",
+            "fs",
+            "cp",
+            "-r",
+            "--overwrite",
+            source_path.as_posix(),
+            target_path,
+        ],
+        msg=MSG,
     )
     log.info(f"{MSG}: Configuration uploaded to {target_path}")
 
