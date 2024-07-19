@@ -1,6 +1,7 @@
 import copy
 
 import pytest
+import yaml
 from kedro.pipeline import Pipeline, node
 
 
@@ -227,18 +228,6 @@ def _generate_testdata():
     return resources, result
 
 
-def test_generate_workflow():
-    from kedro_databricks.bundle import _create_workflow
-
-    assert _create_workflow("workflow1", pipeline) == workflow
-
-
-def test_generate_resources(metadata):
-    from kedro_databricks.bundle import generate_resources
-
-    assert generate_resources({"__default__": Pipeline([])}, metadata) == {}
-
-
 def test_apply_resource_overrides():
     from kedro_databricks.bundle import apply_resource_overrides
 
@@ -253,6 +242,83 @@ def test_apply_resource_overrides():
     assert apply_resource_overrides(resources, mix_overrides, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply mixed overrides"
+
+
+def test_generate_workflow():
+    from kedro_databricks.bundle import _create_workflow
+
+    assert _create_workflow("workflow1", pipeline) == workflow
+
+
+def test_generate_resources(metadata):
+    from kedro_databricks.bundle import generate_resources
+
+    assert generate_resources({"__default__": Pipeline([])}, metadata) == {}
+    assert generate_resources(
+        {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
+        metadata,
+    ) == {
+        "fake_project": {
+            "resources": {
+                "jobs": {
+                    "fake_project": {
+                        "format": "MULTI_TASK",
+                        "name": "fake_project",
+                        "tasks": [
+                            {
+                                "depends_on": [],
+                                "libraries": [
+                                    {
+                                        "whl": "../dist/*.whl",
+                                    },
+                                ],
+                                "python_wheel_task": {
+                                    "entry_point": "databricks_run",
+                                    "parameters": [
+                                        "--nodes",
+                                        "node",
+                                        "--conf-source",
+                                        "/dbfs/FileStore/None/conf",
+                                        "--package-name",
+                                        None,
+                                    ],
+                                },
+                                "task_key": "node",
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+    }
+
+
+def test_substitute_catalog_paths(metadata):
+    from kedro_databricks.init import substitute_catalog_paths
+
+    catalog_path = metadata.project_path / "conf" / "base" / "catalog.yml"
+
+    # Add some datasets
+    catalog = {
+        "test": {
+            "type": "pandas.CSVDataSet",
+            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test.csv",
+        },
+        "test2": {
+            "type": "pandas.CSVDataSet",
+            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test2.csv",
+        },
+    }
+
+    with open(catalog_path, "w") as f:
+        f.write(yaml.dump(catalog))
+
+    substitute_catalog_paths(metadata)
+
+    with open(catalog_path) as f:
+        new_catalog = f.read()
+
+    assert "/dbfs/FileStore/fake_project/data" in new_catalog, new_catalog
 
 
 def test_run_cmd():
@@ -279,3 +345,6 @@ def test_run_cmd():
 
     result = run_cmd(["ls", "."])
     assert isinstance(result, subprocess.CompletedProcess)
+
+    result = run_cmd(["ls", "non_existent_file"], msg="Custom message", warn=True)
+    assert result is None, result

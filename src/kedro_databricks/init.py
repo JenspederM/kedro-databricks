@@ -245,17 +245,20 @@ def write_databricks_run_script(metadata: ProjectMetadata):
 
 
 def substitute_catalog_paths(metadata: ProjectMetadata):
+    MSG = "Substituting DBFS paths"
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
     envs = ["base", "local", "dev", "qa", "prod"]
-    regex = r"(/dbfs/FileStore/)(.*)(/data.*)"
+    regex = r"(.*/dbfs/FileStore/)(.*)(/data.*)"
     for env in envs:
         path = Path(project_path / f"conf/{env}/catalog.yml")
 
         if not path.exists():
+            log.warning(f"{MSG}: {path.relative_to(project_path)} does not exist")
             continue
 
+        log.info(f"{MSG}: Checking {path.relative_to(project_path)}")
         with open(path) as f:
             content = f.readlines()
 
@@ -267,6 +270,8 @@ def substitute_catalog_paths(metadata: ProjectMetadata):
                     f"{path.relative_to(project_path)}: "
                     f"Substituted: {line.strip()} -> {new_line.strip()}"
                 )
+            else:
+                log.info(f"{path.relative_to(project_path)}: {line.strip()}")
             new_content.append(new_line)
 
         with open(path, "w") as f:
