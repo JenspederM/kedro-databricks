@@ -33,26 +33,23 @@ def test_databricks_bundle(kedro_project, cli_runner, metadata):
 
     init_cmd = ["databricks", "init"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-
+    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
-
-    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert override_path.exists(), "Override file not created"
 
-    command = ["databricks", "bundle"]
+    command = ["databricks", "bundle", "--env", "dev"]
     result = cli_runner.invoke(commands, command, obj=metadata)
-
     resource_dir = kedro_project / "resources"
-
+    conf_dir = kedro_project / "conf" / "dev"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert resource_dir.exists(), "Resource directory not created"
     assert resource_dir.is_dir(), "Resource directory is not a directory"
+    assert conf_dir.exists(), "Configuration directory not created"
 
     files = [p.name for p in resource_dir.rglob("*")]
     files.sort()
-
     assert files == [
         f"{metadata.package_name}.yml",
         f"{metadata.package_name}_ds.yml",
@@ -88,15 +85,14 @@ def test_deploy(kedro_project, cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
+    init_cmd = ["databricks", "init"]
+    result = cli_runner.invoke(commands, init_cmd, obj=metadata)
+    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert metadata.project_path.exists(), "Project path not created"
+    assert metadata.project_path.is_dir(), "Project path is not a directory"
+    assert override_path.exists(), "Override file not created"
 
-#     init_cmd = ["databricks", "init"]
-#     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-#     assert result.exit_code == 0, (result.exit_code, result.stdout)
-
-#     bundle_cmd = ["databricks", "bundle"]
-#     result = cli_runner.invoke(commands, bundle_cmd, obj=metadata)
-#     assert result.exit_code == 0, (result.exit_code, result.stdout)
-
-#     deploy_cmd = ["databricks", "deploy"]
-#     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
-#     assert result.exit_code == 0, (result.exit_code, result.stdout)
+    deploy_cmd = ["databricks", "deploy", "--bundle", "--debug"]
+    result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)

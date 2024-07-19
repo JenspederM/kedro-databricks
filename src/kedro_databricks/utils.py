@@ -25,7 +25,7 @@ WORKFLOW_KEY_ORDER = [
 
 def run_cmd(
     cmd: list[str], msg: str | None = None, warn: bool = False
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess | None:
     """Run a shell command.
 
     Args:
@@ -38,13 +38,14 @@ def run_cmd(
         msg = "Failed to run command"
 
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, check=False)
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
         for line in result.stdout.decode().split("\n"):
             logging.info(line)
         return result
     except Exception as e:
         if warn:
             logging.warning(f"{msg}: {e}")
+            return None
         else:
             raise Exception(f"{msg}: {e}")
 
