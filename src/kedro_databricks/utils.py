@@ -79,9 +79,16 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
         if isinstance(v, dict):
             _remove_nulls_from_dict(v)
         elif isinstance(v, list):
+            new_values = []
             for item in v:
                 if isinstance(item, dict):
                     _remove_nulls_from_dict(item)
+
+                if item is None:
+                    continue
+
+                new_values.append(item)
+            d[k] = new_values
 
         if v is None:
             del d[k]
