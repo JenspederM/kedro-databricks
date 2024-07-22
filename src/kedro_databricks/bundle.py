@@ -172,13 +172,7 @@ def _apply_overrides(
 
     workflow["format"] = "MULTI_TASK"
 
-    new_workflow = {}
-    for k, v in workflow.items():
-        if v is None or (isinstance(v, dict | list) and len(v) == 0):
-            continue
-        new_workflow[k] = v
-
-    return new_workflow
+    return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
 
 def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
