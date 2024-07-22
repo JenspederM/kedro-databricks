@@ -66,6 +66,18 @@ def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     return dict(sorted(d.items(), key=lambda x: order.index(x[0])))
 
 
+def _null_check(x: Any) -> bool:
+    """Check if a value is None or an empty dictionary.
+
+    Args:
+        x (Any): value to check
+
+    Returns:
+        bool: whether the value is None or an empty dictionary
+    """
+    return x is None or (isinstance(x, dict | list) and len(x) == 0)
+
+
 def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | bool]:
     """Remove None values from a dictionary.
 
@@ -75,6 +87,7 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
     Returns:
         Dict[str, float | int | str | bool]: dictionary with None values removed
     """
+
     for k, v in list(d.items()):
         if isinstance(v, dict):
             _remove_nulls_from_dict(v)
@@ -84,13 +97,13 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
                 if isinstance(item, dict):
                     _remove_nulls_from_dict(item)
 
-                if item is None:
+                if _null_check(item):
                     continue
 
                 new_values.append(item)
             d[k] = new_values
 
-        if v is None:
+        if _null_check(v):
             del d[k]
 
     return d

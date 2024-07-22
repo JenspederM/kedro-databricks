@@ -36,7 +36,6 @@ workflow = {
     "tasks": [
         {
             "task_key": "node0",
-            "depends_on": [],
             "libraries": [
                 {"whl": "../dist/*.whl"},
             ],
@@ -271,7 +270,6 @@ def test_generate_resources(metadata):
                         "name": "fake_project",
                         "tasks": [
                             {
-                                "depends_on": [],
                                 "libraries": [
                                     {
                                         "whl": "../dist/*.whl",
@@ -354,3 +352,38 @@ def test_run_cmd():
 
     result = run_cmd(["ls", "non_existent_file"], msg="Custom message", warn=True)
     assert result is None, result
+
+
+def test_remove_nulls_from_dict():
+    from kedro_databricks.utils import _remove_nulls_from_dict
+
+    a = {
+        "a": 1,
+        "b": None,
+        "c": {"d": None},
+        "e": {"f": {"g": None}},
+        "h": {"i": {"j": {}}},
+        "k": [],
+        "l": [1, 2, 3],
+        "m": [1, None, 3],
+        "n": [1, {"o": None}, 3],
+    }
+
+    assert _remove_nulls_from_dict(a) == {
+        "a": 1,
+        "l": [1, 2, 3],
+        "m": [1, 3],
+        "n": [1, 3],
+    }, _remove_nulls_from_dict(a)
+
+
+def test_null_check():
+    from kedro_databricks.utils import _null_check
+
+    assert _null_check(None), "Failed to check None"
+    assert _null_check({}), "Failed to check empty dict"
+    assert _null_check([]), "Failed to check empty list"
+    assert not _null_check(1), "Failed to check int"
+    assert not _null_check("a"), "Failed to check str"
+    assert not _null_check({1: 1}), "Failed to check dict"
+    assert not _null_check([1]), "Failed to check list"
