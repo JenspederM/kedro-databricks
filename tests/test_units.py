@@ -41,14 +41,15 @@ workflow = {
                 {"whl": "../dist/*.whl"},
             ],
             "python_wheel_task": {
+                "package_name": "fake_project",
                 "entry_point": "databricks_run",
                 "parameters": [
                     "--nodes",
                     "node0",
                     "--conf-source",
-                    "/dbfs/FileStore/None/conf",
+                    "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
-                    None,
+                    "fake_project",
                 ],
             },
         },
@@ -59,14 +60,15 @@ workflow = {
                 {"whl": "../dist/*.whl"},
             ],
             "python_wheel_task": {
+                "package_name": "fake_project",
                 "entry_point": "databricks_run",
                 "parameters": [
                     "--nodes",
                     "node1",
                     "--conf-source",
-                    "/dbfs/FileStore/None/conf",
+                    "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
-                    None,
+                    "fake_project",
                 ],
             },
         },
@@ -77,14 +79,15 @@ workflow = {
                 {"whl": "../dist/*.whl"},
             ],
             "python_wheel_task": {
+                "package_name": "fake_project",
                 "entry_point": "databricks_run",
                 "parameters": [
                     "--nodes",
                     "node2",
                     "--conf-source",
-                    "/dbfs/FileStore/None/conf",
+                    "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
-                    None,
+                    "fake_project",
                 ],
             },
         },
@@ -95,14 +98,15 @@ workflow = {
                 {"whl": "../dist/*.whl"},
             ],
             "python_wheel_task": {
+                "package_name": "fake_project",
                 "entry_point": "databricks_run",
                 "parameters": [
                     "--nodes",
                     "node3",
                     "--conf-source",
-                    "/dbfs/FileStore/None/conf",
+                    "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
-                    None,
+                    "fake_project",
                 ],
             },
         },
@@ -113,14 +117,15 @@ workflow = {
                 {"whl": "../dist/*.whl"},
             ],
             "python_wheel_task": {
+                "package_name": "fake_project",
                 "entry_point": "databricks_run",
                 "parameters": [
                     "--nodes",
                     "node4",
                     "--conf-source",
-                    "/dbfs/FileStore/None/conf",
+                    "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
-                    None,
+                    "fake_project",
                 ],
             },
         },
@@ -247,7 +252,7 @@ def test_apply_resource_overrides():
 def test_generate_workflow():
     from kedro_databricks.bundle import _create_workflow
 
-    assert _create_workflow("workflow1", pipeline) == workflow
+    assert _create_workflow("workflow1", pipeline, "fake_project") == workflow
 
 
 def test_generate_resources(metadata):
@@ -273,14 +278,15 @@ def test_generate_resources(metadata):
                                     },
                                 ],
                                 "python_wheel_task": {
+                                    "package_name": "fake_project",
                                     "entry_point": "databricks_run",
                                     "parameters": [
                                         "--nodes",
                                         "node",
                                         "--conf-source",
-                                        "/dbfs/FileStore/None/conf",
+                                        "/dbfs/FileStore/fake_project/conf",
                                         "--package-name",
-                                        None,
+                                        "fake_project",
                                     ],
                                 },
                                 "task_key": "node",

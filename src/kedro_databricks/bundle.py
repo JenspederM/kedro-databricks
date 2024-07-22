@@ -16,7 +16,7 @@ from kedro_databricks.utils import (
 DEFAULT = "default"
 
 
-def _create_task(name: str, depends_on: list[node]) -> dict[str, Any]:
+def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, Any]:
     """Create a Databricks task for a given node.
 
     Args:
@@ -34,15 +34,15 @@ def _create_task(name: str, depends_on: list[node]) -> dict[str, Any]:
         "libraries": [{"whl": "../dist/*.whl"}],
         "depends_on": [{"task_key": dep.name} for dep in depends_on],
         "python_wheel_task": {
-            "package_name": PACKAGE_NAME,
+            "package_name": package,
             "entry_point": "databricks_run",
             "parameters": [
                 "--nodes",
                 name,
                 "--conf-source",
-                f"/dbfs/FileStore/{PACKAGE_NAME}/conf",
+                f"/dbfs/FileStore/{package}/conf",
                 "--package-name",
-                PACKAGE_NAME,
+                package,
             ],
         },
     }
@@ -50,7 +50,7 @@ def _create_task(name: str, depends_on: list[node]) -> dict[str, Any]:
     return _sort_dict(task, TASK_KEY_ORDER)
 
 
-def _create_workflow(name: str, pipeline: Pipeline) -> dict[str, Any]:
+def _create_workflow(name: str, pipeline: Pipeline, package: str) -> dict[str, Any]:
     """Create a Databricks workflow for a given pipeline.
 
     Args:
@@ -65,7 +65,7 @@ def _create_workflow(name: str, pipeline: Pipeline) -> dict[str, Any]:
     workflow = {
         "name": name,
         "tasks": [
-            _create_task(node.name, depends_on=deps)
+            _create_task(node.name, depends_on=deps, package=package)
             for node, deps in pipeline.node_dependencies.items()
         ],
         "format": "MULTI_TASK",
@@ -189,7 +189,9 @@ def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
 
 
 def apply_resource_overrides(
-    resources: dict[str, Any], overrides: dict[str, Any], default_key: str = DEFAULT
+    resources: dict[str, Any],
+    overrides: dict[str, Any],
+    default_key: str = DEFAULT,
 ):
     default_workflow = overrides.pop(default_key, {})
     default_tasks = default_workflow.get("tasks", [])
@@ -242,7 +244,7 @@ def generate_resources(
             continue
 
         wf_name = f"{package}_{name}" if name != "__default__" else package
-        wf = _create_workflow(wf_name, pipeline)
+        wf = _create_workflow(name=wf_name, pipeline=pipeline, package=package)
         log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
         workflows[wf_name] = wf
