@@ -2,7 +2,6 @@ import copy
 import logging
 from typing import Any
 
-from kedro.framework.project import PACKAGE_NAME
 from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
@@ -227,7 +226,7 @@ def generate_resources(
     """Generate Databricks resources for the given pipelines.
 
     Finds all pipelines in the project and generates Databricks asset bundle resources
-    for each according to the Databricks REST API.
+    for each according to the Databricks REST API
 
     Args:
         pipelines (dict[str, Pipeline]): A dictionary of pipeline names and their Kedro pipelines
