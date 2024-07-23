@@ -15,29 +15,75 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 2. **Generation**: Generate Asset Bundle resources definition with a single command.
 3. **Deployment**: Deploy your Kedro project to Databricks with a single command.
 
-## Overview
+# Installation
 
-The plugin provides a new `kedro-databricks` CLI command group with the following commands:
-
-- `kedro databricks init`: Initialize a Kedro project for Databricks.
-- `kedro databricks bundle`: Generate Asset Bundle resources definition.
-- `kedro databricks deploy`: Deploy a Kedro project to Databricks.
-
-## Prerequisites
-
-- `Databricks CLI` must be installed and configured. See [Databricks CLI](https://docs.databricks.com/dev-tools/cli/index.html) for more information.
-  - [Click here for help on installation](https://docs.databricks.com/en/dev-tools/cli/install.html)
-  - [Click here for help on configuration](https://docs.databricks.com/en/dev-tools/cli/authentication.html)
-
-## Installation
+To install the plugin, simply run:
 
 ```bash
 pip install kedro-databricks
 ```
 
-## Usage
+Now you can use the plugin to develop Kedro pipelines for Databricks.
 
-### Initialization
+# How to get started
+
+## Prerequisites:
+
+Before you begin, ensure that the Databricks CLI is installed and configured. For more information on installation and configuration, please refer to the [Databricks CLI documentation](https://docs.databricks.com/dev-tools/cli/index.html).
+
+- [Installation Help](https://docs.databricks.com/en/dev-tools/cli/install.html)
+- [Configuration Help](https://docs.databricks.com/en/dev-tools/cli/authentication.html)
+
+## Creating a new project
+
+To create a project based on this starter, [ensure you have installed Kedro into a virtual environment](https://docs.kedro.org/en/stable/get_started/install.html). Then use the following command:
+
+```bash
+pip install kedro
+```
+
+Soon you will be able to initialize the `databricks-iris` starter with the following command:
+
+```bash
+kedro new --starter="databricks-iris"
+```
+
+After the project is created, navigate to the newly created project directory:
+
+```bash
+cd <my-project-name>  # change directory
+```
+
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+pip install kedro-databricks
+```
+
+Now you can nitialize the Databricks asset bundle
+
+```bash
+kedro databricks init
+```
+
+Next, generate the Asset Bundle resources definition:
+
+```bash
+kedro databricks bundle
+```
+
+Finally, deploy the Kedro project to Databricks:
+
+```bash
+kedro databricks deploy
+```
+
+That's it! Your pipelines have now been deployed as a workflow to Databricks as `[dev <user>] <project_name>`. Try running the workflow to see the results.
+
+## Commands
+
+### `kedro databricks init`
 
 To initialize a Kedro project for Databricks, run:
 
@@ -92,7 +138,7 @@ default: # will be applied to all workflows
 
 The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
 
-### Generation
+### `kedro databricks bundle`
 
 To generate Asset Bundle resources definition, run:
 
@@ -110,7 +156,7 @@ This command will generate the following files:
 
 The generated resources definition files are used to define the resources required to run the Kedro pipeline on Databricks.
 
-### Deployment
+### `kedro databricks deploy`
 
 To deploy a Kedro project to Databricks, run:
 
