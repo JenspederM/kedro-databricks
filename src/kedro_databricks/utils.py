@@ -1,3 +1,4 @@
+import copy
 import logging
 import subprocess
 from typing import Any
@@ -66,7 +67,7 @@ def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     return dict(sorted(d.items(), key=lambda x: order.index(x[0])))
 
 
-def _null_check(x: Any) -> bool:
+def is_null_or_empty(x: Any) -> bool:
     """Check if a value is None or an empty dictionary.
 
     Args:
@@ -78,6 +79,27 @@ def _null_check(x: Any) -> bool:
     return x is None or (isinstance(x, dict | list) and len(x) == 0)
 
 
+def _remove_nulls_from_list(
+    lst: list[dict | float | int | str | bool],
+) -> list[dict | list]:
+    """Remove None values from a list.
+
+    Args:
+        l (List[Dict[Any, Any]]): list to remove None values from
+
+    Returns:
+        List[Dict[Any, Any]]: list with None values removed
+    """
+    new_values = []
+    for item in lst:
+        if isinstance(item, dict):
+            _remove_nulls_from_dict(item)
+        if is_null_or_empty(item):
+            continue
+        new_values.append(item)
+    return new_values
+
+
 def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | bool]:
     """Remove None values from a dictionary.
 
@@ -87,23 +109,15 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
     Returns:
         Dict[str, float | int | str | bool]: dictionary with None values removed
     """
-
+    new_values = {}
     for k, v in list(d.items()):
-        if isinstance(v, dict):
-            _remove_nulls_from_dict(v)
-        elif isinstance(v, list):
-            new_values = []
-            for item in v:
-                if isinstance(item, dict):
-                    _remove_nulls_from_dict(item)
-
-                if _null_check(item):
-                    continue
-
-                new_values.append(item)
-            d[k] = new_values
-
-        if _null_check(v):
-            del d[k]
-
-    return d
+        value_copy = copy.deepcopy(v)
+        if isinstance(value_copy, dict):
+            _remove_nulls_from_dict(value_copy)
+        elif isinstance(value_copy, list):
+            d[k] = _remove_nulls_from_list(value_copy)
+            value_copy = d[k]
+        if is_null_or_empty(value_copy):
+            continue
+        new_values[k] = value_copy
+    return new_values

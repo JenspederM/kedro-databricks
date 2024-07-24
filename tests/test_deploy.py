@@ -1,34 +1,53 @@
 import os
+from pathlib import Path
 
 import pytest
 
 
-def test_deploy_go_to_project(kedro_project):
-    from kedro_databricks.deploy import _go_to_project
+class MetadataMock:
+    def __init__(self, path: str, name: str):
+        self.project_path = Path(path)
+        self.project_name = name
+        self.package_name = name
+        self.source_dir = "src"
+        self.env = "local"
+        self.config_file = "conf/base"
+        self.project_version = "0.16.0"
+        self.project_description = "Test Project Description"
+        self.project_author = "Test Author"
+        self.project_author_email = "   "
 
-    project_path = _go_to_project(kedro_project)
+
+def test_deploy_go_to_project(metadata):
+    from kedro_databricks.deploy import go_to_project
+
+    project_path = go_to_project(metadata)
     assert os.getcwd() == str(project_path), "Failed to change to project directory"
 
     with pytest.raises(FileNotFoundError):
-        _go_to_project("/tmp/non_existent_path" + str(os.getpid()))
+        go_to_project(
+            MetadataMock(
+                "/tmp/non_existent_path" + str(os.getpid()), "non_existent_project"
+            )
+        )
 
 
-def test_deploy_validate_databricks_config(kedro_project, cli_runner, metadata):
-    from kedro_databricks.deploy import _go_to_project, _validate_databricks_config
+def test_deploy_validate_databricks_config(metadata):
+    from kedro_databricks.deploy import go_to_project, validate_databricks_config
 
-    project_path = _go_to_project(kedro_project)
+    project_path = go_to_project(metadata)
 
     with pytest.raises(FileNotFoundError):
-        _validate_databricks_config(project_path)
+        validate_databricks_config(metadata)
 
     with open(project_path / "databricks.yml", "w") as f:
         f.write("")
 
-    _validate_databricks_config(project_path)
+    validate_databricks_config(metadata)
 
 
 def test_deploy_build_project(metadata):
-    from kedro_databricks.deploy import _build_project
+    from kedro_databricks.deploy import build_project
 
-    result = _build_project(metadata, "Test Build Project")
+    result = build_project(metadata, "Test Build Project")
     assert result.returncode == 0, (result.returncode, result.stdout)

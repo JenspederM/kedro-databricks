@@ -257,10 +257,11 @@ def test_generate_workflow():
 def test_generate_resources(metadata):
     from kedro_databricks.bundle import generate_resources
 
-    assert generate_resources({"__default__": Pipeline([])}, metadata) == {}
+    assert generate_resources({"__default__": Pipeline([])}, metadata, "Test MSG") == {}
     assert generate_resources(
         {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
         metadata,
+        "Test MSG",
     ) == {
         "fake_project": {
             "resources": {
@@ -377,13 +378,13 @@ def test_remove_nulls_from_dict():
     }, _remove_nulls_from_dict(a)
 
 
-def test_null_check():
-    from kedro_databricks.utils import _null_check
+def test_is_null_or_empty():
+    from kedro_databricks.utils import is_null_or_empty
 
-    assert _null_check(None), "Failed to check None"
-    assert _null_check({}), "Failed to check empty dict"
-    assert _null_check([]), "Failed to check empty list"
-    assert not _null_check(1), "Failed to check int"
-    assert not _null_check("a"), "Failed to check str"
-    assert not _null_check({1: 1}), "Failed to check dict"
-    assert not _null_check([1]), "Failed to check list"
+    assert is_null_or_empty(None), "Failed to check None"
+    assert is_null_or_empty({}), "Failed to check empty dict"
+    assert is_null_or_empty([]), "Failed to check empty list"
+    assert not is_null_or_empty(1), "Failed to check int"
+    assert not is_null_or_empty("a"), "Failed to check str"
+    assert not is_null_or_empty({1: 1}), "Failed to check dict"
+    assert not is_null_or_empty([1]), "Failed to check list"

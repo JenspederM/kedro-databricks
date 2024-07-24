@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import tarfile
 from pathlib import Path
 
@@ -19,61 +18,49 @@ kedro databricks init
 """
 
 
-def deploy_to_databricks(
-    metadata: ProjectMetadata,
-    env: str,
-    bundle: bool = True,
-    debug: bool = False,
-):
-    """Deploy the project to Databricks.
-
-    Will bundle the project, upload the configuration and data to Databricks,
-    and deploy the project to the specified environment.
+def go_to_project(metadata: ProjectMetadata) -> Path:
+    """Change the current working directory to the project path.
 
     Args:
-        metadata (ProjectMetadata): metadata of the project
-        env (str): environment to deploy to
-        bundle (bool): whether to bundle the project before deploying
-        debug (bool): whether to run the deployment in debug mode
+        metadata (ProjectMetadata): Project metadata.
+
+    Returns:
+        pathlib.Path: Path to the project directory.
+
+    Raises:
+        FileNotFoundError: If the project path does not exist.
     """
-    MSG = "Deploying to Databricks"
-    package_name = metadata.package_name
-    project_path = metadata.project_path
-    log = logging.getLogger(package_name)
-    if shutil.which("databricks") is None:  # pragma: no cover
-        raise Exception("databricks CLI is not installed")
-
-    project_path = _go_to_project(metadata.project_path)
-    _validate_databricks_config(project_path)
-    _build_project(metadata, MSG=MSG)
-    if bundle is True:
-        _bundle_project(metadata, env, MSG=MSG)
-    _create_dbfs_dir(metadata, MSG=MSG)
-    _upload_project_config(metadata, MSG=MSG)
-    _upload_project_data(metadata, MSG=MSG)
-    log.info(f"{MSG}: Running `databricks bundle deploy --target {env}`")
-    deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
-    if debug:
-        deploy_cmd.append("--debug")
-    run_cmd(deploy_cmd, msg=MSG)
-    log.info(f"{MSG}: Deployment to Databricks succeeded")
-
-
-def _go_to_project(path):
-    project_path = Path(path)
+    project_path = Path(metadata.project_path)
     if not project_path.exists():
         raise FileNotFoundError(f"Project path {project_path} does not exist")
     os.chdir(project_path)
     return project_path
 
 
-def _validate_databricks_config(project_path):
-    if not (project_path / "databricks.yml").exists():
+def validate_databricks_config(metadata: ProjectMetadata):
+    """Check if the Databricks configuration file exists.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+
+    Returns:
+        bool: Whether the Databricks configuration file exists.
+
+    Raises:
+        FileNotFoundError: If the Databricks configuration file does not exist.
+    """
+    if not (metadata.project_path / "databricks.yml").exists():
         raise FileNotFoundError(_INVALID_CONFIG_MSG)
     return True
 
 
-def _create_dbfs_dir(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+def create_dbfs_dir(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    """Create a directory in DBFS.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        MSG (str): Message to display.
+    """
     run_cmd(
         ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{metadata.package_name}"],
         msg=MSG,
@@ -81,7 +68,13 @@ def _create_dbfs_dir(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
     )
 
 
-def _upload_project_data(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+def upload_project_data(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    """Upload the project data to DBFS.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        MSG (str): Message to display.
+    """
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
@@ -109,7 +102,13 @@ def _upload_project_data(metadata: ProjectMetadata, MSG: str):  # pragma: no cov
     log.info(f"{MSG}: Data uploaded to {target_path}")
 
 
-def _upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+def upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    """Upload the project configuration to DBFS.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        MSG (str): Message to display.
+    """
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
@@ -138,17 +137,47 @@ def _upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no c
     log.info(f"{MSG}: Configuration uploaded to {target_path}")
 
 
-def _bundle_project(metadata: ProjectMetadata, env: str, MSG: str):  # pragma: no cover
+def bundle_project(metadata: ProjectMetadata, env: str, MSG: str):  # pragma: no cover
+    """Bundle the project.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        env (str): Environment to bundle.
+        MSG (str): Message to display.
+    """
     log = logging.getLogger(metadata.package_name)
     log.info(f"{MSG}: Running `kedro databricks bundle --env {env}`")
     bundle_cmd = ["kedro", "databricks", "bundle", "--env", env]
     run_cmd(bundle_cmd, msg=MSG)
 
 
-def _build_project(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+def build_project(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
+    """Build the project.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        MSG (str): Message to display.
+    """
     log = logging.getLogger(metadata.package_name)
     log.info(f"{MSG}: Building the project")
-    _go_to_project(metadata.project_path)
+    go_to_project(metadata)
     build_cmd = ["kedro", "package"]
     result = run_cmd(build_cmd, msg=MSG)
     return result
+
+
+def deploy_project(metadata: ProjectMetadata, MSG: str, env: str, debug: bool = False):
+    """Deploy the project to Databricks.
+
+    Args:
+        metadata (ProjectMetadata): Project metadata.
+        MSG (str): Message to display.
+        env (str): Environment to deploy to.
+    """
+    log = logging.getLogger(metadata.package_name)
+    log.info(f"{MSG}: Running `databricks bundle deploy --target {env}`")
+    deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
+    if debug:
+        deploy_cmd.append("--debug")
+    run_cmd(deploy_cmd, msg=MSG)
+    log.info(f"{MSG}: Deployment to Databricks succeeded")

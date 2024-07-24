@@ -6,6 +6,8 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
 antlr4-python3-runtime==4.9.3
@@ -13,8 +15,6 @@ antlr4-python3-runtime==4.9.3
 anyio==4.4.0
     # via httpx
     # via jupyter-server
-appnope==0.1.4
-    # via ipykernel
 argon2-cffi==23.1.0
     # via jupyter-server
 argon2-cffi-bindings==21.2.0

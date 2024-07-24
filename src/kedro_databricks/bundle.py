@@ -2,6 +2,7 @@ import copy
 import logging
 from typing import Any
 
+import yaml
 from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
@@ -181,6 +182,37 @@ def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
             return d
 
 
+def save_bundled_resources(
+    resources: dict[str, dict[str, Any]],
+    metadata: ProjectMetadata,
+    overwrite: bool = False,
+):
+    """Save the generated resources to the project directory.
+
+    Args:
+        resources (Dict[str, Dict[str, Any]]): A dictionary of pipeline names and their Databricks resources
+        metadata (ProjectMetadata): The metadata of the project
+        overwrite (bool): Whether to overwrite existing resources
+    """
+    log = logging.getLogger(metadata.package_name)
+    resources_dir = metadata.project_path / "resources"
+    resources_dir.mkdir(exist_ok=True)
+    for name, resource in resources.items():
+        MSG = f"Writing resource '{name}'"
+        p = resources_dir / f"{name}.yml"
+
+        if p.exists() and not overwrite:  # pragma: no cover
+            log.warning(
+                f"{MSG}: {p.relative_to(metadata.project_path)} already exists."
+                " Use --overwrite to replace."
+            )
+            continue
+
+        with open(p, "w") as f:
+            log.info(f"{MSG}: Wrote {p.relative_to(metadata.project_path)}")
+            yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
+
+
 def apply_resource_overrides(
     resources: dict[str, Any],
     overrides: dict[str, Any],
@@ -215,7 +247,7 @@ def apply_resource_overrides(
 
 
 def generate_resources(
-    pipelines: dict[str, Pipeline], metadata: ProjectMetadata
+    pipelines: dict[str, Pipeline], metadata: ProjectMetadata, MSG: str
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -246,6 +278,6 @@ def generate_resources(
         name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
     }
 
-    log.info("Databricks resources successfully generated.")
+    log.info(f"{MSG}: Databricks resources successfully generated.")
     log.debug(resources)
     return resources
