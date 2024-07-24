@@ -379,12 +379,12 @@ def test_remove_nulls_from_dict():
 
 
 def test_is_null_or_empty():
-    from kedro_databricks.utils import is_null_or_empty
+    from kedro_databricks.utils import _is_null_or_empty
 
-    assert is_null_or_empty(None), "Failed to check None"
-    assert is_null_or_empty({}), "Failed to check empty dict"
-    assert is_null_or_empty([]), "Failed to check empty list"
-    assert not is_null_or_empty(1), "Failed to check int"
-    assert not is_null_or_empty("a"), "Failed to check str"
-    assert not is_null_or_empty({1: 1}), "Failed to check dict"
-    assert not is_null_or_empty([1]), "Failed to check list"
+    assert _is_null_or_empty(None), "Failed to check None"
+    assert _is_null_or_empty({}), "Failed to check empty dict"
+    assert _is_null_or_empty([]), "Failed to check empty list"
+    assert not _is_null_or_empty(1), "Failed to check int"
+    assert not _is_null_or_empty("a"), "Failed to check str"
+    assert not _is_null_or_empty({1: 1}), "Failed to check dict"
+    assert not _is_null_or_empty([1]), "Failed to check list"

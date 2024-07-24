@@ -65,7 +65,7 @@ def _load_config(
     # Load the config
     try:
         return config_loader["databricks"]
-    except MissingConfigException:
+    except MissingConfigException:  # pragma: no cover
         log.warning("No Databricks configuration found.")
         return {}
 
