@@ -31,7 +31,7 @@ def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, A
     task = {
         "task_key": name.replace(".", "_"),
         "libraries": [{"whl": "../dist/*.whl"}],
-        "depends_on": [{"task_key": dep.name} for dep in depends_on],
+        "depends_on": [{"task_key": dep.name.replace(".", "_")} for dep in depends_on],
         "python_wheel_task": {
             "package_name": package,
             "entry_point": "databricks_run",
