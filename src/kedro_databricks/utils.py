@@ -87,13 +87,12 @@ def _remove_nulls_from_list(
     Returns:
         List[Dict[Any, Any]]: list with None values removed
     """
-    for item in lst:
-        if isinstance(item, dict):
-            _remove_nulls_from_dict(item)
-        elif isinstance(item, list):
-            _remove_nulls_from_list(item)
-        if _is_null_or_empty(item):
+    for i, item in enumerate(lst):
+        value = remove_nulls(item)
+        if _is_null_or_empty(value):
             lst.remove(item)
+        else:
+            lst[i] = value
 
 
 def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | bool]:
