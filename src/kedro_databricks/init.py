@@ -263,17 +263,25 @@ def substitute_catalog_paths(metadata: ProjectMetadata):
         with open(path) as f:
             content = f.readlines()
 
-        new_content = []
-        for line in content:
-            new_line = re.sub(regex, f"\\g<1>{package_name}\\g<3>", line)
-            if new_line != line:
-                log.info(
-                    f"{path.relative_to(project_path)}: "
-                    f"Substituted: {line.strip()} -> {new_line.strip()}"
-                )
-            else:
-                log.info(f"{path.relative_to(project_path)}: {line.strip()}")
-            new_content.append(new_line)
+        new_content = _parse_content(metadata, regex, path, content)
 
         with open(path, "w") as f:
             f.writelines(new_content)
+
+
+def _parse_content(metadata, regex, path, content):
+    package_name = metadata.package_name
+    project_path = metadata.project_path
+    log = logging.getLogger(package_name)
+    new_content = []
+    for line in content:
+        new_line = re.sub(regex, f"\\g<1>{package_name}\\g<3>", line)
+        if new_line != line:
+            log.info(
+                f"{path.relative_to(project_path)}: "
+                f"Substituted: {line.strip()} -> {new_line.strip()}"
+            )
+        else:
+            log.info(f"{path.relative_to(project_path)}: {line.strip()}")
+        new_content.append(new_line)
+    return new_content
