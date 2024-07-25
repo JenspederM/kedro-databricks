@@ -236,7 +236,7 @@ def generate_resources(
         if len(pipeline.nodes) == 0:
             continue
 
-        wf_name = f"{package}_{name}" if name != "__default__" else package
+        wf_name = f"{package}_{name}".replace(".", "_") if name != "__default__" else package
         wf = _create_workflow(name=wf_name, pipeline=pipeline, package=package)
         log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
