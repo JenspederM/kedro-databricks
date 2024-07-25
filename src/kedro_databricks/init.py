@@ -263,13 +263,13 @@ def substitute_catalog_paths(metadata: ProjectMetadata):
         with open(path) as f:
             content = f.readlines()
 
-        new_content = _parse_content(metadata, log, regex, path, content)
+        new_content = _parse_content(metadata, regex, path, content)
 
         with open(path, "w") as f:
             f.writelines(new_content)
 
 
-def _parse_content(metadata, log, regex, path, content):
+def _parse_content(metadata, regex, path, content):
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
