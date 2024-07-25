@@ -24,8 +24,8 @@ dev-dependencies = [
     "pytest>=8.2.2",
     "pytest-cov>=5.0.0",
     "isort>=5.13.2",
-    "ipython>=8.26.0",
-    "notebook>=7.2.1",
+    "ipython",
+    "notebook",
     "pre-commit>=3.7.1",
 ]
 
