@@ -35,13 +35,6 @@ DEFAULT_CONFIG_KEY = "default"
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 
 
-def _make_env_conf(project_path, env, MSG, log):  # pragma: no cover
-    conf_dir = project_path / "conf" / env
-    if not conf_dir.exists():
-        log.warning(f"{MSG}: Creating {conf_dir.relative_to(project_path)}")
-        conf_dir.mkdir(parents=True)
-
-
 @click.group(name="Kedro-Databricks")
 def commands():
     pass
