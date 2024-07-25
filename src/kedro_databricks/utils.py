@@ -73,7 +73,7 @@ def _is_null_or_empty(x: Any) -> bool:
     Returns:
         bool: whether the value is None or an empty dictionary
     """
-    return x is None or (isinstance(x, Union[dict, list]) and len(x) == 0)
+    return x is None or (isinstance(x, (dict, list)) and len(x) == 0)
 
 
 def _remove_nulls_from_list(
