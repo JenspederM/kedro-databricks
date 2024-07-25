@@ -249,16 +249,17 @@ def substitute_catalog_paths(metadata: ProjectMetadata):
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
-    envs = ["base", "local", "dev", "qa", "prod"]
+    conf_dir = metadata.project_path / "conf"
+    envs = [d for d in conf_dir.iterdir() if d.is_dir()]
     regex = r"(.*/dbfs/FileStore/)(.*)(/data.*)"
     for env in envs:
-        path = Path(project_path / f"conf/{env}/catalog.yml")
+        path = conf_dir / env / "catalog.yml"
+        log.info(f"{MSG}: Checking {path.relative_to(project_path)}")
 
         if not path.exists():
-            log.warning(f"{MSG}: {path.relative_to(project_path)} does not exist")
+            log.warning(f"{MSG}: {path.relative_to(project_path)} does not exist.")
             continue
 
-        log.info(f"{MSG}: Checking {path.relative_to(project_path)}")
         with open(path) as f:
             content = f.readlines()
 

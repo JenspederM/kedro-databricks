@@ -1,3 +1,4 @@
+import copy
 import logging
 import subprocess
 from typing import Any
@@ -24,7 +25,7 @@ WORKFLOW_KEY_ORDER = [
 
 
 def run_cmd(
-    cmd: list[str], msg: str | None = None, warn: bool = False
+    cmd: list[str], msg: str = "Failed to run command", warn: bool = False
 ) -> subprocess.CompletedProcess | None:
     """Run a shell command.
 
@@ -33,9 +34,6 @@ def run_cmd(
         msg (str, optional): message to raise if the command fails
         warn (bool): whether to log a warning if the command fails
     """
-
-    if msg is None:
-        msg = "Failed to run command"
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
@@ -66,7 +64,7 @@ def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     return dict(sorted(d.items(), key=lambda x: order.index(x[0])))
 
 
-def _null_check(x: Any) -> bool:
+def _is_null_or_empty(x: Any) -> bool:
     """Check if a value is None or an empty dictionary.
 
     Args:
@@ -78,6 +76,25 @@ def _null_check(x: Any) -> bool:
     return x is None or (isinstance(x, dict | list) and len(x) == 0)
 
 
+def _remove_nulls_from_list(
+    lst: list[dict | float | int | str | bool],
+) -> list[dict | list]:
+    """Remove None values from a list.
+
+    Args:
+        l (List[Dict[Any, Any]]): list to remove None values from
+
+    Returns:
+        List[Dict[Any, Any]]: list with None values removed
+    """
+    for i, item in enumerate(lst):
+        value = remove_nulls(item)
+        if _is_null_or_empty(value):
+            lst.remove(item)
+        else:
+            lst[i] = value
+
+
 def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | bool]:
     """Remove None values from a dictionary.
 
@@ -87,23 +104,27 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
     Returns:
         Dict[str, float | int | str | bool]: dictionary with None values removed
     """
-
     for k, v in list(d.items()):
-        if isinstance(v, dict):
-            _remove_nulls_from_dict(v)
-        elif isinstance(v, list):
-            new_values = []
-            for item in v:
-                if isinstance(item, dict):
-                    _remove_nulls_from_dict(item)
-
-                if _null_check(item):
-                    continue
-
-                new_values.append(item)
-            d[k] = new_values
-
-        if _null_check(v):
+        value = remove_nulls(v)
+        if _is_null_or_empty(value):
             del d[k]
-
+        else:
+            d[k] = value
     return d
+
+
+def remove_nulls(value: dict | list):
+    """Remove None values from a dictionary or list.
+
+    Args:
+        value (Dict[Any, Any] | List[Dict[Any, Any]]): dictionary or list to remove None values from
+
+    Returns:
+        Dict[Any, Any] | List[Dict[Any, Any]]: dictionary or list with None values removed
+    """
+    non_null = copy.deepcopy(value)
+    if isinstance(non_null, dict):
+        _remove_nulls_from_dict(non_null)
+    elif isinstance(non_null, list):
+        _remove_nulls_from_list(non_null)
+    return non_null

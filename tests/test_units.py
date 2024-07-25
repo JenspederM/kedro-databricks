@@ -257,10 +257,11 @@ def test_generate_workflow():
 def test_generate_resources(metadata):
     from kedro_databricks.bundle import generate_resources
 
-    assert generate_resources({"__default__": Pipeline([])}, metadata) == {}
+    assert generate_resources({"__default__": Pipeline([])}, metadata, "Test MSG") == {}
     assert generate_resources(
         {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
         metadata,
+        "Test MSG",
     ) == {
         "fake_project": {
             "resources": {
@@ -355,7 +356,7 @@ def test_run_cmd():
 
 
 def test_remove_nulls_from_dict():
-    from kedro_databricks.utils import _remove_nulls_from_dict
+    from kedro_databricks.utils import remove_nulls
 
     a = {
         "a": 1,
@@ -367,23 +368,27 @@ def test_remove_nulls_from_dict():
         "l": [1, 2, 3],
         "m": [1, None, 3],
         "n": [1, {"o": None}, 3],
+        "o": [1, [None], 3],
+        "p": [1, {"q": {"r": None}}, 3],
     }
 
-    assert _remove_nulls_from_dict(a) == {
+    assert remove_nulls(a) == {
         "a": 1,
         "l": [1, 2, 3],
         "m": [1, 3],
         "n": [1, 3],
-    }, _remove_nulls_from_dict(a)
+        "o": [1, 3],
+        "p": [1, 3],
+    }, remove_nulls(a)
 
 
-def test_null_check():
-    from kedro_databricks.utils import _null_check
+def test_is_null_or_empty():
+    from kedro_databricks.utils import _is_null_or_empty
 
-    assert _null_check(None), "Failed to check None"
-    assert _null_check({}), "Failed to check empty dict"
-    assert _null_check([]), "Failed to check empty list"
-    assert not _null_check(1), "Failed to check int"
-    assert not _null_check("a"), "Failed to check str"
-    assert not _null_check({1: 1}), "Failed to check dict"
-    assert not _null_check([1]), "Failed to check list"
+    assert _is_null_or_empty(None), "Failed to check None"
+    assert _is_null_or_empty({}), "Failed to check empty dict"
+    assert _is_null_or_empty([]), "Failed to check empty list"
+    assert not _is_null_or_empty(1), "Failed to check int"
+    assert not _is_null_or_empty("a"), "Failed to check str"
+    assert not _is_null_or_empty({1: 1}), "Failed to check dict"
+    assert not _is_null_or_empty([1]), "Failed to check list"

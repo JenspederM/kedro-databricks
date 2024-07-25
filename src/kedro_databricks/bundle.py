@@ -2,6 +2,7 @@ import copy
 import logging
 from typing import Any
 
+import yaml
 from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
@@ -29,9 +30,9 @@ def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, A
     ## https://docs.databricks.com/api/workspace/jobs/create
 
     task = {
-        "task_key": name,
+        "task_key": name.replace(".", "_"),
         "libraries": [{"whl": "../dist/*.whl"}],
-        "depends_on": [{"task_key": dep.name} for dep in depends_on],
+        "depends_on": [{"task_key": dep.name.replace(".", "_")} for dep in depends_on],
         "python_wheel_task": {
             "package_name": package,
             "entry_point": "databricks_run",
@@ -175,10 +176,48 @@ def _apply_overrides(
     return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
 
-def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
+def _get_value_by_key(
+    lst: list[dict[str, Any]], lookup: str, key: str
+) -> dict[str, Any]:
+    result = {}
     for d in lst:
         if d.get(lookup) == key:
-            return d
+            result = copy.deepcopy(d)
+            break
+    if result.get(lookup):
+        result.pop(lookup)
+    return result
+
+
+def save_bundled_resources(
+    resources: dict[str, dict[str, Any]],
+    metadata: ProjectMetadata,
+    overwrite: bool = False,
+):
+    """Save the generated resources to the project directory.
+
+    Args:
+        resources (Dict[str, Dict[str, Any]]): A dictionary of pipeline names and their Databricks resources
+        metadata (ProjectMetadata): The metadata of the project
+        overwrite (bool): Whether to overwrite existing resources
+    """
+    log = logging.getLogger(metadata.package_name)
+    resources_dir = metadata.project_path / "resources"
+    resources_dir.mkdir(exist_ok=True)
+    for name, resource in resources.items():
+        MSG = f"Writing resource '{name}'"
+        p = resources_dir / f"{name}.yml"
+
+        if p.exists() and not overwrite:  # pragma: no cover
+            log.warning(
+                f"{MSG}: {p.relative_to(metadata.project_path)} already exists."
+                " Use --overwrite to replace."
+            )
+            continue
+
+        with open(p, "w") as f:
+            log.info(f"{MSG}: Wrote {p.relative_to(metadata.project_path)}")
+            yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
 
 
 def apply_resource_overrides(
@@ -186,36 +225,40 @@ def apply_resource_overrides(
     overrides: dict[str, Any],
     default_key: str = DEFAULT,
 ):
+    """Apply overrides to the Databricks resources.
+
+    Args:
+        resources (Dict[str, Any]): dictionary of Databricks resources
+        overrides (Dict[str, Any]): dictionary of overrides
+        default_key (str, optional): default key to use for overrides
+
+    Returns:
+        Dict[str, Any]: dictionary of Databricks resources with overrides applied
+    """
     default_workflow = overrides.pop(default_key, {})
     default_tasks = default_workflow.get("tasks", [])
     default_task = _get_value_by_key(default_tasks, "task_key", default_key)
-    if default_task:
-        del default_task["task_key"]
-    else:
-        default_task = {}
 
     for name, resource in resources.items():
         workflow = resource["resources"]["jobs"][name]
         workflow_overrides = copy.deepcopy(default_workflow)
         workflow_overrides.update(overrides.get(name, {}))
-        task_overrides = workflow_overrides.pop("tasks", [])
-        workflow_default_task = _get_value_by_key(
-            task_overrides, "task_key", default_key
+        workflow_task_overrides = workflow_overrides.pop("tasks", [])
+        task_overrides = _get_value_by_key(
+            workflow_task_overrides, "task_key", default_key
         )
-        if workflow_default_task:
-            del workflow_default_task["task_key"]
-        else:
-            workflow_default_task = copy.deepcopy(default_task)
+        if not task_overrides:
+            task_overrides = default_task
 
         resources[name]["resources"]["jobs"][name] = _apply_overrides(
-            workflow, workflow_overrides, default_task=workflow_default_task
+            workflow, workflow_overrides, default_task=task_overrides
         )
 
     return resources
 
 
 def generate_resources(
-    pipelines: dict[str, Pipeline], metadata: ProjectMetadata
+    pipelines: dict[str, Pipeline], metadata: ProjectMetadata, MSG: str
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -246,6 +289,6 @@ def generate_resources(
         name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
     }
 
-    log.info("Databricks resources successfully generated.")
+    log.info(f"{MSG}: Databricks resources successfully generated.")
     log.debug(resources)
     return resources
