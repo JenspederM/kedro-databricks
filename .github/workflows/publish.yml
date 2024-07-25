@@ -54,8 +54,10 @@ jobs:
           _diff=$(echo $(git diff ${{ github.event.before }} ${{ github.event.after }}))
           if [[ $_diff == *"+version"* ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed"
           else
             echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version did not change"
           fi
   pypi-publish:
     name: Upload release to PyPI
