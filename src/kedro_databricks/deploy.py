@@ -114,7 +114,7 @@ def upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no co
     log = logging.getLogger(package_name)
 
     with tarfile.open(project_path / f"dist/conf-{package_name}.tar.gz") as f:
-        f.extractall("dist/")
+        f.extractall("dist/", filter="tar")
 
     target_path = f"dbfs:/FileStore/{package_name}/conf"
     source_path = project_path / "dist" / "conf"

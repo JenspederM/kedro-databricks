@@ -176,10 +176,17 @@ def _apply_overrides(
     return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
 
-def _get_value_by_key(lst: list[dict[str, Any]], lookup: str, key: str) -> Any:
+def _get_value_by_key(
+    lst: list[dict[str, Any]], lookup: str, key: str
+) -> dict[str, Any]:
+    result = {}
     for d in lst:
         if d.get(lookup) == key:
-            return d
+            result = copy.deepcopy(d)
+            break
+    if result.get(lookup):
+        result.pop(lookup)
+    return result
 
 
 def save_bundled_resources(
@@ -218,29 +225,33 @@ def apply_resource_overrides(
     overrides: dict[str, Any],
     default_key: str = DEFAULT,
 ):
+    """Apply overrides to the Databricks resources.
+
+    Args:
+        resources (Dict[str, Any]): dictionary of Databricks resources
+        overrides (Dict[str, Any]): dictionary of overrides
+        default_key (str, optional): default key to use for overrides
+
+    Returns:
+        Dict[str, Any]: dictionary of Databricks resources with overrides applied
+    """
     default_workflow = overrides.pop(default_key, {})
     default_tasks = default_workflow.get("tasks", [])
     default_task = _get_value_by_key(default_tasks, "task_key", default_key)
-    if default_task:
-        del default_task["task_key"]
-    else:
-        default_task = {}
 
     for name, resource in resources.items():
         workflow = resource["resources"]["jobs"][name]
         workflow_overrides = copy.deepcopy(default_workflow)
         workflow_overrides.update(overrides.get(name, {}))
-        task_overrides = workflow_overrides.pop("tasks", [])
-        workflow_default_task = _get_value_by_key(
-            task_overrides, "task_key", default_key
+        workflow_task_overrides = workflow_overrides.pop("tasks", [])
+        task_overrides = _get_value_by_key(
+            workflow_task_overrides, "task_key", default_key
         )
-        if workflow_default_task:
-            del workflow_default_task["task_key"]
-        else:
-            workflow_default_task = copy.deepcopy(default_task)
+        if not task_overrides:
+            task_overrides = default_task
 
         resources[name]["resources"]["jobs"][name] = _apply_overrides(
-            workflow, workflow_overrides, default_task=workflow_default_task
+            workflow, workflow_overrides, default_task=task_overrides
         )
 
     return resources

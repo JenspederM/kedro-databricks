@@ -356,7 +356,7 @@ def test_run_cmd():
 
 
 def test_remove_nulls_from_dict():
-    from kedro_databricks.utils import _remove_nulls_from_dict
+    from kedro_databricks.utils import remove_nulls
 
     a = {
         "a": 1,
@@ -368,14 +368,18 @@ def test_remove_nulls_from_dict():
         "l": [1, 2, 3],
         "m": [1, None, 3],
         "n": [1, {"o": None}, 3],
+        "o": [1, [None], 3],
+        "p": [1, {"q": {"r": None}}, 3],
     }
 
-    assert _remove_nulls_from_dict(a) == {
+    assert remove_nulls(a) == {
         "a": 1,
         "l": [1, 2, 3],
         "m": [1, 3],
         "n": [1, 3],
-    }, _remove_nulls_from_dict(a)
+        "o": [1, 3],
+        "p": [1, 3],
+    }, remove_nulls(a)
 
 
 def test_is_null_or_empty():

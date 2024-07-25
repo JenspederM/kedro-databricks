@@ -1,3 +1,4 @@
+import copy
 import logging
 import subprocess
 from typing import Any
@@ -24,7 +25,7 @@ WORKFLOW_KEY_ORDER = [
 
 
 def run_cmd(
-    cmd: list[str], msg: str | None = None, warn: bool = False
+    cmd: list[str], msg: str = "Failed to run command", warn: bool = False
 ) -> subprocess.CompletedProcess | None:
     """Run a shell command.
 
@@ -33,9 +34,6 @@ def run_cmd(
         msg (str, optional): message to raise if the command fails
         warn (bool): whether to log a warning if the command fails
     """
-
-    if msg is None:
-        msg = "Failed to run command"
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
@@ -108,11 +106,26 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
         Dict[str, float | int | str | bool]: dictionary with None values removed
     """
     for k, v in list(d.items()):
-        if isinstance(v, dict):
-            _remove_nulls_from_dict(v)
-        elif isinstance(v, list):
-            _remove_nulls_from_list(v)
-
-        if _is_null_or_empty(v):
+        value = remove_nulls(v)
+        if _is_null_or_empty(value):
             del d[k]
+        else:
+            d[k] = value
     return d
+
+
+def remove_nulls(value: dict | list):
+    """Remove None values from a dictionary or list.
+
+    Args:
+        value (Dict[Any, Any] | List[Dict[Any, Any]]): dictionary or list to remove None values from
+
+    Returns:
+        Dict[Any, Any] | List[Dict[Any, Any]]: dictionary or list with None values removed
+    """
+    non_null = copy.deepcopy(value)
+    if isinstance(non_null, dict):
+        _remove_nulls_from_dict(non_null)
+    elif isinstance(non_null, list):
+        _remove_nulls_from_list(non_null)
+    return non_null

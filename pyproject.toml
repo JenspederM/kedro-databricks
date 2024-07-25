@@ -45,7 +45,8 @@ addopts = """
     --no-cov-on-fail
     --cov-fail-under=70
     --ignore-glob="develop-eggs/*"
-    -ra"""
+    -ra
+    -vv"""
 
 
 [tool.black]
