@@ -1,7 +1,7 @@
 import copy
 import logging
 import subprocess
-from typing import Any
+from typing import Any, Union
 
 TASK_KEY_ORDER = [
     "task_key",
@@ -26,7 +26,7 @@ WORKFLOW_KEY_ORDER = [
 
 def run_cmd(
     cmd: list[str], msg: str = "Failed to run command", warn: bool = False
-) -> subprocess.CompletedProcess | None:
+) -> Union[subprocess.CompletedProcess, None]:
     """Run a shell command.
 
     Args:
@@ -73,12 +73,12 @@ def _is_null_or_empty(x: Any) -> bool:
     Returns:
         bool: whether the value is None or an empty dictionary
     """
-    return x is None or (isinstance(x, dict | list) and len(x) == 0)
+    return x is None or (isinstance(x, (dict, list)) and len(x) == 0)
 
 
 def _remove_nulls_from_list(
-    lst: list[dict | float | int | str | bool],
-) -> list[dict | list]:
+    lst: list[Union[dict, float, int, str, bool]],
+) -> list[Union[dict, list]]:
     """Remove None values from a list.
 
     Args:
@@ -95,7 +95,9 @@ def _remove_nulls_from_list(
             lst[i] = value
 
 
-def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | bool]:
+def _remove_nulls_from_dict(
+    d: dict[str, Any],
+) -> dict[str, Union[float, int, str, bool]]:
     """Remove None values from a dictionary.
 
     Args:
@@ -113,7 +115,7 @@ def _remove_nulls_from_dict(d: dict[str, Any]) -> dict[str, float | int | str | 
     return d
 
 
-def remove_nulls(value: dict | list):
+def remove_nulls(value: Union[dict, list]) -> Union[dict, list]:
     """Remove None values from a dictionary or list.
 
     Args:
