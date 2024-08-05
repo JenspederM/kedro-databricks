@@ -33,6 +33,17 @@ from kedro_databricks.init import (
 DEFAULT_RUN_ENV = "local"
 DEFAULT_CONFIG_KEY = "default"
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
+_PROVIDER_PROMPT = """
+Please select your cloud provider:
+1. Azure
+2. AWS
+3. GCP
+"""
+_PROVIDER_MAP = {
+    "1": "azure",
+    "2": "aws",
+    "3": "gcp",
+}
 
 
 @click.group(name="Kedro-Databricks")
@@ -87,14 +98,16 @@ def _load_env_config(metadata: ProjectMetadata, env: str, MSG: str):
 
 @databricks_commands.command()
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
+@click.option("--provider", prompt=_PROVIDER_PROMPT, default="1")
 @click.pass_obj
 def init(
     metadata: ProjectMetadata,
     default: str,
+    provider: str,
 ):
     """Initialize Databricks Asset Bundle configuration"""
     write_bundle_template(metadata)
-    write_override_template(metadata, default)
+    write_override_template(metadata, default, _PROVIDER_MAP.get(provider))
     write_databricks_run_script(metadata)
     substitute_catalog_paths(metadata)
 
