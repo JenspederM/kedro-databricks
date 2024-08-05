@@ -24,7 +24,7 @@ fi
 rye build
 
 # Create a new project
-kedro new --starter="https://github.com/JenspederM/kedro-starters" --directory="databricks-iris" --checkout="feat/align-databricks-iris-with-kedro-databricks" --name="$1"
+kedro new --starter="databricks-iris" --name="$1"
 # kedro new --starter=databricks-iris --name="$1"
 
 # Databricks needs Java
