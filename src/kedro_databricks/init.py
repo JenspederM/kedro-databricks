@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import re
@@ -9,6 +11,12 @@ import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.utils import run_cmd
+
+DEFAULT_NODE_TYPE_ID = {
+    "aws": "m5.xlarge",
+    "azure": "Standard_DS3_v2",
+    "gcp": "n1-standard-4",
+}
 
 _bundle_config_template = """
 # This is a Databricks asset bundle definition for dab.
@@ -96,7 +104,7 @@ _bundle_override_template = """
         - job_cluster_key: {default_key}
           new_cluster:
               spark_version: 14.3.x-scala2.12
-              node_type_id: Standard_DS3_v2
+              node_type_id: {node_type_id}
               num_workers: 1
               spark_env_vars:
                   KEDRO_LOGGING_CONFIG: "/dbfs/FileStore/{package_name}/conf/logging.yml"
@@ -200,12 +208,14 @@ def write_bundle_template(metadata: ProjectMetadata):
     shutil.rmtree(assets_dir)
 
 
-def write_override_template(metadata: ProjectMetadata, default_key: str):
+def write_override_template(metadata: ProjectMetadata, default_key: str, provider: str):
     MSG = "Creating bundle override configuration"
     package_name = metadata.package_name
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
     override_path = Path(project_path) / "conf" / "base" / "databricks.yml"
+    node_type_id = DEFAULT_NODE_TYPE_ID.get(provider, DEFAULT_NODE_TYPE_ID[provider])
+
     if override_path.exists():
         log.warning(f"{MSG}: {override_path.relative_to(project_path)} already exists.")
         return
@@ -213,7 +223,9 @@ def write_override_template(metadata: ProjectMetadata, default_key: str):
     with open(override_path, "w") as f:
         f.write(
             _bundle_override_template.format(
-                default_key=default_key, package_name=package_name
+                default_key=default_key,
+                package_name=package_name,
+                node_type_id=node_type_id,
             )
         )
     log.info(f"{MSG}: Wrote {override_path.relative_to(project_path)}")
@@ -281,7 +293,5 @@ def _parse_content(metadata, regex, path, content):
                 f"{path.relative_to(project_path)}: "
                 f"Substituted: {line.strip()} -> {new_line.strip()}"
             )
-        else:
-            log.info(f"{path.relative_to(project_path)}: {line.strip()}")
         new_content.append(new_line)
     return new_content

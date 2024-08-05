@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import copy
 import logging
 import subprocess
-from typing import Any, Union
+from typing import Any
 
 TASK_KEY_ORDER = [
     "task_key",
@@ -26,7 +28,7 @@ WORKFLOW_KEY_ORDER = [
 
 def run_cmd(
     cmd: list[str], msg: str = "Failed to run command", warn: bool = False
-) -> Union[subprocess.CompletedProcess, None]:
+) -> subprocess.CompletedProcess | None:
     """Run a shell command.
 
     Args:
@@ -77,8 +79,8 @@ def _is_null_or_empty(x: Any) -> bool:
 
 
 def _remove_nulls_from_list(
-    lst: list[Union[dict, float, int, str, bool]],
-) -> list[Union[dict, list]]:
+    lst: list[dict | float | int | str | bool],
+) -> list[dict | list]:
     """Remove None values from a list.
 
     Args:
@@ -97,7 +99,7 @@ def _remove_nulls_from_list(
 
 def _remove_nulls_from_dict(
     d: dict[str, Any],
-) -> dict[str, Union[float, int, str, bool]]:
+) -> dict[str, float | int | str | bool]:
     """Remove None values from a dictionary.
 
     Args:
@@ -115,7 +117,7 @@ def _remove_nulls_from_dict(
     return d
 
 
-def remove_nulls(value: Union[dict, list]) -> Union[dict, list]:
+def remove_nulls(value: dict | list) -> dict | list:
     """Remove None values from a dictionary or list.
 
     Args:
