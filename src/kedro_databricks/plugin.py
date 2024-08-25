@@ -131,7 +131,7 @@ def bundle(
 
     MSG = "Create Asset Bundle Resources"
     overrides = _load_env_config(metadata, env, MSG)
-    workflows = generate_resources(pipelines, metadata, MSG)
+    workflows = generate_resources(pipelines, metadata, env, MSG)
     bundle_resources = apply_resource_overrides(workflows, overrides, default)
     save_bundled_resources(bundle_resources, metadata, overwrite)
 
@@ -161,7 +161,7 @@ def deploy(
     build_project(metadata, MSG=MSG)
     if bundle is True:
         overrides = _load_env_config(metadata, env, MSG)
-        workflows = generate_resources(pipelines, metadata, MSG)
+        workflows = generate_resources(pipelines, metadata, env, MSG)
         bundle_resources = apply_resource_overrides(workflows, overrides, "default")
         save_bundled_resources(bundle_resources, metadata, True)
     create_dbfs_dir(metadata, MSG=MSG)

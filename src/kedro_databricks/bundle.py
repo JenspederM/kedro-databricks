@@ -16,7 +16,9 @@ from kedro_databricks.utils import (
 DEFAULT = "default"
 
 
-def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, Any]:
+def _create_task(
+    name: str, depends_on: list[node], package: str, env: str
+) -> dict[str, Any]:
     """Create a Databricks task for a given node.
 
     Args:
@@ -43,6 +45,8 @@ def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, A
                 f"/dbfs/FileStore/{package}/conf",
                 "--package-name",
                 package,
+                "--env",
+                env,
             ],
         },
     }
@@ -50,7 +54,9 @@ def _create_task(name: str, depends_on: list[node], package: str) -> dict[str, A
     return _sort_dict(task, TASK_KEY_ORDER)
 
 
-def _create_workflow(name: str, pipeline: Pipeline, package: str) -> dict[str, Any]:
+def _create_workflow(
+    name: str, pipeline: Pipeline, package: str, env: str
+) -> dict[str, Any]:
     """Create a Databricks workflow for a given pipeline.
 
     Args:
@@ -65,7 +71,7 @@ def _create_workflow(name: str, pipeline: Pipeline, package: str) -> dict[str, A
     workflow = {
         "name": name,
         "tasks": [
-            _create_task(node.name, depends_on=deps, package=package)
+            _create_task(node.name, depends_on=deps, package=package, env=env)
             for node, deps in pipeline.node_dependencies.items()
         ],
         "format": "MULTI_TASK",
@@ -258,7 +264,7 @@ def apply_resource_overrides(
 
 
 def generate_resources(
-    pipelines: dict[str, Pipeline], metadata: ProjectMetadata, MSG: str
+    pipelines: dict[str, Pipeline], metadata: ProjectMetadata, env: str, MSG: str
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -280,7 +286,7 @@ def generate_resources(
             continue
 
         wf_name = f"{package}_{name}" if name != "__default__" else package
-        wf = _create_workflow(name=wf_name, pipeline=pipeline, package=package)
+        wf = _create_workflow(name=wf_name, pipeline=pipeline, package=package, env=env)
         log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
         workflows[wf_name] = wf
