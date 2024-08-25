@@ -167,4 +167,4 @@ def deploy(
     create_dbfs_dir(metadata, MSG=MSG)
     upload_project_config(metadata, MSG=MSG)
     upload_project_data(metadata, MSG=MSG)
-    deploy_project(metadata, MSG=MSG, env=env, debug=debug)
+    deploy_project(metadata, MSG=MSG, target=env, debug=debug)
