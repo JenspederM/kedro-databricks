@@ -24,6 +24,8 @@ def _create_task(
     Args:
         name (str): name of the node
         depends_on (List[Node]): list of nodes that the task depends on
+        package (str): name of the package
+        env (str): name of the env to be used by the task
 
     Returns:
         Dict[str, Any]: a Databricks task
@@ -62,6 +64,8 @@ def _create_workflow(
     Args:
         name (str): name of the pipeline
         pipeline (Pipeline): Kedro pipeline object
+        package (str): name of the package
+        env (str): name of the env to be used by the tasks of the workflow
 
     Returns:
         Dict[str, Any]: a Databricks workflow
@@ -273,6 +277,7 @@ def generate_resources(
 
     Args:
         pipelines (dict[str, Pipeline]): A dictionary of pipeline names and their Kedro pipelines
+        env (str): The name of the kedro environment to be used by the workflow
 
     Returns:
         dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
