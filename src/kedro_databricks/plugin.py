@@ -144,7 +144,7 @@ def bundle(
     default=False,
     help="Bundle the project before deploying",
 )
-@click.option("-b", "--debug/--no-debug", default=False, help="Enable debug mode")
+@click.option("-d", "--debug/--no-debug", default=False, help="Enable debug mode")
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,

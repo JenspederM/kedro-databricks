@@ -1,6 +1,6 @@
 # .github/workflows/ci-cd.yml
 on:
-  pull_request: {}
+  pull_request_target: {}
 
 jobs:
   test:
@@ -34,7 +34,8 @@ jobs:
           rye test
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
