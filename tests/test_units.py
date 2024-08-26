@@ -49,6 +49,8 @@ workflow = {
                     "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
                     "fake_project",
+                    "--env",
+                    "fake_env",
                 ],
             },
         },
@@ -68,6 +70,8 @@ workflow = {
                     "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
                     "fake_project",
+                    "--env",
+                    "fake_env",
                 ],
             },
         },
@@ -87,6 +91,8 @@ workflow = {
                     "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
                     "fake_project",
+                    "--env",
+                    "fake_env",
                 ],
             },
         },
@@ -106,6 +112,8 @@ workflow = {
                     "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
                     "fake_project",
+                    "--env",
+                    "fake_env",
                 ],
             },
         },
@@ -125,6 +133,8 @@ workflow = {
                     "/dbfs/FileStore/fake_project/conf",
                     "--package-name",
                     "fake_project",
+                    "--env",
+                    "fake_env",
                 ],
             },
         },
@@ -251,16 +261,24 @@ def test_apply_resource_overrides():
 def test_generate_workflow():
     from kedro_databricks.bundle import _create_workflow
 
-    assert _create_workflow("workflow1", pipeline, "fake_project") == workflow
+    assert (
+        _create_workflow("workflow1", pipeline, "fake_project", "fake_env") == workflow
+    )
 
 
 def test_generate_resources(metadata):
     from kedro_databricks.bundle import generate_resources
 
-    assert generate_resources({"__default__": Pipeline([])}, metadata, "Test MSG") == {}
+    assert (
+        generate_resources(
+            {"__default__": Pipeline([])}, metadata, "fake_env", "Test MSG"
+        )
+        == {}
+    )
     assert generate_resources(
         {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
         metadata,
+        "fake_env",
         "Test MSG",
     ) == {
         "fake_project": {
@@ -286,6 +304,8 @@ def test_generate_resources(metadata):
                                         "/dbfs/FileStore/fake_project/conf",
                                         "--package-name",
                                         "fake_project",
+                                        "--env",
+                                        "fake_env",
                                     ],
                                 },
                                 "task_key": "node",
