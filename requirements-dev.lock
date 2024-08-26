@@ -6,6 +6,8 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
 antlr4-python3-runtime==4.9.3
@@ -13,8 +15,8 @@ antlr4-python3-runtime==4.9.3
 anyio==4.4.0
     # via httpx
     # via jupyter-server
-appnope==0.1.4
-    # via ipykernel
+appdirs==1.4.4
+    # via kedro-telemetry
 argon2-cffi==23.1.0
     # via jupyter-server
 argon2-cffi-bindings==21.2.0
@@ -26,11 +28,11 @@ asttokens==2.4.1
     # via stack-data
 async-lru==2.0.4
     # via jupyterlab
-attrs==23.2.0
+attrs==24.2.0
     # via jsonschema
     # via kedro
     # via referencing
-babel==2.15.0
+babel==2.16.0
     # via jupyterlab-server
 beautifulsoup4==4.12.3
     # via nbconvert
@@ -40,13 +42,13 @@ bleach==6.1.0
     # via nbconvert
 build==1.2.1
     # via kedro
-cachetools==5.4.0
+cachetools==5.5.0
     # via kedro
 certifi==2024.7.4
     # via httpcore
     # via httpx
     # via requests
-cffi==1.16.0
+cffi==1.17.0
     # via argon2-cffi-bindings
 cfgv==3.4.0
     # via pre-commit
@@ -61,9 +63,9 @@ comm==0.2.2
     # via ipykernel
 cookiecutter==2.6.0
     # via kedro
-coverage==7.6.0
+coverage==7.6.1
     # via pytest-cov
-debugpy==1.8.2
+debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -99,12 +101,12 @@ httpx==0.27.0
     # via jupyterlab
 identify==2.6.0
     # via pre-commit
-idna==3.7
+idna==3.8
     # via anyio
     # via httpx
     # via jsonschema
     # via requests
-importlib-metadata==7.2.1
+importlib-metadata==8.4.0
     # via build
     # via jupyter-client
     # via jupyter-lsp
@@ -112,7 +114,7 @@ importlib-metadata==7.2.1
     # via jupyterlab-server
     # via kedro
     # via nbconvert
-importlib-resources==6.4.0
+importlib-resources==6.4.4
     # via kedro
 iniconfig==2.0.0
     # via pytest
@@ -172,8 +174,11 @@ jupyterlab-pygments==0.3.0
 jupyterlab-server==2.27.3
     # via jupyterlab
     # via notebook
-kedro==0.19.6
+kedro==0.19.8
     # via kedro-databricks
+    # via kedro-telemetry
+kedro-telemetry==0.6.0
+    # via kedro
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
@@ -188,7 +193,7 @@ mergedeep==1.3.4
     # via kedro-databricks
 mistune==3.0.2
     # via nbconvert
-more-itertools==10.3.0
+more-itertools==10.4.0
     # via kedro
 nbclient==0.10.0
     # via nbconvert
@@ -234,7 +239,7 @@ platformdirs==4.2.2
 pluggy==1.5.0
     # via kedro
     # via pytest
-pre-commit==3.7.1
+pre-commit==3.8.0
 pre-commit-hooks==4.6.0
     # via kedro
 prometheus-client==0.20.0
@@ -268,13 +273,13 @@ python-slugify==8.0.4
     # via cookiecutter
 pytoolconfig==1.3.1
     # via rope
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via cookiecutter
     # via jupyter-events
     # via kedro
     # via omegaconf
     # via pre-commit
-pyzmq==26.0.3
+pyzmq==26.2.0
     # via ipykernel
     # via jupyter-client
     # via jupyter-server
@@ -285,18 +290,19 @@ referencing==0.35.1
 requests==2.32.3
     # via cookiecutter
     # via jupyterlab-server
+    # via kedro-telemetry
 rfc3339-validator==0.1.4
     # via jsonschema
     # via jupyter-events
 rfc3986-validator==0.1.1
     # via jsonschema
     # via jupyter-events
-rich==13.7.1
+rich==13.8.0
     # via cookiecutter
     # via kedro
 rope==1.13.0
     # via kedro
-rpds-py==0.19.1
+rpds-py==0.20.0
     # via jsonschema
     # via referencing
 ruamel-yaml==0.18.6
@@ -305,7 +311,7 @@ ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
 send2trash==1.8.3
     # via jupyter-server
-setuptools==71.1.0
+setuptools==73.0.1
     # via jupyterlab
 six==1.16.0
     # via asttokens
@@ -317,7 +323,7 @@ smmap==5.0.1
 sniffio==1.3.1
     # via anyio
     # via httpx
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
@@ -337,7 +343,7 @@ tomli==2.0.1
     # via pre-commit-hooks
     # via pytest
     # via pytoolconfig
-tomlkit==0.13.0
+tomlkit==0.13.2
     # via kedro-databricks
 tornado==6.4.1
     # via ipykernel
@@ -359,12 +365,13 @@ traitlets==5.14.3
     # via nbclient
     # via nbconvert
     # via nbformat
-types-python-dateutil==2.9.0.20240316
+types-python-dateutil==2.9.0.20240821
     # via arrow
 typing-extensions==4.12.2
     # via anyio
     # via async-lru
     # via ipython
+    # via kedro
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.2.2
@@ -373,13 +380,13 @@ virtualenv==20.26.3
     # via pre-commit
 wcwidth==0.2.13
     # via prompt-toolkit
-webcolors==24.6.0
+webcolors==24.8.0
     # via jsonschema
 webencodings==0.5.1
     # via bleach
     # via tinycss2
 websocket-client==1.8.0
     # via jupyter-server
-zipp==3.19.2
+zipp==3.20.1
     # via importlib-metadata
     # via importlib-resources
