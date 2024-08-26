@@ -138,6 +138,7 @@ def bundle(
 
 @databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
+@click.option("-t", "--target", default=None, help="Databricks target environment. Defaults to the `env` value.")
 @click.option(
     "-b",
     "--bundle/--no-bundle",
@@ -149,6 +150,7 @@ def bundle(
 def deploy(
     metadata: ProjectMetadata,
     env: str,
+    target: str | None,
     bundle: bool,
     debug: bool,
 ):
@@ -167,4 +169,6 @@ def deploy(
     create_dbfs_dir(metadata, MSG=MSG)
     upload_project_config(metadata, MSG=MSG)
     upload_project_data(metadata, MSG=MSG)
-    deploy_project(metadata, MSG=MSG, env=env, debug=debug)
+    if target is None:
+        target = env
+    deploy_project(metadata, MSG=MSG, target=target, debug=debug)

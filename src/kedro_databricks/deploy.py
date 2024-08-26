@@ -166,17 +166,17 @@ def build_project(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
     return result
 
 
-def deploy_project(metadata: ProjectMetadata, MSG: str, env: str, debug: bool = False):
+def deploy_project(metadata: ProjectMetadata, MSG: str, target: str, debug: bool = False):
     """Deploy the project to Databricks.
 
     Args:
         metadata (ProjectMetadata): Project metadata.
         MSG (str): Message to display.
-        env (str): Environment to deploy to.
+        target (str): Databricks target environment to deploy to.
     """
     log = logging.getLogger(metadata.package_name)
-    log.info(f"{MSG}: Running `databricks bundle deploy --target {env}`")
-    deploy_cmd = ["databricks", "bundle", "deploy", "--target", env]
+    log.info(f"{MSG}: Running `databricks bundle deploy --target {target}`")
+    deploy_cmd = ["databricks", "bundle", "deploy", "--target", target]
     if debug:
         deploy_cmd.append("--debug")
     run_cmd(deploy_cmd, msg=MSG)
