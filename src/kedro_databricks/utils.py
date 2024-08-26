@@ -5,6 +5,9 @@ import logging
 import subprocess
 from typing import Any
 
+from kedro import __version__ as kedro_version
+
+KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
 TASK_KEY_ORDER = [
     "task_key",
     "job_cluster_key",
@@ -24,6 +27,20 @@ WORKFLOW_KEY_ORDER = [
     "job_clusters",
     "tasks",
 ]
+
+
+def require_databricks_run_script() -> bool:
+    """Check if the current Kedro version is less than 0.19.8.
+
+    Kedro 0.19.8 introduced a new `run_script` method that is required for
+    running tasks on Databricks. This method is not available in earlier
+    versions of Kedro. This function checks if the current Kedro version is
+    less than 0.19.8.
+
+    Returns:
+        bool: whether the current Kedro version is less than 0.19.8
+    """
+    return KEDRO_VERSION < [0, 19, 8]
 
 
 def run_cmd(

@@ -31,6 +31,7 @@ from kedro_databricks.init import (
     write_databricks_run_script,
     write_override_template,
 )
+from kedro_databricks.utils import require_databricks_run_script
 
 DEFAULT_RUN_ENV = "local"
 DEFAULT_CONFIG_KEY = "default"
@@ -110,7 +111,12 @@ def init(
     """Initialize Databricks Asset Bundle configuration"""
     write_bundle_template(metadata)
     write_override_template(metadata, default, _PROVIDER_MAP.get(provider))
-    write_databricks_run_script(metadata)
+    if require_databricks_run_script():
+        log = logging.getLogger(metadata.package_name)
+        log.warning(
+            "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "
+        )
+        write_databricks_run_script(metadata)
     substitute_catalog_paths(metadata)
 
 
@@ -140,7 +146,12 @@ def bundle(
 
 @databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
-@click.option("-t", "--target", default=None, help="Databricks target environment. Defaults to the `env` value.")
+@click.option(
+    "-t",
+    "--target",
+    default=None,
+    help="Databricks target environment. Defaults to the `env` value.",
+)
 @click.option(
     "-b",
     "--bundle/--no-bundle",

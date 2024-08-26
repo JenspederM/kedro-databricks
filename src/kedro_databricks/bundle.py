@@ -13,20 +13,21 @@ from kedro_databricks.utils import (
     WORKFLOW_KEY_ORDER,
     _remove_nulls_from_dict,
     _sort_dict,
+    require_databricks_run_script,
 )
 
 DEFAULT = "default"
 
 
 def _create_task(
-    name: str, depends_on: list[node], package: str, env: str
+    name: str, depends_on: list[node], metadata: ProjectMetadata, env: str
 ) -> dict[str, Any]:
     """Create a Databricks task for a given node.
 
     Args:
         name (str): name of the node
         depends_on (List[Node]): list of nodes that the task depends on
-        package (str): name of the package
+        metadata (str): metadata of the project
         env (str): name of the env to be used by the task
 
     Returns:
@@ -34,6 +35,20 @@ def _create_task(
     """
     ## Follows the Databricks REST API schema. See "tasks" in the link below
     ## https://docs.databricks.com/api/workspace/jobs/create
+    package = metadata.package_name
+    entry_point = metadata.project_name
+    params = [
+        "--nodes",
+        name,
+        "--conf-source",
+        f"/dbfs/FileStore/{package}/conf",
+        "--env",
+        env,
+    ]
+
+    if require_databricks_run_script():
+        entry_point = "databricks_run"
+        params = params + ["--package-name", package]
 
     task = {
         "task_key": name.replace(".", "_"),
@@ -41,17 +56,8 @@ def _create_task(
         "depends_on": [{"task_key": dep.name.replace(".", "_")} for dep in depends_on],
         "python_wheel_task": {
             "package_name": package,
-            "entry_point": "databricks_run",
-            "parameters": [
-                "--nodes",
-                name,
-                "--conf-source",
-                f"/dbfs/FileStore/{package}/conf",
-                "--package-name",
-                package,
-                "--env",
-                env,
-            ],
+            "entry_point": entry_point,
+            "parameters": params,
         },
     }
 
@@ -59,14 +65,14 @@ def _create_task(
 
 
 def _create_workflow(
-    name: str, pipeline: Pipeline, package: str, env: str
+    name: str, pipeline: Pipeline, metadata: str, env: str
 ) -> dict[str, Any]:
     """Create a Databricks workflow for a given pipeline.
 
     Args:
         name (str): name of the pipeline
         pipeline (Pipeline): Kedro pipeline object
-        package (str): name of the package
+        metadata (str): metadata of the project
         env (str): name of the env to be used by the tasks of the workflow
 
     Returns:
@@ -77,7 +83,7 @@ def _create_workflow(
     workflow = {
         "name": name,
         "tasks": [
-            _create_task(node.name, depends_on=deps, package=package, env=env)
+            _create_task(node.name, depends_on=deps, metadata=metadata, env=env)
             for node, deps in pipeline.node_dependencies.items()
         ],
         "format": "MULTI_TASK",
@@ -293,7 +299,12 @@ def generate_resources(
             continue
 
         wf_name = f"{package}_{name}" if name != "__default__" else package
-        wf = _create_workflow(name=wf_name, pipeline=pipeline, package=package, env=env)
+        wf = _create_workflow(
+            name=wf_name,
+            pipeline=pipeline,
+            metadata=metadata,
+            env=env,
+        )
         log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
         workflows[wf_name] = wf
