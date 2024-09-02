@@ -66,15 +66,6 @@ jobs:
         with:
           github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           push: true
-      - name: Set Name and Version from pyproject.toml to output
-        id: project
-        run: |
-          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
-          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
-          echo "NAME=$name" >> $GITHUB_OUTPUT
-          echo "VERSION=$version" >> $GITHUB_OUTPUT
-          echo "Releasing $name version $version"
-          ls -laR dist
       # Download the Databricks CLI.
       # See https://github.com/databricks/setup-cli
       - uses: databricks/setup-cli@main
@@ -93,6 +84,15 @@ jobs:
           rye sync --no-lock
       - name: Build package
         run: rye build
+      - name: Set Name and Version from pyproject.toml to output
+        id: project
+        run: |
+          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+          echo "NAME=$name" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Releasing $name version $version"
+          ls -laR dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
       - name: Upload release to GitHub
