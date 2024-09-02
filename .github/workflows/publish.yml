@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     name: Run tests
+    if: ${{ !startsWith(github.event.head_commit.message, 'bump:') }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,33 +41,11 @@ jobs:
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-  check_version:
-    name: Check if version changed
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.check-version.outputs.changed }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check if version changed
-        id: check-version
-        run: |
-          _diff=$(echo $(git diff ${{ github.event.before }} ${{ github.event.after }}))
-          if [[ $_diff == *"+version"* ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Version changed"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "Version did not change"
-          fi
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     needs:
       - test
-      - check_version
-    if: ${{ needs.check_version.outputs.changed == 'true' }}
     strategy:
       matrix:
         python-version: ["3.9"]
@@ -76,7 +55,26 @@ jobs:
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          fetch-depth: 0
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          push: true
+      - name: Set Name and Version from pyproject.toml to output
+        id: project
+        run: |
+          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+          echo "NAME=$name" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Releasing $name version $version"
+          ls -laR dist
       # Download the Databricks CLI.
       # See https://github.com/databricks/setup-cli
       - uses: databricks/setup-cli@main
@@ -95,8 +93,16 @@ jobs:
           rye sync --no-lock
       - name: Build package
         run: rye build
-      - name: list
-        run: ls -la
-      # retrieve your distributions here
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Upload release to GitHub
+        uses: softprops/action-gh-release@v1
+        env:
+          PACKAGE_NAME: ${{ steps.project.outputs.NAME }}
+          VERSION: ${{ steps.project.outputs.VERSION }}
+        with:
+          tag_name: ${{ steps.cz.outputs.version }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          files: |
+            dist/${{ env.PACKAGE_NAME }}-${{ env.VERSION }}-py3-none-any.whl
+            dist/${{ env.PACKAGE_NAME }}-${{ env.VERSION }}.tar.gz
