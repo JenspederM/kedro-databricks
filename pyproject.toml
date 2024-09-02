@@ -27,6 +27,7 @@ dev-dependencies = [
     "ipython",
     "notebook",
     "pre-commit",
+    "commitizen",
 ]
 
 [tool.hatch.metadata]
@@ -74,3 +75,11 @@ lint.ignore = ["E501"] # Black takes care of line-too-long
 
 [tool.ruff.lint.per-file-ignores]
 "{tests,features}/*" = ["T201", "PLR2004", "PLR0915", "PLW1510"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = true
+major_version_zero = true

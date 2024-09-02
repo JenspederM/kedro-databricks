@@ -15,6 +15,8 @@ anyio==4.4.0
     # via jupyter-server
 appnope==0.1.4
     # via ipykernel
+argcomplete==3.1.6
+    # via commitizen
 argon2-cffi==23.1.0
     # via jupyter-server
 argon2-cffi-bindings==21.2.0
@@ -53,18 +55,24 @@ cfgv==3.4.0
 chardet==5.2.0
     # via binaryornot
 charset-normalizer==3.3.2
+    # via commitizen
     # via requests
 click==8.1.7
     # via cookiecutter
     # via kedro
+colorama==0.4.6
+    # via commitizen
 comm==0.2.2
     # via ipykernel
+commitizen==3.9.1
 cookiecutter==2.6.0
     # via kedro
 coverage==7.6.0
     # via pytest-cov
 debugpy==1.8.2
     # via ipykernel
+decli==0.6.2
+    # via commitizen
 decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
@@ -104,8 +112,9 @@ idna==3.7
     # via httpx
     # via jsonschema
     # via requests
-importlib-metadata==7.2.1
+importlib-metadata==6.11.0
     # via build
+    # via commitizen
     # via jupyter-client
     # via jupyter-lsp
     # via jupyterlab
@@ -126,6 +135,7 @@ isort==5.13.2
 jedi==0.19.1
     # via ipython
 jinja2==3.1.4
+    # via commitizen
     # via cookiecutter
     # via jupyter-server
     # via jupyterlab
@@ -212,6 +222,7 @@ overrides==7.7.0
     # via jupyter-server
 packaging==24.1
     # via build
+    # via commitizen
     # via ipykernel
     # via jupyter-server
     # via jupyterlab
@@ -241,6 +252,7 @@ prometheus-client==0.20.0
     # via jupyter-server
 prompt-toolkit==3.0.47
     # via ipython
+    # via questionary
 psutil==6.0.0
     # via ipykernel
 ptyprocess==0.7.0
@@ -269,6 +281,7 @@ python-slugify==8.0.4
 pytoolconfig==1.3.1
     # via rope
 pyyaml==6.0.1
+    # via commitizen
     # via cookiecutter
     # via jupyter-events
     # via kedro
@@ -278,6 +291,8 @@ pyzmq==26.0.3
     # via ipykernel
     # via jupyter-client
     # via jupyter-server
+questionary==1.10.0
+    # via commitizen
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
@@ -321,6 +336,8 @@ soupsieve==2.5
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
+termcolor==2.4.0
+    # via commitizen
 terminado==0.18.1
     # via jupyter-server
     # via jupyter-server-terminals
@@ -338,6 +355,7 @@ tomli==2.0.1
     # via pytest
     # via pytoolconfig
 tomlkit==0.13.0
+    # via commitizen
     # via kedro-databricks
 tornado==6.4.1
     # via ipykernel
