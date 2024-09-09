@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import yaml
+
 from kedro_databricks.plugin import commands
 
 
@@ -78,7 +79,7 @@ def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
         for i, task in enumerate(tasks):
             assert task.get("task_key") == f"node{i}"
             assert task.get("job_cluster_key") == "default"
-            assert task.get("python_wheel_task").get("parameters")[-1] == "dev"
+            assert task.get("python_wheel_task").get("parameters")[-3] == "dev"
 
 
 def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata):
@@ -128,7 +129,7 @@ def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata
 
         for i, task in enumerate(tasks):
             assert task.get("task_key") == f"node{i}"
-            assert task.get("python_wheel_task").get("parameters")[-1] == "dev"
+            assert task.get("python_wheel_task").get("parameters")[-3] == "dev"
 
 
 def test_deploy(kedro_project, cli_runner, metadata):

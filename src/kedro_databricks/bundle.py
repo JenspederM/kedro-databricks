@@ -13,6 +13,7 @@ from kedro_databricks.utils import (
     WORKFLOW_KEY_ORDER,
     _remove_nulls_from_dict,
     _sort_dict,
+    get_entry_point,
     require_databricks_run_script,
 )
 
@@ -36,7 +37,7 @@ def _create_task(
     ## Follows the Databricks REST API schema. See "tasks" in the link below
     ## https://docs.databricks.com/api/workspace/jobs/create
     package = metadata.package_name
-    entry_point = metadata.project_name
+    entry_point = get_entry_point(metadata.project_name)
     params = [
         "--nodes",
         name,
