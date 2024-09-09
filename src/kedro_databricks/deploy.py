@@ -123,7 +123,7 @@ def upload_project_config(metadata: ProjectMetadata, MSG: str):  # pragma: no co
     if not source_path.exists():
         raise FileNotFoundError(f"Configuration path {source_path} does not exist")
 
-    log.info(f"{MSG}: Uploading configuration to Databricks")
+    log.info(f"{MSG}: Uploading configuration to {target_path}")
     run_cmd(
         [
             "databricks",
@@ -168,7 +168,9 @@ def build_project(metadata: ProjectMetadata, MSG: str):  # pragma: no cover
     return result
 
 
-def deploy_project(metadata: ProjectMetadata, MSG: str, target: str, debug: bool = False):
+def deploy_project(
+    metadata: ProjectMetadata, MSG: str, target: str, debug: bool = False
+):
     """Deploy the project to Databricks.
 
     Args:
