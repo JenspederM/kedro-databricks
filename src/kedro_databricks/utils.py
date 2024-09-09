@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import re
 import subprocess
 from typing import Any
 
@@ -27,6 +28,20 @@ WORKFLOW_KEY_ORDER = [
     "job_clusters",
     "tasks",
 ]
+
+
+def get_entry_point(project_name: str) -> str:
+    """Get the entry point for a project.
+
+    Args:
+        project_name (str): name of the project
+
+    Returns:
+        str: entry point for the project
+    """
+    entrypoint = project_name.strip().lower()
+    entrypoint = re.sub(r" +", " ", entrypoint)
+    return re.sub(r"[^a-zA-Z]", "-", entrypoint)
 
 
 def require_databricks_run_script() -> bool:
