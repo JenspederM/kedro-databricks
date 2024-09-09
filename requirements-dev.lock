@@ -17,6 +17,8 @@ anyio==4.4.0
     # via jupyter-server
 appdirs==1.4.4
     # via kedro-telemetry
+appnope==0.1.4
+    # via ipykernel
 argcomplete==3.1.6
     # via commitizen
 argon2-cffi==23.1.0
