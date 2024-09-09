@@ -25,8 +25,7 @@ jobs:
       - name: Pin python-version ${{ matrix.python-version }}
         run: rye pin ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |
-          rye sync --no-lock
+        run: rye sync --no-lock
       - name: Lint code
         run: rye lint
       - name: Run tests
