@@ -1,3 +1,16 @@
+## 0.3.0 (2024-09-14)
+
+### Feat
+
+- Make changes necessary to utilize run in kedro>=0.19.8
+
+### Fix
+
+- entry_point is separated by hyphens
+- project must be build to be listed
+- log target path when uploading config
+- use __main__ when kedro > 0.19.8
+
 ## 0.2.1 (2024-09-02)
 
 ### Fix
