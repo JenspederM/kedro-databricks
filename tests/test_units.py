@@ -335,16 +335,3 @@ def test_is_null_or_empty():
     assert not _is_null_or_empty("a"), "Failed to check str"
     assert not _is_null_or_empty({1: 1}), "Failed to check dict"
     assert not _is_null_or_empty([1]), "Failed to check list"
-
-
-if __name__ == "__main__":
-    from rich import print
-
-    from kedro_databricks.bundle import _create_workflow
-
-    class Meta:
-        project_path = "/path/to/project"
-        package_name = "fake_project"
-        project_name = "fake-project"
-
-    print(_create_workflow("workflow1", pipeline, Meta(), "fake_env"))
