@@ -5,6 +5,7 @@ import copy
 import pytest
 import yaml
 from kedro.pipeline import Pipeline, node
+
 from kedro_databricks.utils import require_databricks_run_script
 
 
@@ -35,118 +36,52 @@ pipeline = Pipeline(
 )
 
 
-def generate_workflow():
+def generate_task(task_key: int | str, depends_on: list[str] = []):
     entry_point = "fake-project"
+    params = [
+        "--nodes",
+        task_key,
+        "--conf-source",
+        "/dbfs/FileStore/fake_project/conf",
+        "--env",
+        "fake_env",
+    ]
+
     if require_databricks_run_script():
         entry_point = "databricks_run"
+        params = params + ["--package-name", "fake_project"]
+
+    task = {
+        "task_key": task_key,
+        "libraries": [
+            {"whl": "../dist/*.whl"},
+        ],
+        "python_wheel_task": {
+            "package_name": "fake_project",
+            "entry_point": entry_point,
+            "parameters": params,
+        },
+    }
+
+    if len(depends_on) > 0:
+        task["depends_on"] = [{"task_key": dep} for dep in depends_on]
+
+    return task
+
+
+def generate_workflow():
+    tasks = []
+
+    for i in range(5):
+        if i == 0:
+            depends_on = []
+        else:
+            depends_on = ["node0"]
+        tasks.append(generate_task(f"node{i}", depends_on))
+
     return {
         "name": "workflow1",
-        "tasks": [
-            {
-                "task_key": "node0",
-                "libraries": [
-                    {"whl": "../dist/*.whl"},
-                ],
-                "python_wheel_task": {
-                    "package_name": "fake_project",
-                    "entry_point": entry_point,
-                    "parameters": [
-                        "--nodes",
-                        "node0",
-                        "--conf-source",
-                        "/dbfs/FileStore/fake_project/conf",
-                        "--env",
-                        "fake_env",
-                        "--package-name",
-                        "fake_project",
-                    ],
-                },
-            },
-            {
-                "task_key": "node1",
-                "depends_on": [{"task_key": "node0"}],
-                "libraries": [
-                    {"whl": "../dist/*.whl"},
-                ],
-                "python_wheel_task": {
-                    "package_name": "fake_project",
-                    "entry_point": entry_point,
-                    "parameters": [
-                        "--nodes",
-                        "node1",
-                        "--conf-source",
-                        "/dbfs/FileStore/fake_project/conf",
-                        "--env",
-                        "fake_env",
-                        "--package-name",
-                        "fake_project",
-                    ],
-                },
-            },
-            {
-                "task_key": "node2",
-                "depends_on": [{"task_key": "node0"}],
-                "libraries": [
-                    {"whl": "../dist/*.whl"},
-                ],
-                "python_wheel_task": {
-                    "package_name": "fake_project",
-                    "entry_point": entry_point,
-                    "parameters": [
-                        "--nodes",
-                        "node2",
-                        "--conf-source",
-                        "/dbfs/FileStore/fake_project/conf",
-                        "--env",
-                        "fake_env",
-                        "--package-name",
-                        "fake_project",
-                    ],
-                },
-            },
-            {
-                "task_key": "node3",
-                "depends_on": [{"task_key": "node0"}],
-                "libraries": [
-                    {"whl": "../dist/*.whl"},
-                ],
-                "python_wheel_task": {
-                    "package_name": "fake_project",
-                    "entry_point": entry_point,
-                    "parameters": [
-                        "--nodes",
-                        "node3",
-                        "--conf-source",
-                        "/dbfs/FileStore/fake_project/conf",
-                        "--env",
-                        "fake_env",
-                        "--package-name",
-                        "fake_project",
-                    ],
-                },
-            },
-            {
-                "task_key": "node4",
-                "depends_on": [{"task_key": "node0"}],
-                "libraries": [
-                    {"whl": "../dist/*.whl"},
-                ],
-                "python_wheel_task": {
-                    "package_name": "fake_project",
-                    "entry_point": entry_point,
-                    "parameters": [
-                        "--nodes",
-                        "node4",
-                        "--conf-source",
-                        "/dbfs/FileStore/fake_project/conf",
-                        "--env",
-                        "fake_env",
-                        "--package-name",
-                        "fake_project",
-                    ],
-                },
-            },
-        ],
+        "tasks": tasks,
         "format": "MULTI_TASK",
     }
 
@@ -278,10 +213,6 @@ def test_generate_workflow(metadata):
 def test_generate_resources(metadata):
     from kedro_databricks.bundle import generate_resources
 
-    entry_point = "fake-project"
-    if require_databricks_run_script():
-        entry_point = "databricks_run"
-
     assert (
         generate_resources(
             {"__default__": Pipeline([])}, metadata, "fake_env", "Test MSG"
@@ -301,28 +232,7 @@ def test_generate_resources(metadata):
                         "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
-                            {
-                                "libraries": [
-                                    {
-                                        "whl": "../dist/*.whl",
-                                    },
-                                ],
-                                "python_wheel_task": {
-                                    "package_name": "fake_project",
-                                    "entry_point": entry_point,
-                                    "parameters": [
-                                        "--nodes",
-                                        "node",
-                                        "--conf-source",
-                                        "/dbfs/FileStore/fake_project/conf",
-                                        "--env",
-                                        "fake_env",
-                                        "--package-name",
-                                        "fake_project",
-                                    ],
-                                },
-                                "task_key": "node",
-                            },
+                            generate_task("node"),
                         ],
                     },
                 },
@@ -425,3 +335,16 @@ def test_is_null_or_empty():
     assert not _is_null_or_empty("a"), "Failed to check str"
     assert not _is_null_or_empty({1: 1}), "Failed to check dict"
     assert not _is_null_or_empty([1]), "Failed to check list"
+
+
+if __name__ == "__main__":
+    from rich import print
+
+    from kedro_databricks.bundle import _create_workflow
+
+    class Meta:
+        project_path = "/path/to/project"
+        package_name = "fake_project"
+        project_name = "fake-project"
+
+    print(_create_workflow("workflow1", pipeline, Meta(), "fake_env"))
