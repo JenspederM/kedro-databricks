@@ -34,8 +34,10 @@ from kedro_databricks.init import (
 from kedro_databricks.utils import require_databricks_run_script
 
 DEFAULT_RUN_ENV = "local"
+DEFAULT_CONF_FOLDER = "conf"
 DEFAULT_CONFIG_KEY = "default"
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
+CONF_HELP = "Set the conf folder. Default to `conf`."
 _PROVIDER_PROMPT = """
 Please select your cloud provider:
 1. Azure
@@ -84,10 +86,10 @@ def _load_config(
         return {}
 
 
-def _load_env_config(metadata: ProjectMetadata, env: str, MSG: str):
+def _load_env_config(metadata: ProjectMetadata, env: str, conf: str, MSG: str):
     log = logging.getLogger(metadata.package_name)
     # If the configuration directory does not exist, Kedro will not load any configuration
-    conf_dir = metadata.project_path / "conf" / env
+    conf_dir = metadata.project_path / conf / env
     if not conf_dir.exists():
         log.warning(f"{MSG}: Creating {conf_dir.relative_to(metadata.project_path)}")
         conf_dir.mkdir(parents=True)
@@ -123,12 +125,14 @@ def init(
 @databricks_commands.command()
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
+@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("--overwrite", default=False, help="Overwrite the existing resources")
 @click.pass_obj
 def bundle(
     metadata: ProjectMetadata,
     default: str,
     env: str,
+    conf: str,
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
@@ -138,7 +142,7 @@ def bundle(
         )
 
     MSG = "Create Asset Bundle Resources"
-    overrides = _load_env_config(metadata, env, MSG)
+    overrides = _load_env_config(metadata, env, conf, MSG)
     workflows = generate_resources(pipelines, metadata, env, MSG)
     bundle_resources = apply_resource_overrides(workflows, overrides, default)
     save_bundled_resources(bundle_resources, metadata, overwrite)
@@ -158,6 +162,7 @@ def bundle(
     default=False,
     help="Bundle the project before deploying",
 )
+@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-d", "--debug/--no-debug", default=False, help="Enable debug mode")
 @click.pass_obj
 def deploy(
@@ -165,6 +170,7 @@ def deploy(
     env: str,
     target: str | None,
     bundle: bool,
+    conf: str,
     debug: bool,
 ):
     """Deploy the asset bundle to Databricks"""
@@ -175,12 +181,12 @@ def deploy(
     validate_databricks_config(metadata)
     build_project(metadata, MSG=MSG)
     if bundle is True:
-        overrides = _load_env_config(metadata, env, MSG)
+        overrides = _load_env_config(metadata, env, conf, MSG)
         workflows = generate_resources(pipelines, metadata, env, MSG)
         bundle_resources = apply_resource_overrides(workflows, overrides, "default")
         save_bundled_resources(bundle_resources, metadata, True)
     create_dbfs_dir(metadata, MSG=MSG)
-    upload_project_config(metadata, MSG=MSG)
+    upload_project_config(metadata, conf, MSG=MSG)
     upload_project_data(metadata, MSG=MSG)
     if target is None:
         target = env
