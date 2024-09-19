@@ -41,7 +41,7 @@ def generate_task(task_key: int | str, depends_on: list[str] = []):
         "--nodes",
         task_key,
         "--conf-source",
-        "/dbfs/FileStore/fake_project/conf",
+        "/dbfs/FileStore/fake_project/conf/sub_pipeline",
         "--env",
         "fake_env",
     ]
@@ -206,7 +206,7 @@ def test_apply_resource_overrides():
 def test_generate_workflow(metadata):
     from kedro_databricks.bundle import _create_workflow
 
-    assert _create_workflow("workflow1", pipeline, metadata, "fake_env") == workflow
+    assert _create_workflow("workflow1", pipeline, metadata, "fake_env", conf="conf/sub_pipeline") == workflow
 
 
 def test_generate_resources(metadata):
@@ -214,7 +214,7 @@ def test_generate_resources(metadata):
 
     assert (
         generate_resources(
-            {"__default__": Pipeline([])}, metadata, "fake_env", "Test MSG"
+            {"__default__": Pipeline([])}, metadata, "fake_env", "conf/sub_pipeline", "Test MSG"
         )
         == {}
     )
@@ -222,6 +222,7 @@ def test_generate_resources(metadata):
         {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
         metadata,
         "fake_env",
+        "conf/sub_pipeline",
         "Test MSG",
     ) == {
         "fake_project": {
