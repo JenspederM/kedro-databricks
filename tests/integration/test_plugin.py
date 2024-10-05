@@ -89,7 +89,9 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
 
     init_cmd = ["databricks", "init"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
+    override_path = (
+        metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
+    )
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     override_path.unlink(missing_ok=True)
     assert not override_path.exists(), "Override file not created"
@@ -135,6 +137,7 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
             for j, param in enumerate(params):
                 if param == "--env":
                     assert params[j + 1] == "dev"
+
 
 def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
@@ -216,12 +219,20 @@ def test_deploy_with_conf(kedro_project, cli_runner, metadata):
 
     init_cmd = ["databricks", "init"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "sub_pipeline"/ "base" / "databricks.yml"
+    override_path = (
+        metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
+    )
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert override_path.exists(), "Override file not created"
 
-    deploy_cmd = ["databricks", "deploy", "--bundle", "--debug", "--conf=conf/sub_pipeline"]
+    deploy_cmd = [
+        "databricks",
+        "deploy",
+        "--bundle",
+        "--debug",
+        "--conf=conf/sub_pipeline",
+    ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)

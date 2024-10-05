@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import copy
 
-import pytest
-import yaml
 from kedro.pipeline import Pipeline, node
+from kedro_databricks.bundle import (
+    _create_workflow,
+    apply_resource_overrides,
+    generate_resources,
+)
 from kedro_databricks.utils import require_databricks_run_script
 
 
@@ -85,7 +88,7 @@ def generate_workflow():
     }
 
 
-workflow = generate_workflow()
+WORKFLOW = generate_workflow()
 
 overrides = {
     "default": {
@@ -112,7 +115,7 @@ overrides = {
 }
 
 workflow_overrides = {
-    workflow["name"]: {
+    WORKFLOW["name"]: {
         "job_clusters": [
             {
                 "job_cluster_key": "default",
@@ -151,7 +154,7 @@ mix_overrides = {
             }
         ]
     },
-    workflow["name"]: {
+    WORKFLOW["name"]: {
         "tasks": [
             {
                 "task_key": "default",
@@ -163,7 +166,7 @@ mix_overrides = {
 
 
 def _generate_testdata():
-    result = copy.deepcopy(workflow)
+    result = copy.deepcopy(WORKFLOW)
     result["job_clusters"] = [
         {
             "job_cluster_key": "default",
@@ -179,8 +182,8 @@ def _generate_testdata():
         task["job_cluster_key"] = "default"
 
     resources = {
-        workflow["name"]: {
-            "resources": {"jobs": {workflow["name"]: copy.deepcopy(workflow)}}
+        WORKFLOW["name"]: {
+            "resources": {"jobs": {WORKFLOW["name"]: copy.deepcopy(WORKFLOW)}}
         }
     }
 
@@ -188,10 +191,7 @@ def _generate_testdata():
 
 
 def test_apply_resource_overrides():
-    from kedro_databricks.bundle import apply_resource_overrides
-
     resources, result = _generate_testdata()
-
     assert apply_resource_overrides(resources, overrides, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply default overrides"
@@ -204,14 +204,10 @@ def test_apply_resource_overrides():
 
 
 def test_generate_workflow(metadata):
-    from kedro_databricks.bundle import _create_workflow
-
-    assert _create_workflow("workflow1", pipeline, metadata, "fake_env") == workflow
+    assert _create_workflow("workflow1", pipeline, metadata, "fake_env") == WORKFLOW
 
 
 def test_generate_resources(metadata):
-    from kedro_databricks.bundle import generate_resources
-
     assert (
         generate_resources(
             {"__default__": Pipeline([])}, metadata, "fake_env", "Test MSG"
@@ -238,99 +234,3 @@ def test_generate_resources(metadata):
             },
         },
     }
-
-
-def test_substitute_catalog_paths(metadata):
-    from kedro_databricks.init import substitute_catalog_paths
-
-    catalog_path = metadata.project_path / "conf" / "base" / "catalog.yml"
-
-    # Add some datasets
-    catalog = {
-        "test": {
-            "type": "pandas.CSVDataSet",
-            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test.csv",
-        },
-        "test2": {
-            "type": "pandas.CSVDataSet",
-            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test2.csv",
-        },
-    }
-
-    with open(catalog_path, "w") as f:
-        f.write(yaml.dump(catalog))
-
-    substitute_catalog_paths(metadata)
-
-    with open(catalog_path) as f:
-        new_catalog = f.read()
-
-    assert "/dbfs/FileStore/fake_project/data" in new_catalog, new_catalog
-
-
-def test_run_cmd():
-    import subprocess
-
-    from kedro_databricks.utils import run_cmd
-
-    with pytest.raises(Exception) as e:
-        cmd = ["ls", "non_existent_file"]
-        run_cmd(cmd)
-        assert "Failed to run command" in str(
-            e.value
-        ), f"Failed to raise exception: {cmd}"
-        raise e
-
-    with pytest.raises(Exception) as e:
-        cmd = ["ls", "non_existent_file"]
-        run_cmd(cmd, msg="Custom message")
-        assert "Custom message" in str(e.value), f"Failed to raise exception: {cmd}"
-        raise e
-
-    run_cmd(["ls", "non_existent_file"], warn=True)
-    run_cmd(["ls", "non_existent_file"], msg="Custom message", warn=True)
-
-    result = run_cmd(["ls", "."])
-    assert isinstance(result, subprocess.CompletedProcess)
-
-    result = run_cmd(["ls", "non_existent_file"], msg="Custom message", warn=True)
-    assert result is None, result
-
-
-def test_remove_nulls_from_dict():
-    from kedro_databricks.utils import remove_nulls
-
-    a = {
-        "a": 1,
-        "b": None,
-        "c": {"d": None},
-        "e": {"f": {"g": None}},
-        "h": {"i": {"j": {}}},
-        "k": [],
-        "l": [1, 2, 3],
-        "m": [1, None, 3],
-        "n": [1, {"o": None}, 3],
-        "o": [1, [None], 3],
-        "p": [1, {"q": {"r": None}}, 3],
-    }
-
-    assert remove_nulls(a) == {
-        "a": 1,
-        "l": [1, 2, 3],
-        "m": [1, 3],
-        "n": [1, 3],
-        "o": [1, 3],
-        "p": [1, 3],
-    }, remove_nulls(a)
-
-
-def test_is_null_or_empty():
-    from kedro_databricks.utils import _is_null_or_empty
-
-    assert _is_null_or_empty(None), "Failed to check None"
-    assert _is_null_or_empty({}), "Failed to check empty dict"
-    assert _is_null_or_empty([]), "Failed to check empty list"
-    assert not _is_null_or_empty(1), "Failed to check int"
-    assert not _is_null_or_empty("a"), "Failed to check str"
-    assert not _is_null_or_empty({1: 1}), "Failed to check dict"
-    assert not _is_null_or_empty([1]), "Failed to check list"
