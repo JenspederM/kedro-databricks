@@ -16,7 +16,7 @@ from kedro.framework.startup import bootstrap_project
 from pytest import fixture
 
 
-@fixture(name="cli_runner", scope="session")
+@fixture(name="cli_runner", scope="function")
 def cli_runner():
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -38,7 +38,7 @@ def _create_kedro_settings_py(file_name: Path, patterns: list[str]):
     file_name.write_text(content)
 
 
-@fixture(scope="session")
+@fixture(scope="function")
 def kedro_project(cli_runner):
     CliRunner().invoke(
         # Supply name, tools, and example to skip interactive prompts
@@ -91,7 +91,7 @@ def register_pipelines():
     return project_path
 
 
-@fixture(scope="session")
+@fixture(scope="function")
 def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()
