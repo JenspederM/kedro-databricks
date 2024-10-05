@@ -38,6 +38,7 @@ def test_deploy_go_to_project(metadata):
 
 def test_deploy_validate_databricks_config(metadata):
     project_path = go_to_project(metadata)
+    (project_path / "databricks.yml").unlink(missing_ok=True)
     with pytest.raises(FileNotFoundError):
         validate_databricks_config(metadata)
     with open(project_path / "databricks.yml", "w") as f:
