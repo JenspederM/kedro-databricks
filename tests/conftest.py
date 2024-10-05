@@ -16,12 +16,10 @@ from kedro.framework.startup import bootstrap_project
 from pytest import fixture
 
 
-@fixture(name="cli_runner", scope="function")
+@fixture(name="cli_runner", scope="session")
 def cli_runner():
     runner = CliRunner()
     with runner.isolated_filesystem():
-        # fp = cwd / "kedro_databricks/airflow_dag_template.j2"
-        # copyfile(fp.resolve(), Path("./airflow_dag.j2").resolve())
         yield runner
 
 
@@ -38,9 +36,9 @@ def _create_kedro_settings_py(file_name: Path, patterns: list[str]):
     file_name.write_text(content)
 
 
-@fixture(scope="function")
+@fixture(scope="session")
 def kedro_project(cli_runner):
-    CliRunner().invoke(
+    cli_runner.invoke(
         # Supply name, tools, and example to skip interactive prompts
         kedro_cli,
         [
@@ -91,7 +89,7 @@ def register_pipelines():
     return project_path
 
 
-@fixture(scope="function")
+@fixture(scope="session")
 def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()
