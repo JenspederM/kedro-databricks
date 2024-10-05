@@ -21,7 +21,7 @@ DEFAULT = "default"
 
 
 def _create_task(
-    name: str, depends_on: list[node], metadata: ProjectMetadata, env: str
+    name: str, depends_on: list[node], metadata: ProjectMetadata, env: str, conf: str
 ) -> dict[str, Any]:
     """Create a Databricks task for a given node.
 
@@ -30,6 +30,7 @@ def _create_task(
         depends_on (List[Node]): list of nodes that the task depends on
         metadata (str): metadata of the project
         env (str): name of the env to be used by the task
+        conf (str): name of the configuration folder
 
     Returns:
         Dict[str, Any]: a Databricks task
@@ -42,7 +43,7 @@ def _create_task(
         "--nodes",
         name,
         "--conf-source",
-        f"/dbfs/FileStore/{package}/conf",
+        f"/dbfs/FileStore/{package}/{conf}",
         "--env",
         env,
     ]
@@ -66,7 +67,7 @@ def _create_task(
 
 
 def _create_workflow(
-    name: str, pipeline: Pipeline, metadata: str, env: str
+    name: str, pipeline: Pipeline, metadata: str, env: str, conf: str
 ) -> dict[str, Any]:
     """Create a Databricks workflow for a given pipeline.
 
@@ -75,6 +76,7 @@ def _create_workflow(
         pipeline (Pipeline): Kedro pipeline object
         metadata (str): metadata of the project
         env (str): name of the env to be used by the tasks of the workflow
+        conf (str): name of the configuration folder
 
     Returns:
         Dict[str, Any]: a Databricks workflow
@@ -84,7 +86,9 @@ def _create_workflow(
     workflow = {
         "name": name,
         "tasks": [
-            _create_task(node.name, depends_on=deps, metadata=metadata, env=env)
+            _create_task(
+                node.name, depends_on=deps, metadata=metadata, env=env, conf=conf
+            )
             for node, deps in pipeline.node_dependencies.items()
         ],
         "format": "MULTI_TASK",
@@ -277,7 +281,11 @@ def apply_resource_overrides(
 
 
 def generate_resources(
-    pipelines: dict[str, Pipeline], metadata: ProjectMetadata, env: str, MSG: str
+    pipelines: dict[str, Pipeline],
+    metadata: ProjectMetadata,
+    env: str,
+    conf: str,
+    MSG: str,
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -286,7 +294,10 @@ def generate_resources(
 
     Args:
         pipelines (dict[str, Pipeline]): A dictionary of pipeline names and their Kedro pipelines
+        metadata (ProjectMetadata): The metadata of the project
         env (str): The name of the kedro environment to be used by the workflow
+        conf (str): The name of the configuration folder
+        MSG (str): The message to display
 
     Returns:
         dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
@@ -301,10 +312,7 @@ def generate_resources(
 
         wf_name = f"{package}_{name}" if name != "__default__" else package
         wf = _create_workflow(
-            name=wf_name,
-            pipeline=pipeline,
-            metadata=metadata,
-            env=env,
+            name=wf_name, pipeline=pipeline, metadata=metadata, env=env, conf=conf
         )
         log.debug(f"Workflow '{wf_name}' successfully created.")
         log.debug(wf)
