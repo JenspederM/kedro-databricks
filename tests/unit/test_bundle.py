@@ -38,13 +38,13 @@ pipeline = Pipeline(
 )
 
 
-def _generate_task(task_key: int | str, depends_on: list[str] = []):
+def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = "conf"):
     entry_point = "fake-project"
     params = [
         "--nodes",
         task_key,
         "--conf-source",
-        "/dbfs/FileStore/fake_project/conf",
+        f"/dbfs/FileStore/fake_project/{conf}",
         "--env",
         "fake_env",
     ]
@@ -71,7 +71,7 @@ def _generate_task(task_key: int | str, depends_on: list[str] = []):
     return task
 
 
-def generate_workflow():
+def generate_workflow(conf="conf"):
     tasks = []
 
     for i in range(5):
@@ -79,7 +79,7 @@ def generate_workflow():
             depends_on = []
         else:
             depends_on = ["node0"]
-        tasks.append(_generate_task(f"node{i}", depends_on))
+        tasks.append(_generate_task(f"node{i}", depends_on, conf))
 
     return {
         "name": "workflow1",
@@ -204,21 +204,29 @@ def test_apply_resource_overrides():
 
 
 def test_generate_workflow(metadata):
-    assert _create_workflow("workflow1", pipeline, metadata, "fake_env") == WORKFLOW
+    assert (
+        _create_workflow("workflow1", pipeline, metadata, "fake_env", "conf")
+        == WORKFLOW
+    )
 
 
 def test_generate_resources(metadata):
     assert (
         generate_resources(
-            {"__default__": Pipeline([])}, metadata, "fake_env", "Test MSG"
+            pipelines={"__default__": Pipeline([])},
+            metadata=metadata,
+            env="fake_env",
+            conf="conf",
+            MSG="Test MSG",
         )
         == {}
     )
     assert generate_resources(
         {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
-        metadata,
-        "fake_env",
-        "Test MSG",
+        metadata=metadata,
+        env="fake_env",
+        conf="conf",
+        MSG="Test MSG",
     ) == {
         "fake_project": {
             "resources": {
@@ -228,6 +236,30 @@ def test_generate_resources(metadata):
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("node"),
+                        ],
+                    },
+                },
+            },
+        },
+    }
+
+
+def test_generate_resources_another_conf(metadata):
+    assert generate_resources(
+        {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
+        metadata=metadata,
+        env="fake_env",
+        conf="sub_conf",
+        MSG="Test MSG",
+    ) == {
+        "fake_project": {
+            "resources": {
+                "jobs": {
+                    "fake_project": {
+                        "format": "MULTI_TASK",
+                        "name": "fake_project",
+                        "tasks": [
+                            _generate_task("node", conf="sub_conf"),
                         ],
                     },
                 },

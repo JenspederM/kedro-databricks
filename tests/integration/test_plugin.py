@@ -211,7 +211,7 @@ def test_deploy(kedro_project, cli_runner, metadata):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
-def test_deploy_with_conf(kedro_project, cli_runner, metadata):
+def test_deploy_with_conf(cli_runner, metadata):
     """Test the `deploy` command"""
     deploy_fail = ["databricks", "deploy"]
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
