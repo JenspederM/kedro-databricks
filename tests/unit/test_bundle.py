@@ -38,7 +38,7 @@ pipeline = Pipeline(
 )
 
 
-def generate_task(task_key: int | str, depends_on: list[str] = []):
+def _generate_task(task_key: int | str, depends_on: list[str] = []):
     entry_point = "fake-project"
     params = [
         "--nodes",
@@ -79,7 +79,7 @@ def generate_workflow():
             depends_on = []
         else:
             depends_on = ["node0"]
-        tasks.append(generate_task(f"node{i}", depends_on))
+        tasks.append(_generate_task(f"node{i}", depends_on))
 
     return {
         "name": "workflow1",
@@ -90,7 +90,7 @@ def generate_workflow():
 
 WORKFLOW = generate_workflow()
 
-overrides = {
+OVERRIDES = {
     "default": {
         "job_clusters": [
             {
@@ -114,7 +114,7 @@ overrides = {
     }
 }
 
-workflow_overrides = {
+WORKFLOW_OVERRIDES = {
     WORKFLOW["name"]: {
         "job_clusters": [
             {
@@ -138,7 +138,7 @@ workflow_overrides = {
     }
 }
 
-mix_overrides = {
+MIX_OVERRIDES = {
     "default": {
         "job_clusters": [
             {
@@ -192,13 +192,13 @@ def _generate_testdata():
 
 def test_apply_resource_overrides():
     resources, result = _generate_testdata()
-    assert apply_resource_overrides(resources, overrides, "default") == {
+    assert apply_resource_overrides(resources, OVERRIDES, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply default overrides"
-    assert apply_resource_overrides(resources, workflow_overrides, "default") == {
+    assert apply_resource_overrides(resources, WORKFLOW_OVERRIDES, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply workflow overrides"
-    assert apply_resource_overrides(resources, mix_overrides, "default") == {
+    assert apply_resource_overrides(resources, MIX_OVERRIDES, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply mixed overrides"
 
@@ -227,7 +227,7 @@ def test_generate_resources(metadata):
                         "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
-                            generate_task("node"),
+                            _generate_task("node"),
                         ],
                     },
                 },
