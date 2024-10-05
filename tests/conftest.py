@@ -38,7 +38,7 @@ def _create_kedro_settings_py(file_name: Path, patterns: list[str]):
     file_name.write_text(content)
 
 
-@fixture(scope="function")
+@fixture(scope="session")
 def kedro_project(cli_runner):
     CliRunner().invoke(
         # Supply name, tools, and example to skip interactive prompts
@@ -91,7 +91,7 @@ def register_pipelines():
     return project_path
 
 
-@fixture(scope="function")
+@fixture(scope="session")
 def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()
