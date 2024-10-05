@@ -22,7 +22,7 @@ class MetadataMock:
         self.project_version = "0.16.0"
         self.project_description = "Test Project Description"
         self.project_author = "Test Author"
-        self.project_author_email = "   "
+        self.project_author_email = "author@email.com"
 
 
 def test_deploy_go_to_project(metadata):
