@@ -1,6 +1,6 @@
 # .github/workflows/ci-cd.yml
 on:
-  pull_request_target: {}
+  pull_request: {}
 
 jobs:
   test:
@@ -9,11 +9,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        kedro_version: ["0.19.7", "0.19.8"]
     steps:
       - uses: actions/checkout@v4
-      # Download the Databricks CLI.
-      # See https://github.com/databricks/setup-cli
-      - uses: databricks/setup-cli@main
       - uses: eifinger/setup-rye@v3
         id: setup-rye
         with:
@@ -22,21 +20,12 @@ jobs:
       - name: Pin python-version ${{ matrix.python-version }}
         run: rye pin ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |
-          rye sync --no-lock
-      - name: List files
-        run: ls -la
+        run: rye sync --no-lock
+      - name: Install kedro
+        run: rye add kedro==${{ matrix.kedro_version }}
       - name: Lint code
         run: rye lint
       - name: Run tests
         run: |
           source .venv/bin/activate
-          rye test
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          rye test -- ./tests/unit
