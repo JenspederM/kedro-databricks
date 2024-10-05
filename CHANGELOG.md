@@ -1,3 +1,13 @@
+## 0.4.0 (2024-10-05)
+
+### Feat
+
+- **deploy**: add conf option to the bundle and the deploy commands
+
+### Fix
+
+- adds support for another conf path#
+
 ## 0.3.0 (2024-09-14)
 
 ### Feat
