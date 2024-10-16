@@ -160,7 +160,7 @@ def write_bundle_template(metadata: ProjectMetadata):
     project_path = metadata.project_path
     log = logging.getLogger(package_name)
     if shutil.which("databricks") is None:  # pragma: no cover
-        raise Exception("databricks CLI is not installed")
+        raise Exception("databricks CLI is not installed, you can find the installation guide here: https://docs.databricks.com/en/dev-tools/cli/install.html")
 
     config = {
         "project_name": package_name,
