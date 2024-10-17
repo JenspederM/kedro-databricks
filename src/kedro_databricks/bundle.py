@@ -89,7 +89,7 @@ def _create_workflow(
             _create_task(
                 node.name, depends_on=deps, metadata=metadata, env=env, conf=conf
             )
-            for node, deps in pipeline.node_dependencies.items()
+            for node, deps in sorted(pipeline.node_dependencies.items())
         ],
         "format": "MULTI_TASK",
     }
