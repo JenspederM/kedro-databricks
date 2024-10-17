@@ -1,3 +1,9 @@
+## 0.5.0 (2024-10-17)
+
+### Feat
+
+- **bundle**: sort tasks for easy change review
+
 ## 0.4.0 (2024-10-05)
 
 ### Feat
