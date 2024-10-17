@@ -294,3 +294,37 @@ def test_generate_resources_in_a_sorted_manner(metadata):
             },
         },
     }
+
+
+def test_generate_resources_for_a_single_pipeline(metadata):
+    assert generate_resources(
+        {"__default__": Pipeline([
+            node(identity, ["input"], ["a_output"], name="a_node"),
+        ]),
+        "a_pipeline": Pipeline([
+            node(identity, ["input"], ["a_output"], name="a_node"),
+        ]),
+        "b_pipeline": Pipeline([
+            node(identity, ["input"], ["b_output"], name="b_node"),
+        ])
+        },
+        metadata=metadata,
+        env="fake_env",
+        conf="conf",
+        pipeline_name="b_pipeline",
+        MSG="Test MSG",
+    ) == {
+        "fake_project_b_pipeline": {
+            "resources": {
+                "jobs": {
+                    "fake_project_b_pipeline": {
+                        "format": "MULTI_TASK",
+                        "name": "fake_project_b_pipeline",
+                        "tasks": [
+                            _generate_task("b_node"),
+                        ],
+                    },
+                },
+            },
+        },
+    }

@@ -126,6 +126,7 @@ def init(
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
+@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
 @click.option("--overwrite", default=False, help="Overwrite the existing resources")
 @click.pass_obj
 def bundle(
@@ -133,6 +134,7 @@ def bundle(
     default: str,
     env: str,
     conf: str,
+    pipeline: str | None,
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
@@ -143,7 +145,7 @@ def bundle(
 
     MSG = "Create Asset Bundle Resources"
     overrides = _load_env_config(metadata, env, conf, MSG)
-    workflows = generate_resources(pipelines, metadata, env, conf, MSG)
+    workflows = generate_resources(pipelines, metadata, env, conf, pipeline, MSG)
     bundle_resources = apply_resource_overrides(workflows, overrides, default)
     save_bundled_resources(bundle_resources, metadata, overwrite)
 
@@ -164,6 +166,7 @@ def bundle(
 )
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-d", "--debug/--no-debug", default=False, help="Enable debug mode")
+@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,
@@ -171,6 +174,7 @@ def deploy(
     target: str | None,
     bundle: bool,
     conf: str,
+    pipeline: str,
     debug: bool,
 ):
     """Deploy the asset bundle to Databricks"""
@@ -183,7 +187,7 @@ def deploy(
     if bundle is True:
         overrides = _load_env_config(metadata, env, conf, MSG)
         workflows = generate_resources(
-            pipelines=pipelines, metadata=metadata, env=env, conf=conf, MSG=MSG
+            pipelines=pipelines, metadata=metadata, env=env, conf=conf, pipeline_name=pipeline, MSG=MSG
         )
         bundle_resources = apply_resource_overrides(workflows, overrides, "default")
         save_bundled_resources(bundle_resources, metadata, True)
