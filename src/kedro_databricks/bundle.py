@@ -285,7 +285,8 @@ def generate_resources(
     metadata: ProjectMetadata,
     env: str,
     conf: str,
-    MSG: str,
+    pipeline_name: str | None,
+    MSG: str = "",
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 
@@ -297,6 +298,8 @@ def generate_resources(
         metadata (ProjectMetadata): The metadata of the project
         env (str): The name of the kedro environment to be used by the workflow
         conf (str): The name of the configuration folder
+        pipeline_name (str | None): The name of the pipeline for which Databricks asset bundle resources should be generated.
+          If None, generates all pipelines.
         MSG (str): The message to display
 
     Returns:
@@ -307,6 +310,8 @@ def generate_resources(
     package = metadata.package_name
     workflows = {}
     for name, pipeline in pipelines.items():
+        if pipeline_name is not None and pipeline_name != name:
+            continue
         if len(pipeline.nodes) == 0:
             continue
 
