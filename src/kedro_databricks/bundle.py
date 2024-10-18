@@ -286,7 +286,7 @@ def generate_resources(
     env: str,
     conf: str,
     pipeline_name: str | None,
-    MSG: str,
+    MSG: str = "",
 ) -> dict[str, dict[str, Any]]:
     """Generate Databricks resources for the given pipelines.
 

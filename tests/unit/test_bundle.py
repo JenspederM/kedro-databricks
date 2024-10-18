@@ -217,6 +217,7 @@ def test_generate_resources(metadata):
             metadata=metadata,
             env="fake_env",
             conf="conf",
+            pipeline_name=None,
             MSG="Test MSG",
         )
         == {}
@@ -226,6 +227,7 @@ def test_generate_resources(metadata):
         metadata=metadata,
         env="fake_env",
         conf="conf",
+        pipeline_name=None,
         MSG="Test MSG",
     ) == {
         "fake_project": {
@@ -250,6 +252,7 @@ def test_generate_resources_another_conf(metadata):
         metadata=metadata,
         env="fake_env",
         conf="sub_conf",
+        pipeline_name=None,
         MSG="Test MSG",
     ) == {
         "fake_project": {
@@ -277,6 +280,7 @@ def test_generate_resources_in_a_sorted_manner(metadata):
         metadata=metadata,
         env="fake_env",
         conf="conf",
+        pipeline_name=None,
         MSG="Test MSG",
     ) == {
         "fake_project": {
