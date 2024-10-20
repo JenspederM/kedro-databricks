@@ -1,3 +1,9 @@
+## 0.6.0 (2024-10-20)
+
+### Feat
+
+- **bundle**: allow to bundle a single pipeline
+
 ## 0.5.0 (2024-10-17)
 
 ### Feat
