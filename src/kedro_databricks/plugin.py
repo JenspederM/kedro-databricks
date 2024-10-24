@@ -25,12 +25,7 @@ from kedro_databricks.deploy import (
     upload_project_data,
     validate_databricks_config,
 )
-from kedro_databricks.init import (
-    substitute_catalog_paths,
-    write_bundle_template,
-    write_databricks_run_script,
-    write_override_template,
-)
+from kedro_databricks.init import InitController
 from kedro_databricks.utils import require_databricks_run_script
 
 DEFAULT_RUN_ENV = "local"
@@ -111,15 +106,17 @@ def init(
     provider: str,
 ):
     """Initialize Databricks Asset Bundle configuration"""
-    write_bundle_template(metadata)
-    write_override_template(metadata, default, _PROVIDER_MAP.get(provider))
+    provider_name = _PROVIDER_MAP.get(provider)
+    controller = InitController(metadata)
+    controller.bundle_init()
+    controller.write_override_template(default, provider_name)
     if require_databricks_run_script():
         log = logging.getLogger(metadata.package_name)
         log.warning(
             "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "
         )
-        write_databricks_run_script(metadata)
-    substitute_catalog_paths(metadata)
+        controller.write_databricks_run_script()
+    controller.substitute_catalog_paths()
 
 
 @databricks_commands.command()
@@ -187,7 +184,12 @@ def deploy(
     if bundle is True:
         overrides = _load_env_config(metadata, env, conf, MSG)
         workflows = generate_resources(
-            pipelines=pipelines, metadata=metadata, env=env, conf=conf, pipeline_name=pipeline, MSG=MSG
+            pipelines=pipelines,
+            metadata=metadata,
+            env=env,
+            conf=conf,
+            pipeline_name=pipeline,
+            MSG=MSG,
         )
         bundle_resources = apply_resource_overrides(workflows, overrides, "default")
         save_bundled_resources(bundle_resources, metadata, True)
