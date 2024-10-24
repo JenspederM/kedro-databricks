@@ -1,0 +1,17 @@
+# Files named `databricks*` or `databricks/**` will be used to apply overrides to the
+# generated asset bundle resources. The overrides should be specified according to the
+# Databricks REST API's `Create a new job` endpoint. To learn more, visit their
+# documentation at https://docs.databricks.com/api/workspace/jobs/create
+
+{default_key}:
+    job_clusters:
+        - job_cluster_key: {default_key}
+          new_cluster:
+              spark_version: 14.3.x-scala2.12
+              node_type_id: {node_type_id}
+              num_workers: 1
+              spark_env_vars:
+                  KEDRO_LOGGING_CONFIG: "/dbfs/FileStore/{package_name}/conf/logging.yml"
+    tasks:
+        - task_key: {default_key}
+          job_cluster_key: {default_key}

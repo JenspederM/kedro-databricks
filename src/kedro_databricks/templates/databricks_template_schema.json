@@ -1,0 +1,22 @@
+{
+    "welcome_message": "Creating a Databricks asset bundle definition...",
+    "min_databricks_cli_version": "v0.212.2",
+    "properties": {
+        "project_name": {
+            "order": 1,
+            "type": "string",
+            "default": "kedro project",
+            "pattern": "^[^.\\\\/A-Z]{3,}$",
+            "pattern_match_failure_message": "Project name must be at least 3 characters long and cannot contain the following characters: '\\', '/', ' ', '.', and must be all lowercase letters.",
+            "description": "\nProject Name. Default"
+        },
+        "project_slug": {
+            "order": 2,
+            "type": "string",
+            "default": "{{ ((regexp `[- ]`).ReplaceAllString .project_name `_`) -}}",
+            "description": "\nProject slug. Default",
+            "hidden": "True"
+        }
+    },
+    "success_message": "\n*** Asset Bundle successfully created for '{{.project_name}}'! ***"
+}
