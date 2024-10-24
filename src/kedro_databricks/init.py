@@ -83,7 +83,7 @@ class InitController:
 
         shutil.rmtree(assets_dir)
 
-    def write_override_template(self, default_key: str, provider_name: str):
+    def write_kedro_databricks_config(self, default_key: str, provider_name: str):
         MSG = "Creating bundle override configuration"
         override_path = Path(self.project_path) / "conf" / "base" / "databricks.yml"
         node_type_id = NODE_TYPE_MAP.get(provider_name, DEFAULT_NODE_TYPE_ID)

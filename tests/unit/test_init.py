@@ -37,7 +37,7 @@ def test_write_override_template(metadata):
     default_key = "default"
     provider = "azure"
 
-    controller.write_override_template(default_key, provider)
+    controller.write_kedro_databricks_config(default_key, provider)
     override_path = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
     assert override_path.exists(), "Override template not written"
 
@@ -56,7 +56,7 @@ def test_write_override_template(metadata):
     assert node_type_id == NODE_TYPE_MAP[provider], f"node_type_id is wrong: {override}"
 
     try:
-        controller.write_override_template(default_key, provider)
+        controller.write_kedro_databricks_config(default_key, provider)
     except Exception:
         pytest.fail("If an override file already exists, it should not be overwritten.")
 

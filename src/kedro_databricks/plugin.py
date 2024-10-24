@@ -109,7 +109,7 @@ def init(
     provider_name = _PROVIDER_MAP.get(provider)
     controller = InitController(metadata)
     controller.bundle_init()
-    controller.write_override_template(default, provider_name)
+    controller.write_kedro_databricks_config(default, provider_name)
     if require_databricks_run_script():
         log = logging.getLogger(metadata.package_name)
         log.warning(
