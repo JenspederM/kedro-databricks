@@ -11,7 +11,7 @@ from pathlib import Path
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import run_cmd
+from kedro_databricks.utils import has_databricks_cli, run_cmd
 
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
@@ -35,7 +35,7 @@ class InitController:
 
     def bundle_init(self):
         MSG = "Creating databricks configuration"
-        if shutil.which("databricks") is None:  # pragma: no cover
+        if not has_databricks_cli():  # pragma: no cover
             raise Exception("databricks CLI is not installed")
 
         config_path = self.project_path / "databricks.yml"

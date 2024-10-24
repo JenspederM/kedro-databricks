@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 from kedro_databricks.init import NODE_TYPE_MAP, InitController
+from kedro_databricks.utils import has_databricks_cli
 
 
 def _write_dummy_catalog(catalog_path: Path):
@@ -75,14 +76,20 @@ def test_write_databricks_run_script(metadata):
 
 def test_bundle_init(metadata):
     controller = InitController(metadata)
-    controller.bundle_init()
-    bundle_path = Path(metadata.project_path) / "databricks.yml"
-    assert bundle_path.exists(), "Bundle template not written"
-    with open(bundle_path) as f:
-        bundle = yaml.safe_load(f)
-    assert bundle.get("bundle", {}).get("name") == metadata.package_name, bundle
-
-    try:
+    if not has_databricks_cli():
+        with pytest.raises(Exception):
+            controller.bundle_init()
+    else:
         controller.bundle_init()
-    except Exception:
-        pytest.fail("If a bundle file already exists, it should not be overwritten.")
+        bundle_path = Path(metadata.project_path) / "databricks.yml"
+        assert bundle_path.exists(), "Bundle template not written"
+        with open(bundle_path) as f:
+            bundle = yaml.safe_load(f)
+        assert bundle.get("bundle", {}).get("name") == metadata.package_name, bundle
+
+        try:
+            controller.bundle_init()
+        except Exception:
+            pytest.fail(
+                "If a bundle file already exists, it should not be overwritten."
+            )
