@@ -1,3 +1,11 @@
+## 0.6.1 (2024-10-26)
+
+### Refactor
+
+- add utility to check if user has databricks CLI
+- move init templates to separate folder
+- make init a class to reduce duplicated code
+
 ## 0.6.0 (2024-10-20)
 
 ### Feat
