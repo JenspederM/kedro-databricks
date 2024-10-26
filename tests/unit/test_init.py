@@ -8,6 +8,11 @@ from kedro_databricks.init import NODE_TYPE_MAP, InitController
 from kedro_databricks.utils import has_databricks_cli
 
 
+def _reset_init(metadata):
+    (metadata.project_path / "databricks.yml").unlink(missing_ok=True)
+    (metadata.project_path / "conf" / "base" / "databricks.yml").unlink(missing_ok=True)
+
+
 def _write_dummy_catalog(catalog_path: Path):
     catalog = {
         "test": {
@@ -80,11 +85,12 @@ def test_bundle_init(metadata):
         with pytest.raises(Exception):
             controller.bundle_init()
     else:
+        _reset_init(metadata)
         controller.bundle_init()
         bundle_path = Path(metadata.project_path) / "databricks.yml"
         assert bundle_path.exists(), "Bundle template not written"
-        with open(bundle_path) as f:
-            bundle = yaml.safe_load(f)
+        bundle = yaml.load(bundle_path.read_text(), Loader=yaml.FullLoader)
+        assert bundle is not None, "Bundle template not written"
         assert bundle.get("bundle", {}).get("name") == metadata.package_name, bundle
 
         try:
