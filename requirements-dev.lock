@@ -17,6 +17,8 @@ anyio==4.4.0
     # via jupyter-server
 appdirs==1.4.4
     # via kedro-telemetry
+appnope==0.1.4
+    # via ipykernel
 argcomplete==3.1.6
     # via commitizen
 argon2-cffi==23.1.0
@@ -184,7 +186,7 @@ jupyterlab-pygments==0.3.0
 jupyterlab-server==2.27.3
     # via jupyterlab
     # via notebook
-kedro==0.19.8
+kedro==0.19.9
     # via kedro-databricks
     # via kedro-telemetry
 kedro-telemetry==0.6.0
