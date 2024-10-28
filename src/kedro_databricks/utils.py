@@ -88,6 +88,44 @@ def run_cmd(
             raise Exception(f"{msg}: {e}")
 
 
+def update_list(
+    old: list[dict[str, Any]],
+    new: list[dict[str, Any]],
+    lookup_key: str,
+    default: dict[str, Any] = {},
+):
+    """Update a list of dictionaries with another list of dictionaries.
+
+    Args:
+        old (List[Dict[str, Any]]): list of dictionaries to update
+        new (List[Dict[str, Any]]): list of dictionaries to update with
+        lookup_key (str): key to use for looking up dictionaries
+        default (Dict[str, Any], optional): default dictionary to use for updating
+
+    Returns:
+        List[Dict[str, Any]]: updated list of dictionaries
+    """
+    assert isinstance(
+        old, list
+    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
+    assert isinstance(
+        new, list
+    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
+    from mergedeep import merge
+
+    old_obj = {curr.pop(lookup_key): curr for curr in old}
+    new_obj = {update.pop(lookup_key): update for update in new}
+    keys = set(old_obj.keys()).union(set(new_obj.keys()))
+
+    for key in keys:
+        update = copy.deepcopy(default)
+        update.update(new_obj.get(key, {}))
+        new = merge(old_obj.get(key, {}), update)
+        old_obj[key] = new
+
+    return [{lookup_key: k, **v} for k, v in old_obj.items()]
+
+
 def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     """Recursively sort the keys of a dictionary.
 
