@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 
 import pytest
+
 from kedro_databricks.utils import _is_null_or_empty, remove_nulls, run_cmd
 
 

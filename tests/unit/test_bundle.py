@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 
 from kedro.pipeline import Pipeline, node
+
 from kedro_databricks.bundle import BundleController
 from kedro_databricks.utils import require_databricks_run_script
 
@@ -332,7 +333,7 @@ def test_save_resoureces(metadata):
     assert resource_dir.is_dir(), "resouces is not a directory"
 
     project_resources = resource_dir.joinpath(f"{metadata.package_name}.yml")
-    assert project_resources.exists(), (
-        "Failed to save project resources, %s"
-        % ",".join([str(p) for p in resource_dir.iterdir()])
-    )
+    project_files = ",".join([str(p) for p in resource_dir.iterdir()])
+    assert (
+        project_resources.exists()
+    ), f"Failed to save project resources, {project_files}"
