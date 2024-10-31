@@ -3,11 +3,8 @@ from __future__ import annotations
 import copy
 
 from kedro.pipeline import Pipeline, node
-from kedro_databricks.bundle import (
-    _create_workflow,
-    apply_resource_overrides,
-    generate_resources,
-)
+
+from kedro_databricks.bundle import BundleController
 from kedro_databricks.utils import require_databricks_run_script
 
 
@@ -190,46 +187,36 @@ def _generate_testdata():
     return resources, result
 
 
-def test_apply_resource_overrides():
+def test_apply_resource_overrides(metadata):
     resources, result = _generate_testdata()
-    assert apply_resource_overrides(resources, OVERRIDES, "default") == {
+    controller = BundleController(metadata, "fake_env", "conf")
+    controller.conf = OVERRIDES
+    assert controller.apply_overrides(resources, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply default overrides"
-    assert apply_resource_overrides(resources, WORKFLOW_OVERRIDES, "default") == {
+    controller.conf = WORKFLOW_OVERRIDES
+    assert controller.apply_overrides(resources, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply workflow overrides"
-    assert apply_resource_overrides(resources, MIX_OVERRIDES, "default") == {
+    controller.conf = MIX_OVERRIDES
+    assert controller.apply_overrides(resources, "default") == {
         "workflow1": {"resources": {"jobs": {"workflow1": result}}}
     }, "Failed to apply mixed overrides"
 
 
 def test_generate_workflow(metadata):
-    assert (
-        _create_workflow("workflow1", pipeline, metadata, "fake_env", "conf")
-        == WORKFLOW
-    )
+    controller = BundleController(metadata, "fake_env", "conf")
+    assert controller._create_workflow("workflow1", pipeline) == WORKFLOW
 
 
 def test_generate_resources(metadata):
-    assert (
-        generate_resources(
-            pipelines={"__default__": Pipeline([])},
-            metadata=metadata,
-            env="fake_env",
-            conf="conf",
-            pipeline_name=None,
-            MSG="Test MSG",
-        )
-        == {}
-    )
-    assert generate_resources(
-        {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
-        metadata=metadata,
-        env="fake_env",
-        conf="conf",
-        pipeline_name=None,
-        MSG="Test MSG",
-    ) == {
+    controller = BundleController(metadata, "fake_env", "conf")
+    controller.pipelines = {"__default__": Pipeline([])}
+    assert controller.generate_resources(pipeline_name=None, MSG="Test MSG") == {}
+    controller.pipelines = {
+        "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
+    }
+    assert controller.generate_resources(pipeline_name=None, MSG="Test MSG") == {
         "fake_project": {
             "resources": {
                 "jobs": {
@@ -247,14 +234,12 @@ def test_generate_resources(metadata):
 
 
 def test_generate_resources_another_conf(metadata):
-    assert generate_resources(
-        {"__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])},
-        metadata=metadata,
-        env="fake_env",
-        conf="sub_conf",
-        pipeline_name=None,
-        MSG="Test MSG",
-    ) == {
+    controller = BundleController(metadata, "fake_env", "sub_conf")
+    controller.pipelines = {
+        "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
+    }
+
+    assert controller.generate_resources(pipeline_name=None, MSG="Test MSG") == {
         "fake_project": {
             "resources": {
                 "jobs": {
@@ -272,17 +257,16 @@ def test_generate_resources_another_conf(metadata):
 
 
 def test_generate_resources_in_a_sorted_manner(metadata):
-    assert generate_resources(
-        {"__default__": Pipeline([
-            node(identity, ["input"], ["b_output"], name="b_node"),
-            node(identity, ["input"], ["a_output"], name="a_node"),
-        ])},
-        metadata=metadata,
-        env="fake_env",
-        conf="conf",
-        pipeline_name=None,
-        MSG="Test MSG",
-    ) == {
+    controller = BundleController(metadata, "fake_env", "conf")
+    controller.pipelines = {
+        "__default__": Pipeline(
+            [
+                node(identity, ["input"], ["b_output"], name="b_node"),
+                node(identity, ["input"], ["a_output"], name="a_node"),
+            ]
+        )
+    }
+    assert controller.generate_resources(pipeline_name=None, MSG="Test MSG") == {
         "fake_project": {
             "resources": {
                 "jobs": {
@@ -301,22 +285,26 @@ def test_generate_resources_in_a_sorted_manner(metadata):
 
 
 def test_generate_resources_for_a_single_pipeline(metadata):
-    assert generate_resources(
-        {"__default__": Pipeline([
-            node(identity, ["input"], ["a_output"], name="a_node"),
-        ]),
-        "a_pipeline": Pipeline([
-            node(identity, ["input"], ["a_output"], name="a_node"),
-        ]),
-        "b_pipeline": Pipeline([
-            node(identity, ["input"], ["b_output"], name="b_node"),
-        ])
-        },
-        metadata=metadata,
-        env="fake_env",
-        conf="conf",
-        pipeline_name="b_pipeline",
-        MSG="Test MSG",
+    controller = BundleController(metadata, "fake_env", "conf")
+    controller.pipelines = {
+        "__default__": Pipeline(
+            [
+                node(identity, ["input"], ["a_output"], name="a_node"),
+            ]
+        ),
+        "a_pipeline": Pipeline(
+            [
+                node(identity, ["input"], ["a_output"], name="a_node"),
+            ]
+        ),
+        "b_pipeline": Pipeline(
+            [
+                node(identity, ["input"], ["b_output"], name="b_node"),
+            ]
+        ),
+    }
+    assert controller.generate_resources(
+        pipeline_name="b_pipeline", MSG="Test MSG"
     ) == {
         "fake_project_b_pipeline": {
             "resources": {
@@ -332,3 +320,20 @@ def test_generate_resources_for_a_single_pipeline(metadata):
             },
         },
     }
+
+
+def test_save_resoureces(metadata):
+    controller = BundleController(metadata, "fake_env", "conf")
+
+    resources = controller.generate_resources(None, "")
+    bundle_resources = controller.apply_overrides(resources, "default")
+    controller.save_bundled_resources(bundle_resources, True)
+    resource_dir = metadata.project_path.joinpath("resources")
+    assert resource_dir.exists(), "Failed to create resources directory"
+    assert resource_dir.is_dir(), "resouces is not a directory"
+
+    project_resources = resource_dir.joinpath(f"{metadata.package_name}.yml")
+    project_files = ",".join([str(p) for p in resource_dir.iterdir()])
+    assert (
+        project_resources.exists()
+    ), f"Failed to save project resources, {project_files}"

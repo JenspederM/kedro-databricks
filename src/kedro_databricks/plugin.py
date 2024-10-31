@@ -2,19 +2,13 @@ from __future__ import annotations
 
 import logging
 import shutil
-from typing import Any
 
 import click
-from kedro.config import AbstractConfigLoader, MissingConfigException
 from kedro.framework.cli.utils import ENV_HELP
-from kedro.framework.project import pipelines
-from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.bundle import (
-    apply_resource_overrides,
-    generate_resources,
-    save_bundled_resources,
+    BundleController,
 )
 from kedro_databricks.deploy import (
     build_project,
@@ -55,45 +49,6 @@ def commands():
 def databricks_commands():
     """Run project with Databricks"""
     pass
-
-
-def _load_config(
-    config_loader: AbstractConfigLoader, package_name: str
-) -> dict[str, Any]:
-    log = logging.getLogger(package_name)
-    # Backwards compatibility for ConfigLoader that does not support `config_patterns`
-    if not hasattr(config_loader, "config_patterns"):
-        return config_loader.get("databricks*", "databricks/**")  # pragma: no cover
-
-    # Set the default pattern for `databricks` if not provided in `settings.py`
-    if "databricks" not in config_loader.config_patterns.keys():
-        config_loader.config_patterns.update(  # pragma: no cover
-            {"databricks": ["databricks*", "databricks/**"]}
-        )
-
-    assert "databricks" in config_loader.config_patterns.keys()
-
-    # Load the config
-    try:
-        return config_loader["databricks"]
-    except MissingConfigException:  # pragma: no cover
-        log.warning("No Databricks configuration found.")
-        return {}
-
-
-def _load_env_config(metadata: ProjectMetadata, env: str, conf: str, MSG: str):
-    log = logging.getLogger(metadata.package_name)
-    # If the configuration directory does not exist, Kedro will not load any configuration
-    conf_dir = metadata.project_path / conf / env
-    if not conf_dir.exists():
-        log.warning(f"{MSG}: Creating {conf_dir.relative_to(metadata.project_path)}")
-        conf_dir.mkdir(parents=True)
-
-    with KedroSession.create(project_path=metadata.project_path, env=env) as session:
-        return _load_config(
-            config_loader=session._get_config_loader(),
-            package_name=session._package_name,
-        )
 
 
 @databricks_commands.command()
@@ -141,10 +96,10 @@ def bundle(
         )
 
     MSG = "Create Asset Bundle Resources"
-    overrides = _load_env_config(metadata, env, conf, MSG)
-    workflows = generate_resources(pipelines, metadata, env, conf, pipeline, MSG)
-    bundle_resources = apply_resource_overrides(workflows, overrides, default)
-    save_bundled_resources(bundle_resources, metadata, overwrite)
+    controller = BundleController(metadata, env, conf)
+    resources = controller.generate_resources(pipeline, MSG)
+    bundle_resources = controller.apply_overrides(resources, default)
+    controller.save_bundled_resources(bundle_resources, overwrite)
 
 
 @databricks_commands.command()
@@ -182,17 +137,10 @@ def deploy(
     validate_databricks_config(metadata)
     build_project(metadata, MSG=MSG)
     if bundle is True:
-        overrides = _load_env_config(metadata, env, conf, MSG)
-        workflows = generate_resources(
-            pipelines=pipelines,
-            metadata=metadata,
-            env=env,
-            conf=conf,
-            pipeline_name=pipeline,
-            MSG=MSG,
-        )
-        bundle_resources = apply_resource_overrides(workflows, overrides, "default")
-        save_bundled_resources(bundle_resources, metadata, True)
+        bundle_controller = BundleController(metadata)
+        workflows = bundle_controller.generate_resources(pipeline, MSG)
+        bundle_resources = bundle_controller.apply_overrides(workflows, "default")
+        bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
     create_dbfs_dir(metadata, MSG=MSG)
     upload_project_config(metadata, conf, MSG=MSG)
     upload_project_data(metadata, MSG=MSG)

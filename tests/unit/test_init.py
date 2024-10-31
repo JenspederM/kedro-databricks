@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from kedro_databricks.init import NODE_TYPE_MAP, InitController
 from kedro_databricks.utils import has_databricks_cli
 

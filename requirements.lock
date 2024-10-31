@@ -52,7 +52,7 @@ importlib-resources==6.4.5
     # via kedro
 jinja2==3.1.4
     # via cookiecutter
-kedro==0.19.8
+kedro==0.19.9
     # via kedro-databricks
     # via kedro-telemetry
 kedro-telemetry==0.6.0
