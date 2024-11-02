@@ -31,5 +31,5 @@ jobs:
           rye test -- ./tests/unit
       - name: Print Version Changes
         run: |
-          source .venv/bin/activate
+          pip install commitizen
           cz bump --dry-run
