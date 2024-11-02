@@ -79,7 +79,13 @@ def init(
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("--overwrite", default=False, help="Overwrite the existing resources")
+@click.option(
+    "--overwrite",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Overwrite the existing resources",
+)
 @click.pass_obj
 def bundle(
     metadata: ProjectMetadata,
