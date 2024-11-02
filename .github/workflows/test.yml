@@ -32,4 +32,4 @@ jobs:
       - name: Print Version Changes
         run: |
           source .venv/bin/activate
-          rye run cz bump --dry-run
+          cz bump --dry-run
