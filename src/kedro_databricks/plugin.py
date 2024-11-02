@@ -79,7 +79,13 @@ def init(
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("--overwrite", default=False, help="Overwrite the existing resources")
+@click.option(
+    "--overwrite",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Overwrite the existing resources",
+)
 @click.pass_obj
 def bundle(
     metadata: ProjectMetadata,
@@ -137,7 +143,7 @@ def deploy(
     validate_databricks_config(metadata)
     build_project(metadata, MSG=MSG)
     if bundle is True:
-        bundle_controller = BundleController(metadata)
+        bundle_controller = BundleController(metadata, env, conf)
         workflows = bundle_controller.generate_resources(pipeline, MSG)
         bundle_resources = bundle_controller.apply_overrides(workflows, "default")
         bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
