@@ -137,7 +137,7 @@ def deploy(
     validate_databricks_config(metadata)
     build_project(metadata, MSG=MSG)
     if bundle is True:
-        bundle_controller = BundleController(metadata)
+        bundle_controller = BundleController(metadata, env, conf)
         workflows = bundle_controller.generate_resources(pipeline, MSG)
         bundle_resources = bundle_controller.apply_overrides(workflows, "default")
         bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)

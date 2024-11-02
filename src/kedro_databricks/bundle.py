@@ -25,17 +25,27 @@ DEFAULT = "default"
 
 
 class BundleController:
-    def __init__(self, metadata: ProjectMetadata, env: str, conf: str = None) -> None:
+    def __init__(
+        self, metadata: ProjectMetadata, env: str, config_dir: str = None
+    ) -> None:
+        """Create a new instance of the BundleController.
+
+        Args:
+            metadata (ProjectMetadata): The metadata of the project
+            env (str): The name of the kedro environment
+            config_dir (str, optional): The name of the configuration directory. Defaults to None.
+        """
+
         self.metadata = metadata
         self.env = env
-        self._conf = conf
+        self._conf = config_dir
         self.project_name = metadata.project_name
         self.project_path = metadata.project_path
         self.package_name = metadata.package_name
         self.pipelines = pipelines
         self.log = logging.getLogger(self.package_name)
-        self.remote_conf_dir = f"/dbfs/FileStore/{self.package_name}/{conf}"
-        self.local_conf_dir = self.metadata.project_path / conf / env
+        self.remote_conf_dir = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
+        self.local_conf_dir = self.metadata.project_path / config_dir / env
         self.conf = self._load_env_config(MSG="Loading configuration")
 
     def generate_resources(
