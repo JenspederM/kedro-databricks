@@ -1,3 +1,14 @@
+## 0.6.2 (2024-11-02)
+
+### Fix
+
+- make overwrite arg a flag
+- pass init args to bundle controller in deploy
+
+### Refactor
+
+- make bundle a controller
+
 ## 0.6.1 (2024-10-26)
 
 ### Refactor
