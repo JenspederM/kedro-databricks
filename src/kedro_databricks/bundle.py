@@ -219,6 +219,7 @@ class BundleController:
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
 
+        depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
