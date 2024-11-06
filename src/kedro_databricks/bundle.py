@@ -48,6 +48,37 @@ class BundleController:
         self.local_conf_dir = self.metadata.project_path / config_dir / env
         self.conf = self._load_env_config(MSG="Loading configuration")
 
+    def _make_workflow_name(self, pipeline_name: str) -> str:
+        """Create a name for the Databricks workflow.
+
+        Args:
+            pipeline_name (str): The name of the pipeline
+
+        Returns:
+            str: The name of the workflow
+        """
+        if pipeline_name == "__default__":
+            return self.package_name
+        return f"{self.package_name}_{pipeline_name}"
+
+    def _workflows_to_resources(
+        self, workflows: dict[str, dict[str, Any]], MSG: str = ""
+    ) -> dict[str, dict[str, Any]]:
+        """Convert Databricks workflows to Databricks resources.
+
+        Args:
+            workflows (Dict[str, Dict[str, Any]]): A dictionary of Databricks workflows
+
+        Returns:
+            Dict[str, Dict[str, Any]]: A dictionary of Databricks resources
+        """
+        resources = {
+            name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
+        }
+        self.log.debug(resources)
+        self.log.info(f"{MSG}: Databricks resources successfully generated.")
+        return resources
+
     def generate_resources(
         self, pipeline_name: str | None = None, MSG: str = ""
     ) -> dict[str, dict[str, Any]]:
@@ -66,29 +97,23 @@ class BundleController:
             dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
         """
         workflows = {}
+        pipeline = self.pipelines.get(pipeline_name)
+        if pipeline:
+            self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
+            name = self._make_workflow_name(pipeline_name)
+            workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
+            return self._workflows_to_resources(workflows, MSG)
+
         for pipe_name, pipeline in self.pipelines.items():
-            if pipeline_name is not None and pipe_name != pipeline_name:
-                continue
             if len(pipeline.nodes) == 0:
                 continue
-
-            if pipe_name == "__default__":
-                name = self.package_name
-            else:
-                name = f"{self.package_name}_{pipe_name}"
-
+            name = self._make_workflow_name(pipe_name)
             workflow = self._create_workflow(name=name, pipeline=pipeline)
             self.log.debug(f"Workflow '{name}' successfully created.")
             self.log.debug(workflow)
             workflows[name] = workflow
 
-        resources = {
-            name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
-        }
-
-        self.log.info(f"{MSG}: Databricks resources successfully generated.")
-        self.log.debug(resources)
-        return resources
+        return self._workflows_to_resources(workflows, MSG)
 
     def apply_overrides(self, resources: dict[str, Any], default_key: str = DEFAULT):
         """Apply overrides to the Databricks resources.

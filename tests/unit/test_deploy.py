@@ -5,11 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from kedro_databricks.deploy import (
-    build_project,
-    go_to_project,
-    validate_databricks_config,
-)
+from kedro_databricks.deploy import DeployController
 
 
 class MetadataMock:
@@ -27,26 +23,30 @@ class MetadataMock:
 
 
 def test_deploy_go_to_project(metadata):
-    project_path = go_to_project(metadata)
+    controller = DeployController(metadata)
+    project_path = controller.go_to_project()
     assert os.getcwd() == str(project_path), "Failed to change to project directory"
     with pytest.raises(FileNotFoundError):
-        go_to_project(
+        controller = DeployController(
             MetadataMock(
                 "/tmp/non_existent_path" + str(os.getpid()), "non_existent_project"
             )
         )
+        controller.go_to_project()
 
 
 def test_deploy_validate_databricks_config(metadata):
-    project_path = go_to_project(metadata)
+    controller = DeployController(metadata)
+    project_path = controller.go_to_project()
     (project_path / "databricks.yml").unlink(missing_ok=True)
     with pytest.raises(FileNotFoundError):
-        validate_databricks_config(metadata)
+        controller.validate_databricks_config()
     with open(project_path / "databricks.yml", "w") as f:
         f.write("")
-    validate_databricks_config(metadata)
+    controller.validate_databricks_config()
 
 
 def test_deploy_build_project(metadata):
-    result = build_project(metadata, "Test Build Project")
+    controller = DeployController(metadata)
+    result = controller.build_project()
     assert result.returncode == 0, (result.returncode, result.stdout)
