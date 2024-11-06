@@ -10,15 +10,7 @@ from kedro.framework.startup import ProjectMetadata
 from kedro_databricks.bundle import (
     BundleController,
 )
-from kedro_databricks.deploy import (
-    build_project,
-    create_dbfs_dir,
-    deploy_project,
-    go_to_project,
-    upload_project_config,
-    upload_project_data,
-    validate_databricks_config,
-)
+from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import InitController
 from kedro_databricks.utils import require_databricks_run_script
 
@@ -136,20 +128,21 @@ def deploy(
     debug: bool,
 ):
     """Deploy the asset bundle to Databricks"""
-    MSG = "Deploying to Databricks"
+
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
-    go_to_project(metadata)
-    validate_databricks_config(metadata)
-    build_project(metadata, MSG=MSG)
+    controller = DeployController(metadata)
+    controller.go_to_project()
+    controller.validate_databricks_config()
+    controller.build_project()
     if bundle is True:
         bundle_controller = BundleController(metadata, env, conf)
-        workflows = bundle_controller.generate_resources(pipeline, MSG)
+        workflows = bundle_controller.generate_resources(pipeline)
         bundle_resources = bundle_controller.apply_overrides(workflows, "default")
         bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
-    create_dbfs_dir(metadata, MSG=MSG)
-    upload_project_config(metadata, conf, MSG=MSG)
-    upload_project_data(metadata, MSG=MSG)
+    controller.create_dbfs_dir()
+    controller.upload_project_config(conf)
+    controller.upload_project_data()
     if target is None:
         target = env
-    deploy_project(metadata, MSG=MSG, target=target, debug=debug)
+    controller.deploy_project(target=target, debug=debug)
