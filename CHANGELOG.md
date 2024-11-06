@@ -1,3 +1,9 @@
+## 0.6.3 (2024-11-06)
+
+### Refactor
+
+- **bundle**: sort task dependencies
+
 ## 0.6.2 (2024-11-02)
 
 ### Fix
