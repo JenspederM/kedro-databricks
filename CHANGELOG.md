@@ -1,3 +1,10 @@
+## 0.6.4 (2024-11-06)
+
+### Refactor
+
+- simplify generate_resources
+- make deploy a controller
+
 ## 0.6.3 (2024-11-06)
 
 ### Refactor
