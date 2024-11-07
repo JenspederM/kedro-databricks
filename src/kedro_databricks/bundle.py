@@ -17,6 +17,7 @@ from kedro_databricks.utils import (
     _remove_nulls_from_dict,
     _sort_dict,
     get_entry_point,
+    make_workflow_name,
     require_databricks_run_script,
     update_list,
 )
@@ -47,19 +48,6 @@ class BundleController:
         self.remote_conf_dir = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
         self.local_conf_dir = self.metadata.project_path / config_dir / env
         self.conf = self._load_env_config(MSG="Loading configuration")
-
-    def _make_workflow_name(self, pipeline_name: str) -> str:
-        """Create a name for the Databricks workflow.
-
-        Args:
-            pipeline_name (str): The name of the pipeline
-
-        Returns:
-            str: The name of the workflow
-        """
-        if pipeline_name == "__default__":
-            return self.package_name
-        return f"{self.package_name}_{pipeline_name}"
 
     def _workflows_to_resources(
         self, workflows: dict[str, dict[str, Any]], MSG: str = ""
@@ -100,14 +88,14 @@ class BundleController:
         pipeline = self.pipelines.get(pipeline_name)
         if pipeline:
             self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
-            name = self._make_workflow_name(pipeline_name)
+            name = make_workflow_name(pipeline_name)
             workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
             return self._workflows_to_resources(workflows, MSG)
 
         for pipe_name, pipeline in self.pipelines.items():
             if len(pipeline.nodes) == 0:
                 continue
-            name = self._make_workflow_name(pipe_name)
+            name = make_workflow_name(pipe_name)
             workflow = self._create_workflow(name=name, pipeline=pipeline)
             self.log.debug(f"Workflow '{name}' successfully created.")
             self.log.debug(workflow)
