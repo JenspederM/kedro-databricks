@@ -88,14 +88,14 @@ class BundleController:
         pipeline = self.pipelines.get(pipeline_name)
         if pipeline:
             self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
-            name = make_workflow_name(pipeline_name)
+            name = make_workflow_name(self.package_name, pipeline_name)
             workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
             return self._workflows_to_resources(workflows, MSG)
 
         for pipe_name, pipeline in self.pipelines.items():
             if len(pipeline.nodes) == 0:
                 continue
-            name = make_workflow_name(pipe_name)
+            name = make_workflow_name(self.package_name, pipe_name)
             workflow = self._create_workflow(name=name, pipeline=pipeline)
             self.log.debug(f"Workflow '{name}' successfully created.")
             self.log.debug(workflow)
