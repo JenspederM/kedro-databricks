@@ -89,9 +89,13 @@ def test_bundle_init(metadata):
         _reset_init(metadata)
         controller.bundle_init()
         bundle_path = Path(metadata.project_path) / "databricks.yml"
-        assert bundle_path.exists(), "Bundle template not written"
+        assert (
+            bundle_path.exists()
+        ), f"Bundle template not written - {list(bundle_path.parent.rglob('*'))}"
         bundle = yaml.load(bundle_path.read_text(), Loader=yaml.FullLoader)
-        assert bundle is not None, "Bundle template not written"
+        assert (
+            bundle is not None
+        ), f"Bundle template failed to load - {bundle_path.read_text()}"
         assert bundle.get("bundle", {}).get("name") == metadata.package_name, bundle
 
         try:
