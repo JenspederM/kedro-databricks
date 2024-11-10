@@ -5,9 +5,11 @@ import os
 import tarfile
 from pathlib import Path
 
+from databricks.sdk import WorkspaceClient
+from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import run_cmd
+from kedro_databricks.utils import make_workflow_name, run_cmd
 
 _INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
@@ -126,7 +128,6 @@ class DeployController:
 
     def build_project(self):  # pragma: no cover
         """Build the project."""
-        self.log = logging.getLogger(self.package_name)
         self.log.info(f"{self._msg}: Building the project")
         self.go_to_project()
         build_cmd = ["kedro", "package"]
@@ -147,4 +148,56 @@ class DeployController:
         if debug:
             deploy_cmd.append("--debug")
         run_cmd(deploy_cmd, msg=self._msg)
-        self.log.info(f"{self._msg}: Deployment to Databricks succeeded")
+        self.log_deployed_resources()
+
+    def log_deployed_resources(self, pipelines=kedro_pipelines) -> None:
+        """Print the pipelines."""
+        w = WorkspaceClient()
+
+        user = w.current_user.me()
+        job_host = f"{w.config.host}/jobs"
+        username = user.user_name.split("@")[0]
+        all_jobs = {job.settings.name: job for job in w.jobs.list()}
+        jobs = []
+        dev_jobs = set()
+        for job_name, job in all_jobs.items():
+            is_dev = job_name.startswith("[dev")
+            for pipeline_name in pipelines:
+                if make_workflow_name(self.package_name, pipeline_name) in job_name:
+                    n = job_name.split(" - ")[0]
+                    line = f"{n} - {job_host}/{job.job_id}"
+                    if is_dev and username in job_name:
+                        dev_jobs.add(line)
+                    elif not is_dev:
+                        jobs.add(line)
+
+        if len(dev_jobs) > 0:
+            _job_str = "\n\t".join(dev_jobs)
+            self.log.info(
+                f"{self._msg}: Successfully Deployed Development Jobs\n\t{_job_str}"
+            )
+        if len(jobs) > 0:
+            _job_str = "\n\t".join(jobs)
+            self.log.info(
+                f"{self._msg}: Successfully Deployed Project Jobs\n\t{_job_str}"
+            )
+
+
+if __name__ == "__main__":
+
+    class MetadataMock:
+        def __init__(self, path: str, name: str):
+            self.project_path = Path(path)
+            self.project_name = name
+            self.package_name = name
+            self.source_dir = "src"
+            self.env = "local"
+            self.config_file = "conf/base"
+            self.project_version = "0.16.0"
+            self.project_description = "Test Project Description"
+            self.project_author = "Test Author"
+            self.project_author_email = "author@email.com"
+
+    controller = DeployController(MetadataMock("/tmp", "fake_project"))
+
+    controller.log_deployed_resources({"__default__": None})
