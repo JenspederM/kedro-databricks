@@ -23,6 +23,7 @@ binaryornot==0.4.4
 build==1.2.2.post1
     # via kedro
 cachetools==5.5.0
+    # via google-auth
     # via kedro
 certifi==2024.8.30
     # via requests
@@ -35,6 +36,8 @@ click==8.1.7
     # via kedro
 cookiecutter==2.6.0
     # via kedro
+databricks-sdk==0.36.0
+    # via kedro-databricks
 dynaconf==3.2.6
     # via kedro
 fsspec==2024.10.0
@@ -43,6 +46,8 @@ gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
     # via kedro
+google-auth==2.36.0
+    # via databricks-sdk
 idna==3.10
     # via requests
 importlib-metadata==8.5.0
@@ -80,6 +85,11 @@ pluggy==1.5.0
     # via kedro
 pre-commit-hooks==5.0.0
     # via kedro
+pyasn1==0.6.1
+    # via pyasn1-modules
+    # via rsa
+pyasn1-modules==0.4.1
+    # via google-auth
 pygments==2.18.0
     # via rich
 pyproject-hooks==1.2.0
@@ -96,12 +106,15 @@ pyyaml==6.0.2
     # via omegaconf
 requests==2.32.3
     # via cookiecutter
+    # via databricks-sdk
     # via kedro-telemetry
 rich==13.9.4
     # via cookiecutter
     # via kedro
 rope==1.13.0
     # via kedro
+rsa==4.9
+    # via google-auth
 ruamel-yaml==0.18.6
     # via pre-commit-hooks
 ruamel-yaml-clib==0.2.12
