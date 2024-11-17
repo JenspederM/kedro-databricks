@@ -89,9 +89,17 @@ def test_bundle_init(metadata):
         _reset_init(metadata)
         controller.bundle_init()
         bundle_path = Path(metadata.project_path) / "databricks.yml"
-        assert (
-            bundle_path.exists()
-        ), f"Bundle template not written - {list(bundle_path.parent.rglob('*'))}"
+        if not bundle_path.exists():
+            files = [
+                f.relative_to(metadata.project_path).as_posix()
+                for f in metadata.project_path.iterdir()
+            ]
+            pytest.fail(
+                "Bundle file not written - found files:\n\t{}".format(
+                    "\n\t".join(files)
+                )
+            )
+
         bundle = yaml.load(bundle_path.read_text(), Loader=yaml.FullLoader)
         assert (
             bundle is not None
