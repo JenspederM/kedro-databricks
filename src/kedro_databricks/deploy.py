@@ -150,7 +150,7 @@ class DeployController:
         run_cmd(deploy_cmd, msg=self._msg)
         self.log_deployed_resources()
 
-    def log_deployed_resources(self, pipelines=kedro_pipelines) -> None:
+    def log_deployed_resources(self, pipelines=kedro_pipelines) -> dict[str, set[str]]:
         """Print the pipelines."""
         w = WorkspaceClient()
 
@@ -181,6 +181,8 @@ class DeployController:
             self.log.info(
                 f"{self._msg}: Successfully Deployed Project Jobs\n\t{_job_str}"
             )
+
+        return {"dev_jobs": dev_jobs, "jobs": jobs}
 
 
 if __name__ == "__main__":
