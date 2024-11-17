@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import tarfile
+from collections import namedtuple
 from pathlib import Path
 
 from databricks.sdk import WorkspaceClient
@@ -20,6 +21,8 @@ You can initialize the Databricks bundle by running:
 kedro databricks init
 ```
 """
+
+JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 
 
 class DeployController:
@@ -148,41 +151,45 @@ class DeployController:
         if debug:
             deploy_cmd.append("--debug")
         run_cmd(deploy_cmd, msg=self._msg)
-        self.log_deployed_resources()
+        self.log_deployed_resources(only_dev=target in ["dev", "local"])
 
-    def log_deployed_resources(self, pipelines=kedro_pipelines) -> dict[str, set[str]]:
+    def log_deployed_resources(
+        self, pipelines=kedro_pipelines, only_dev=False
+    ) -> dict[str, set[str]]:
         """Print the pipelines."""
         w = WorkspaceClient()
 
+        jobs = self._gather_jobs(pipelines, w)
+
+        self.log.info(f"{self._msg}: Successfully Deployed Jobs")
+        for job in jobs:
+            if only_dev and not job.is_dev:
+                continue
+            self.log.info(f"Run '{job.name}' at {job.url}")
+
+        return jobs
+
+    def _gather_jobs(self, pipelines, w):
         user = w.current_user.me()
         job_host = f"{w.config.host}/jobs"
         username = user.user_name.split("@")[0]
         all_jobs = {job.settings.name: job for job in w.jobs.list()}
-        jobs = []
-        dev_jobs = set()
+        jobs = set()
         for job_name, job in all_jobs.items():
             is_dev = job_name.startswith("[dev")
-            for pipeline_name in pipelines:
-                if make_workflow_name(self.package_name, pipeline_name) in job_name:
-                    n = job_name.split(" - ")[0]
-                    line = f"{n} - {job_host}/{job.job_id}"
-                    if is_dev and username in job_name:
-                        dev_jobs.add(line)
-                    elif not is_dev:
-                        jobs.add(line)
+            is_valid = self._is_valid_job(pipelines, job_name)
+            if (is_dev and username not in job_name) or not is_valid:
+                continue
+            n = job_name.split(" - ")[0]
+            link = JobLink(name=n, url=f"{job_host}/{job.job_id}", is_dev=is_dev)
+            jobs.add(link)
+        return jobs
 
-        if len(dev_jobs) > 0:
-            _job_str = "\n\t".join(dev_jobs)
-            self.log.info(
-                f"{self._msg}: Successfully Deployed Development Jobs\n\t{_job_str}"
-            )
-        if len(jobs) > 0:
-            _job_str = "\n\t".join(jobs)
-            self.log.info(
-                f"{self._msg}: Successfully Deployed Project Jobs\n\t{_job_str}"
-            )
-
-        return {"dev_jobs": dev_jobs, "jobs": jobs}
+    def _is_valid_job(self, pipelines, job_name):
+        return any(
+            make_workflow_name(self.package_name, pipeline_name) in job_name
+            for pipeline_name in pipelines
+        )
 
 
 if __name__ == "__main__":
