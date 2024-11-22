@@ -133,7 +133,7 @@ class DeployController:
         result = run_cmd(build_cmd, msg=self._msg)
         return result
 
-    def deploy_project(self, target: str, debug: bool = False):
+    def deploy_project(self, target: str, var: str = None, debug: bool = False):
         """Deploy the project to Databricks.
 
         Args:
@@ -144,6 +144,8 @@ class DeployController:
             f"{self._msg}: Running `databricks bundle deploy --target {target}`"
         )
         deploy_cmd = ["databricks", "bundle", "deploy", "--target", target]
+        if var:
+            deploy_cmd.extend(["--var", var])
         if debug:
             deploy_cmd.append("--debug")
         run_cmd(deploy_cmd, msg=self._msg)
