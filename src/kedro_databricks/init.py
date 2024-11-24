@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import shutil
+import subprocess
 import tempfile
 from importlib import resources
 from pathlib import Path
@@ -66,19 +67,23 @@ class InitController:
         # This is a bit hacky, but it allows the plugin to tap into the authentication
         # mechanism of the databricks CLI and thereby avoid the need to store credentials
         # in the plugin.
-        run_cmd(
-            [
-                "databricks",
-                "bundle",
-                "init",
-                assets_dir.as_posix(),
-                "--config-file",
-                template_params.name,
-                "--output-dir",
-                self.project_path.as_posix(),
-            ],
-            msg=MSG,
-        )
+        init_cmd = [
+            "databricks",
+            "bundle",
+            "init",
+            assets_dir.as_posix(),
+            "--config-file",
+            template_params.name,
+            "--output-dir",
+            self.project_path.as_posix(),
+        ]
+        try:
+            run_cmd(init_cmd, msg=MSG, warn=True)
+        except subprocess.CalledProcessError as e:  # pragma: no cover
+            if "Asset Bundle successfully created for project" not in e.stderr.decode(
+                "utf-8"
+            ):
+                raise e
         self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")
 
         shutil.rmtree(assets_dir)

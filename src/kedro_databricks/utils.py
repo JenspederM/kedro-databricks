@@ -88,6 +88,20 @@ def run_cmd(
             raise Exception(f"{msg}: {e}")
 
 
+def make_workflow_name(package_name, pipeline_name: str) -> str:
+    """Create a name for the Databricks workflow.
+
+    Args:
+        pipeline_name (str): The name of the pipeline
+
+    Returns:
+        str: The name of the workflow
+    """
+    if pipeline_name == "__default__":
+        return package_name
+    return f"{package_name}_{pipeline_name}"
+
+
 def update_list(
     old: list[dict[str, Any]],
     new: list[dict[str, Any]],

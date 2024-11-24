@@ -12,48 +12,23 @@
 -e file:.
 antlr4-python3-runtime==4.9.3
     # via omegaconf
-anyio==4.6.2.post1
-    # via httpx
-    # via jupyter-server
 appdirs==1.4.4
     # via kedro-telemetry
-appnope==0.1.4
-    # via ipykernel
 argcomplete==3.5.1
     # via commitizen
-argon2-cffi==23.1.0
-    # via jupyter-server
-argon2-cffi-bindings==21.2.0
-    # via argon2-cffi
 arrow==1.3.0
     # via cookiecutter
-    # via isoduration
-asttokens==2.4.1
-    # via stack-data
-async-lru==2.0.4
-    # via jupyterlab
 attrs==24.2.0
-    # via jsonschema
     # via kedro
-    # via referencing
-babel==2.16.0
-    # via jupyterlab-server
-beautifulsoup4==4.12.3
-    # via nbconvert
 binaryornot==0.4.4
     # via cookiecutter
-bleach==6.2.0
-    # via nbconvert
 build==1.2.2.post1
     # via kedro
 cachetools==5.5.0
+    # via google-auth
     # via kedro
 certifi==2024.8.30
-    # via httpcore
-    # via httpx
     # via requests
-cffi==1.17.1
-    # via argon2-cffi-bindings
 cfgv==3.4.0
     # via pre-commit
 chardet==5.2.0
@@ -66,125 +41,46 @@ click==8.1.7
     # via kedro
 colorama==0.4.6
     # via commitizen
-comm==0.2.2
-    # via ipykernel
 commitizen==3.30.0
 cookiecutter==2.6.0
     # via kedro
 coverage==7.6.4
     # via pytest-cov
-debugpy==1.8.7
-    # via ipykernel
+databricks-sdk==0.36.0
+    # via kedro-databricks
 decli==0.6.2
     # via commitizen
-decorator==5.1.1
-    # via ipython
-defusedxml==0.7.1
-    # via nbconvert
 distlib==0.3.9
     # via virtualenv
 dynaconf==3.2.6
     # via kedro
 exceptiongroup==1.2.2
-    # via anyio
-    # via ipython
     # via pytest
-executing==2.1.0
-    # via stack-data
-fastjsonschema==2.20.0
-    # via nbformat
 filelock==3.16.1
     # via virtualenv
-fqdn==1.5.1
-    # via jsonschema
 fsspec==2024.10.0
     # via kedro
 gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
     # via kedro
-h11==0.14.0
-    # via httpcore
-httpcore==1.0.6
-    # via httpx
-httpx==0.27.2
-    # via jupyterlab
+google-auth==2.36.0
+    # via databricks-sdk
 identify==2.6.1
     # via pre-commit
 idna==3.10
-    # via anyio
-    # via httpx
-    # via jsonschema
     # via requests
 importlib-metadata==8.5.0
     # via build
     # via commitizen
-    # via jupyter-client
-    # via jupyter-lsp
-    # via jupyterlab
-    # via jupyterlab-server
     # via kedro
-    # via nbconvert
 importlib-resources==6.4.5
     # via kedro
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.29.5
-    # via jupyterlab
-ipython==8.18.0
-    # via ipykernel
-isoduration==20.11.0
-    # via jsonschema
-jedi==0.19.1
-    # via ipython
 jinja2==3.1.4
     # via commitizen
     # via cookiecutter
-    # via jupyter-server
-    # via jupyterlab
-    # via jupyterlab-server
-    # via nbconvert
-json5==0.9.25
-    # via jupyterlab-server
-jsonpointer==3.0.0
-    # via jsonschema
-jsonschema==4.23.0
-    # via jupyter-events
-    # via jupyterlab-server
-    # via nbformat
-jsonschema-specifications==2024.10.1
-    # via jsonschema
-jupyter-client==8.6.3
-    # via ipykernel
-    # via jupyter-server
-    # via nbclient
-jupyter-core==5.7.2
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
-    # via jupyterlab
-    # via nbclient
-    # via nbconvert
-    # via nbformat
-jupyter-events==0.10.0
-    # via jupyter-server
-jupyter-lsp==2.2.5
-    # via jupyterlab
-jupyter-server==2.14.2
-    # via jupyter-lsp
-    # via jupyterlab
-    # via jupyterlab-server
-    # via notebook
-    # via notebook-shim
-jupyter-server-terminals==0.5.3
-    # via jupyter-server
-jupyterlab==4.2.5
-    # via notebook
-jupyterlab-pygments==0.3.0
-    # via nbconvert
-jupyterlab-server==2.27.3
-    # via jupyterlab
-    # via notebook
 kedro==0.19.9
     # via kedro-databricks
     # via kedro-telemetry
@@ -194,58 +90,24 @@ markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.2
     # via jinja2
-    # via nbconvert
-matplotlib-inline==0.1.7
-    # via ipykernel
-    # via ipython
 mdurl==0.1.2
     # via markdown-it-py
 mergedeep==1.3.4
     # via kedro-databricks
-mistune==3.0.2
-    # via nbconvert
 more-itertools==10.5.0
     # via kedro
-nbclient==0.10.0
-    # via nbconvert
-nbconvert==7.16.4
-    # via jupyter-server
-nbformat==5.10.4
-    # via jupyter-server
-    # via nbclient
-    # via nbconvert
-nest-asyncio==1.6.0
-    # via ipykernel
 nodeenv==1.9.1
     # via pre-commit
-notebook==7.2.2
-notebook-shim==0.2.4
-    # via jupyterlab
-    # via notebook
 omegaconf==2.3.0
     # via kedro
-overrides==7.7.0
-    # via jupyter-server
 packaging==24.1
     # via build
     # via commitizen
-    # via ipykernel
-    # via jupyter-server
-    # via jupyterlab
-    # via jupyterlab-server
-    # via nbconvert
     # via pytest
     # via pytoolconfig
-pandocfilters==1.5.1
-    # via nbconvert
 parse==1.20.2
     # via kedro
-parso==0.8.4
-    # via jedi
-pexpect==4.9.0
-    # via ipython
 platformdirs==4.3.6
-    # via jupyter-core
     # via pytoolconfig
     # via virtualenv
 pluggy==1.5.0
@@ -254,23 +116,14 @@ pluggy==1.5.0
 pre-commit==4.0.1
 pre-commit-hooks==5.0.0
     # via kedro
-prometheus-client==0.21.0
-    # via jupyter-server
 prompt-toolkit==3.0.36
-    # via ipython
     # via questionary
-psutil==6.1.0
-    # via ipykernel
-ptyprocess==0.7.0
-    # via pexpect
-    # via terminado
-pure-eval==0.2.3
-    # via stack-data
-pycparser==2.22
-    # via cffi
+pyasn1==0.6.1
+    # via pyasn1-modules
+    # via rsa
+pyasn1-modules==0.4.1
+    # via google-auth
 pygments==2.18.0
-    # via ipython
-    # via nbconvert
     # via rich
 pyproject-hooks==1.2.0
     # via build
@@ -279,9 +132,6 @@ pytest==8.3.3
 pytest-cov==6.0.0
 python-dateutil==2.9.0.post0
     # via arrow
-    # via jupyter-client
-python-json-logger==2.0.7
-    # via jupyter-events
 python-slugify==8.0.4
     # via cookiecutter
 pytoolconfig==1.3.1
@@ -289,124 +139,57 @@ pytoolconfig==1.3.1
 pyyaml==6.0.2
     # via commitizen
     # via cookiecutter
-    # via jupyter-events
     # via kedro
     # via omegaconf
     # via pre-commit
-pyzmq==26.2.0
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
 questionary==2.0.1
     # via commitizen
-referencing==0.35.1
-    # via jsonschema
-    # via jsonschema-specifications
-    # via jupyter-events
 requests==2.32.3
     # via cookiecutter
-    # via jupyterlab-server
+    # via databricks-sdk
     # via kedro-telemetry
-rfc3339-validator==0.1.4
-    # via jsonschema
-    # via jupyter-events
-rfc3986-validator==0.1.1
-    # via jsonschema
-    # via jupyter-events
 rich==13.9.4
     # via cookiecutter
     # via kedro
 rope==1.13.0
     # via kedro
-rpds-py==0.21.0
-    # via jsonschema
-    # via referencing
+rsa==4.9
+    # via google-auth
 ruamel-yaml==0.18.6
     # via pre-commit-hooks
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
 ruff==0.7.2
-send2trash==1.8.3
-    # via jupyter-server
-setuptools==75.3.0
-    # via jupyterlab
 six==1.16.0
-    # via asttokens
     # via python-dateutil
-    # via rfc3339-validator
 smmap==5.0.1
     # via gitdb
-sniffio==1.3.1
-    # via anyio
-    # via httpx
-soupsieve==2.6
-    # via beautifulsoup4
-stack-data==0.6.3
-    # via ipython
 termcolor==2.5.0
     # via commitizen
-terminado==0.18.1
-    # via jupyter-server
-    # via jupyter-server-terminals
 text-unidecode==1.3
     # via python-slugify
-tinycss2==1.4.0
-    # via nbconvert
 toml==0.10.2
     # via kedro
 tomli==2.0.2
     # via build
     # via coverage
-    # via jupyterlab
     # via pre-commit-hooks
     # via pytest
     # via pytoolconfig
 tomlkit==0.13.2
     # via commitizen
     # via kedro-databricks
-tornado==6.4.1
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
-    # via jupyterlab
-    # via notebook
-    # via terminado
-traitlets==5.14.3
-    # via comm
-    # via ipykernel
-    # via ipython
-    # via jupyter-client
-    # via jupyter-core
-    # via jupyter-events
-    # via jupyter-server
-    # via jupyterlab
-    # via matplotlib-inline
-    # via nbclient
-    # via nbconvert
-    # via nbformat
 types-python-dateutil==2.9.0.20241003
     # via arrow
 typing-extensions==4.12.2
-    # via anyio
-    # via async-lru
-    # via ipython
     # via kedro
     # via rich
-uri-template==1.3.0
-    # via jsonschema
 urllib3==2.2.3
     # via requests
 virtualenv==20.27.1
     # via pre-commit
 wcwidth==0.2.13
     # via prompt-toolkit
-webcolors==24.8.0
-    # via jsonschema
-webencodings==0.5.1
-    # via bleach
-    # via tinycss2
-websocket-client==1.8.0
-    # via jupyter-server
 zipp==3.20.2
     # via importlib-metadata
     # via importlib-resources
