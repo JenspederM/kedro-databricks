@@ -1,10 +1,10 @@
 from kedro_databricks.plugin import commands
-from tests.utils import _reset_init
+from tests.utils import reset_init
 
 
 def test_databricks_init(kedro_project, cli_runner, metadata):
     """Test the `init` command"""
-    _reset_init(metadata)
+    reset_init(metadata)
     command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=metadata)
 
