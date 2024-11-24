@@ -7,11 +7,7 @@ import yaml
 
 from kedro_databricks.init import NODE_TYPE_MAP, InitController
 from kedro_databricks.utils import has_databricks_cli
-
-
-def _reset_init(metadata):
-    (metadata.project_path / "databricks.yml").unlink(missing_ok=True)
-    (metadata.project_path / "conf" / "base" / "databricks.yml").unlink(missing_ok=True)
+from tests.utils import reset_init
 
 
 def _write_dummy_catalog(catalog_path: Path):
@@ -86,7 +82,7 @@ def test_bundle_init(metadata):
         with pytest.raises(Exception):
             controller.bundle_init()
     else:
-        _reset_init(metadata)
+        reset_init(metadata)
         controller.bundle_init()
         bundle_path = Path(metadata.project_path) / "databricks.yml"
         if not bundle_path.exists():

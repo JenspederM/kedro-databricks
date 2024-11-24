@@ -1,10 +1,10 @@
 from kedro_databricks.plugin import commands
-from tests.utils import _reset_init
+from tests.utils import reset_init
 
 
 def test_deploy(cli_runner, metadata):
     """Test the `deploy` command"""
-    _reset_init(metadata)
+    reset_init(metadata)
     deploy_fail = ["databricks", "deploy"]
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
@@ -24,7 +24,7 @@ def test_deploy(cli_runner, metadata):
 
 def test_deploy_with_conf(cli_runner, metadata):
     """Test the `deploy` command"""
-    _reset_init(metadata)
+    reset_init(metadata)
     deploy_fail = ["databricks", "deploy"]
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
