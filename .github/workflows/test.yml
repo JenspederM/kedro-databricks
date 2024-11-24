@@ -25,7 +25,12 @@ jobs:
         run: rye add kedro==${{ matrix.kedro_version }}
       - name: Lint code
         run: rye lint
-      - name: Run tests
+      - name: Run Unit tests
         run: |
           source .venv/bin/activate
           rye test -- ./tests/unit
+      - name: Get Coverage for Unit Tests
+        uses: orgoro/coverage@v3.2
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
