@@ -25,17 +25,22 @@ jobs:
         run: rye add kedro==${{ matrix.kedro_version }}
       - name: Lint code
         run: rye lint
-      # - name: Run Unit tests
-      #   run: |
-      #     source .venv/bin/activate
-      #     rye test -- ./tests/unit --coverage-xml=coverage.xml
       - name: Run Unit tests
-        uses: paambaati/codeclimate-action@v9.0.0
-        env:
-          CC_TEST_REPORTER_ID: da3f5759a5a5a6d46a177034edb82b7874d2936d886cc66e7ad09639498213af # This is not considered a secret
+        run: |
+          source .venv/bin/activate
+          rye test -- ./tests/unit --coverage-xml=coverage.xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
         with:
-          coverageCommand: |
-            source .venv/bin/activate
-            rye test -- ./tests/unit --coverage-xml=coverage.xml
-          debug: true
-          coverageLocations: coverage.xml:coverage.py
+          file: coverage.xml
+          fail_ci_if_error: true
+      - name: Upload coverage to Code Climate
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter format-coverage -t lcov -o coverage/codeclimate.json coverage/lcov.info
+          ./cc-test-reporter upload-coverage
+        env:
+          CC_TEST_REPORTER_ID: da3f5759a5a5a6d46a177034edb82b7874d2936d886cc66e7ad09639498213af
+          GIT_BRANCH: $(Build.SourceBranchName)
+          GIT_COMMIT: $(Build.SourceVersion)
