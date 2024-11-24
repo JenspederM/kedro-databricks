@@ -1,5 +1,8 @@
 name: ci
 on:
+  on_pull_request:
+    branches:
+      - docs/*
   push:
     branches:
       - main
