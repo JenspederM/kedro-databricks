@@ -228,7 +228,7 @@ class BundleController:
             self.env,
         ]
 
-        if require_databricks_run_script():
+        if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
 
