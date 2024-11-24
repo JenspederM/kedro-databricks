@@ -190,23 +190,3 @@ class DeployController:
             make_workflow_name(self.package_name, pipeline_name) in job_name
             for pipeline_name in pipelines
         )
-
-
-if __name__ == "__main__":
-
-    class MetadataMock:
-        def __init__(self, path: str, name: str):
-            self.project_path = Path(path)
-            self.project_name = name
-            self.package_name = name
-            self.source_dir = "src"
-            self.env = "local"
-            self.config_file = "conf/base"
-            self.project_version = "0.16.0"
-            self.project_description = "Test Project Description"
-            self.project_author = "Test Author"
-            self.project_author_email = "author@email.com"
-
-    controller = DeployController(MetadataMock("/tmp", "fake_project"))
-
-    controller.log_deployed_resources({"__default__": None})
