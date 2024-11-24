@@ -40,8 +40,8 @@ python3 -m venv .venv
 # Activate the virtual environment
 source .venv/bin/activate
 # Install the project dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install $WHL --force-reinstall
+pip install --upgrade uv
+uv pip install -r requirements.txt
+uv pip install $WHL --force-reinstall
 code .
 popd
