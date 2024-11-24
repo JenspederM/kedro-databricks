@@ -1,6 +1,6 @@
 name: ci
 on:
-  on_pull_request:
+  pull_request:
     branches:
       - docs/*
   push:
