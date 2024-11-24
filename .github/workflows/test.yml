@@ -1,10 +1,10 @@
 # .github/workflows/ci-cd.yml
 on:
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
-      - "README.md"
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
 
 jobs:
   test:
