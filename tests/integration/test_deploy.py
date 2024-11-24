@@ -1,3 +1,4 @@
+from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
@@ -64,3 +65,9 @@ def test_deploy_with_conf(cli_runner, metadata):
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+
+def test_deploy_log_deployed_resources(metadata):
+    deploy = DeployController(metadata)
+    jobs = deploy.log_deployed_resources()
+    assert len(jobs) > 0, "No jobs found"

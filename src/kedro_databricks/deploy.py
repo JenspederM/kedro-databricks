@@ -155,8 +155,10 @@ class DeployController:
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
 
     def log_deployed_resources(
-        self, pipelines: _ProjectPipelines = kedro_pipelines, only_dev: bool = False
-    ) -> dict[str, set[str]]:
+        self,
+        pipelines: _ProjectPipelines = kedro_pipelines,
+        only_dev: bool = False,
+    ) -> set[JobLink]:
         """Print the pipelines."""
         w = WorkspaceClient()
         job_host = f"{w.config.host}/jobs"
