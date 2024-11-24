@@ -159,24 +159,24 @@ class DeployController:
     ) -> dict[str, set[str]]:
         """Print the pipelines."""
         w = WorkspaceClient()
-
-        jobs = self._gather_jobs(pipelines, w)
-
+        job_host = f"{w.config.host}/jobs"
+        username = w.current_user.me().user_name.split("@")[0]
+        all_jobs = {job.settings.name: job for job in w.jobs.list()}
+        jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         for job in jobs:
             if only_dev and not job.is_dev:
                 continue
             self.log.info(f"Run '{job.name}' at {job.url}")
-
         return jobs
 
-    def _gather_jobs(
-        self, pipelines: _ProjectPipelines, w: WorkspaceClient
+    def _gather_user_jobs(
+        self,
+        all_jobs: dict[str, str],
+        pipelines: _ProjectPipelines,
+        username,
+        job_host,
     ) -> set[JobLink]:
-        user = w.current_user.me()
-        job_host = f"{w.config.host}/jobs"
-        username = user.user_name.split("@")[0]
-        all_jobs = {job.settings.name: job for job in w.jobs.list()}
         jobs = set()
         for job_name, job in all_jobs.items():
             is_dev = job_name.startswith("[dev")
