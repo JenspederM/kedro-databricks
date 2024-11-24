@@ -1,4 +1,5 @@
 site_name: Kedro Databricks
-site_url: https://mydomain.org/mysite
+site_url: https://github.com/JenspederM/kedro-databricks
+repo_url: https://github.com/JenspederM/kedro-databricks
 theme:
   name: material
