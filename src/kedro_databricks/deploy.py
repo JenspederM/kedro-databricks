@@ -7,6 +7,7 @@ from collections import namedtuple
 from pathlib import Path
 
 from databricks.sdk import WorkspaceClient
+from kedro.framework.project import _ProjectPipelines
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
@@ -154,7 +155,7 @@ class DeployController:
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
 
     def log_deployed_resources(
-        self, pipelines=kedro_pipelines, only_dev=False
+        self, pipelines: _ProjectPipelines = kedro_pipelines, only_dev: bool = False
     ) -> dict[str, set[str]]:
         """Print the pipelines."""
         w = WorkspaceClient()
@@ -169,7 +170,9 @@ class DeployController:
 
         return jobs
 
-    def _gather_jobs(self, pipelines, w):
+    def _gather_jobs(
+        self, pipelines: _ProjectPipelines, w: WorkspaceClient
+    ) -> set[JobLink]:
         user = w.current_user.me()
         job_host = f"{w.config.host}/jobs"
         username = user.user_name.split("@")[0]
@@ -185,7 +188,7 @@ class DeployController:
             jobs.add(link)
         return jobs
 
-    def _is_valid_job(self, pipelines, job_name):
+    def _is_valid_job(self, pipelines: _ProjectPipelines, job_name: str) -> bool:
         return any(
             make_workflow_name(self.package_name, pipeline_name) in job_name
             for pipeline_name in pipelines
