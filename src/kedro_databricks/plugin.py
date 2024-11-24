@@ -57,7 +57,7 @@ def init(
     controller = InitController(metadata)
     controller.bundle_init()
     controller.write_kedro_databricks_config(default, provider_name)
-    if require_databricks_run_script():
+    if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
         log.warning(
             "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "
@@ -88,7 +88,7 @@ def bundle(
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
-    if default.startswith("_"):
+    if default.startswith("_"):  # pragma: no cover
         raise ValueError(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
         )

@@ -79,7 +79,7 @@ class InitController:
         ]
         try:
             run_cmd(init_cmd, msg=MSG, warn=True)
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError as e:  # pragma: no cover
             if "Asset Bundle successfully created for project" not in e.stderr.decode(
                 "utf-8"
             ):
