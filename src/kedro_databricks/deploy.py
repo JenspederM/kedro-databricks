@@ -138,17 +138,19 @@ class DeployController:
         result = run_cmd(build_cmd, msg=self._msg)
         return result
 
-    def deploy_project(self, target: str, debug: bool = False):
+    def deploy_project(self, target: str, debug: bool = False, vars: list[str] = []):
         """Deploy the project to Databricks.
 
         Args:
             target (str): Databricks target environment to deploy to.
             debug (bool): Whether to enable debug mode.
+            variables (list[str]): List of variables to set.
         """
         self.log.info(
             f"{self._msg}: Running `databricks bundle deploy --target {target}`"
         )
-        deploy_cmd = ["databricks", "bundle", "deploy", "--target", target]
+        _vars = [_v for v in vars for _v in ["--var", v]]
+        deploy_cmd = ["databricks", "bundle", "deploy", "--target", target, *_vars]
         if debug:
             deploy_cmd.append("--debug")
         run_cmd(deploy_cmd, msg=self._msg)

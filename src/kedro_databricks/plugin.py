@@ -117,6 +117,13 @@ def bundle(
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-d", "--debug/--no-debug", default=False, help="Enable debug mode")
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
+@click.option(
+    "-v",
+    "--var",
+    default=[],
+    help='set values for variables defined in bundle config. Example: --var="foo=bar"',
+    multiple=True,
+)
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,
@@ -126,6 +133,7 @@ def deploy(
     conf: str,
     pipeline: str,
     debug: bool,
+    vars: list[str],
 ):
     """Deploy the asset bundle to Databricks"""
 
@@ -145,4 +153,4 @@ def deploy(
     controller.upload_project_data()
     if target is None:
         target = env
-    controller.deploy_project(target=target, debug=debug)
+    controller.deploy_project(target=target, debug=debug, vars=vars)
