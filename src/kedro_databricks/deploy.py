@@ -11,7 +11,7 @@ from kedro.framework.project import _ProjectPipelines
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import make_workflow_name, run_cmd
+from kedro_databricks.utils import Command, make_workflow_name
 
 _INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
@@ -64,11 +64,8 @@ class DeployController:
 
     def create_dbfs_dir(self):  # pragma: no cover
         """Create a directory in DBFS."""
-        run_cmd(
-            ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{self.package_name}"],
-            msg=self._msg,
-            warn=True,
-        )
+        cmd = ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{self.package_name}"]
+        Command(cmd, msg=self._msg, warn=True).run()
 
     def upload_project_data(self):  # pragma: no cover
         """Upload the project data to DBFS.
@@ -86,19 +83,18 @@ class DeployController:
         self.log.info(
             f"{self._msg}: Uploading {source_path.relative_to(self.project_path)} to {target_path}"
         )
-        run_cmd(
-            [
-                "databricks",
-                "fs",
-                "cp",
-                "-r",
-                "--overwrite",
-                source_path.as_posix(),
-                target_path,
-            ],
-            msg=self._msg,
-        )
+        cmd = [
+            "databricks",
+            "fs",
+            "cp",
+            "-r",
+            "--overwrite",
+            source_path.as_posix(),
+            target_path,
+        ]
+        result = Command(cmd, msg=self._msg).run()
         self.log.info(f"{self._msg}: Data uploaded to {target_path}")
+        return result
 
     def upload_project_config(self, conf: str):  # pragma: no cover
         """Upload the project configuration to DBFS.
@@ -116,26 +112,25 @@ class DeployController:
             raise FileNotFoundError(f"Configuration path {source_path} does not exist")
 
         self.log.info(f"{self._msg}: Uploading configuration to {target_path}")
-        run_cmd(
-            [
-                "databricks",
-                "fs",
-                "cp",
-                "-r",
-                "--overwrite",
-                source_path.as_posix(),
-                target_path,
-            ],
-            msg=self._msg,
-        )
+        cmd = [
+            "databricks",
+            "fs",
+            "cp",
+            "-r",
+            "--overwrite",
+            source_path.as_posix(),
+            target_path,
+        ]
+        result = Command(cmd, msg=self._msg).run()
         self.log.info(f"{self._msg}: Configuration uploaded to {target_path}")
+        return result
 
     def build_project(self):  # pragma: no cover
         """Build the project."""
         self.log.info(f"{self._msg}: Building the project")
         self.go_to_project()
         build_cmd = ["kedro", "package"]
-        result = run_cmd(build_cmd, msg=self._msg)
+        result = Command(build_cmd, msg=self._msg).run()
         return result
 
     def deploy_project(self, target: str, debug: bool = False, var: list[str] = []):
@@ -153,8 +148,9 @@ class DeployController:
         deploy_cmd = ["databricks", "bundle", "deploy", "--target", target, *_var]
         if debug:
             deploy_cmd.append("--debug")
-        run_cmd(deploy_cmd, msg=self._msg)
+        result = Command(deploy_cmd, msg=self._msg).run()
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
+        return result
 
     def log_deployed_resources(
         self, pipelines: _ProjectPipelines = kedro_pipelines, only_dev: bool = False
