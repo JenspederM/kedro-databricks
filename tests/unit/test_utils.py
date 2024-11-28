@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from kedro_databricks.utils import (
+    KEDRO_VERSION,
     Command,
     _is_null_or_empty,
     _sort_dict,
@@ -123,11 +124,15 @@ def test_sort_dict():
 
 
 def test_require_databricks_run_script():
-    assert not require_databricks_run_script(), "Should NOT require run script"
+    assert not require_databricks_run_script(
+        [0, 19, 8]
+    ), f"Should NOT require run script - {KEDRO_VERSION}"
 
 
 def test_require_databricks_run_script_fail():
-    assert require_databricks_run_script([0, 19, 6]), "Should require run script"
+    assert require_databricks_run_script(
+        [0, 19, 6]
+    ), f"Should require run script - {KEDRO_VERSION}"
 
 
 def test_make_workflow_name():
