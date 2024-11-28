@@ -133,7 +133,7 @@ def deploy(
     conf: str,
     pipeline: str,
     debug: bool,
-    vars: list[str],
+    var: list[str],
 ):
     """Deploy the asset bundle to Databricks"""
 
@@ -153,4 +153,4 @@ def deploy(
     controller.upload_project_data()
     if target is None:
         target = env
-    controller.deploy_project(target=target, debug=debug, vars=vars)
+    controller.deploy_project(target=target, debug=debug, var=var)
