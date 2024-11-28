@@ -1,3 +1,14 @@
+## 0.6.6 (2024-11-28)
+
+### Fix
+
+- it's var not vars
+- add support for vars
+
+### Refactor
+
+- improve run command
+
 ## 0.6.5 (2024-11-24)
 
 ### Fix
