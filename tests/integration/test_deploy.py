@@ -1,3 +1,4 @@
+from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
@@ -20,6 +21,14 @@ def test_deploy(cli_runner, metadata):
     deploy_cmd = ["databricks", "deploy", "--bundle", "--debug"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+    controller = DeployController(metadata)
+    deployed_jobs = controller.log_deployed_resources()
+    assert deployed_jobs, "No deployed jobs found"
+
+    controller = DeployController(metadata)
+    deployed_jobs = controller.log_deployed_resources(only_dev=True)
+    assert deployed_jobs, "No deployed jobs found"
 
 
 def test_deploy_with_conf(cli_runner, metadata):
