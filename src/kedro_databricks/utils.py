@@ -48,7 +48,8 @@ def get_entry_point(project_name: str) -> str:
     entrypoint = project_name.strip().lower()
     entrypoint = re.sub(r" +", " ", entrypoint)
     entrypoint = re.sub(r"[^a-zA-Z]", "-", entrypoint)
-    entrypoint = re.sub(r"^(-+)|(-+)$", "", entrypoint)
+    entrypoint = re.sub(r"(-+)$", "", entrypoint)
+    entrypoint = re.sub(r"^(-+)", "", entrypoint)
     return entrypoint
 
 
