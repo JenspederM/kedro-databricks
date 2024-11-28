@@ -47,10 +47,13 @@ def get_entry_point(project_name: str) -> str:
     """
     entrypoint = project_name.strip().lower()
     entrypoint = re.sub(r" +", " ", entrypoint)
-    return re.sub(r"[^a-zA-Z]", "-", entrypoint)
+    entrypoint = re.sub(r"[^a-zA-Z]", "-", entrypoint)
+    entrypoint = re.sub(r"(-+)$", "", entrypoint)
+    entrypoint = re.sub(r"^(-+)", "", entrypoint)
+    return entrypoint
 
 
-def require_databricks_run_script() -> bool:
+def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
     """Check if the current Kedro version is less than 0.19.8.
 
     Kedro 0.19.8 introduced a new `run_script` method that is required for
@@ -61,31 +64,48 @@ def require_databricks_run_script() -> bool:
     Returns:
         bool: whether the current Kedro version is less than 0.19.8
     """
-    return KEDRO_VERSION < [0, 19, 8]
+    return _version < [0, 19, 8]
 
 
-def run_cmd(
-    cmd: list[str], msg: str = "Failed to run command", warn: bool = False
-) -> subprocess.CompletedProcess | None:
-    """Run a shell command.
+class Command:
+    def __init__(
+        self, command: list[str], warn: bool = False, msg: str = "Error when running"
+    ):
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.command = command
+        self.warn = warn
+        self.msg = msg
 
-    Args:
-        cmds (List[str]): list of commands to run
-        msg (str, optional): message to raise if the command fails
-        warn (bool): whether to log a warning if the command fails
-    """
+    def __str__(self):
+        return f"Command({self.command})"
 
-    try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
-        for line in result.stdout.decode().split("\n"):
-            logging.info(line)
+    def __repr__(self):
+        return self.__str__()
+
+    def __rich_repr__(self):  # pragma: no cover
+        yield "program", self.command[0]
+        yield "args", self.command[1:]
+
+    def run(self, *args):
+        cmd = self.command + list(*args)
+        result = subprocess.run(cmd, check=False, capture_output=True)
+        if result.returncode != 0:
+            error_msg = self._get_error_message(result)
+
+            if self.warn:
+                self.log.warning(f"{self.msg}: {self.command}\n{error_msg}")
+                return result
+
+            raise RuntimeError(f"{self.msg}: {self.command}\n{error_msg}")
         return result
-    except Exception as e:
-        if warn:
-            logging.warning(f"{msg}: {e}")
-            return None
-        else:
-            raise Exception(f"{msg}: {e}")
+
+    def _get_error_message(self, result):  # pragma: no cover
+        error_msg = result.stderr.decode("utf-8").strip()
+        if not error_msg:
+            error_msg = result.stdout.decode("utf-8").strip()
+        if not error_msg:
+            error_msg = f"Command failed with return code {result.returncode}"
+        return error_msg
 
 
 def make_workflow_name(package_name, pipeline_name: str) -> str:

@@ -12,7 +12,7 @@ from pathlib import Path
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import has_databricks_cli, run_cmd
+from kedro_databricks.utils import Command, has_databricks_cli
 
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
@@ -78,7 +78,8 @@ class InitController:
             self.project_path.as_posix(),
         ]
         try:
-            run_cmd(init_cmd, msg=MSG, warn=True)
+            result = Command(init_cmd, msg=MSG, warn=True).run()
+            return result
         except subprocess.CalledProcessError as e:  # pragma: no cover
             if "Asset Bundle successfully created for project" not in e.stderr.decode(
                 "utf-8"
