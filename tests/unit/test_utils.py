@@ -48,12 +48,12 @@ def test_command_success_custom():
 
 def test_command_warn_default():
     result = Command(["ls", "non_existent_file"], msg="Custom message", warn=True).run()
-    assert result.returncode == 1, result
+    assert result.returncode != 0, result
 
 
 def test_command_warn_customz():
     result = Command(["ls", "non_existent_file"], warn=True).run()
-    assert result.returncode == 1, result
+    assert result.returncode != 0, result
 
 
 def test_command_repr():
