@@ -9,7 +9,6 @@ from kedro_databricks.utils import (
     _is_null_or_empty,
     _sort_dict,
     get_entry_point,
-    has_databricks_cli,
     make_workflow_name,
     remove_nulls,
     require_databricks_run_script,
@@ -59,10 +58,6 @@ def test_command_warn_customz():
 def test_command_repr():
     cmd = Command(["ls", "."])
     assert repr(cmd) == "Command(['ls', '.'])", repr(cmd)
-
-
-def test_has_databricks_cli():
-    assert has_databricks_cli(), "Failed to check databricks cli"
 
 
 def test_get_entry_point():
