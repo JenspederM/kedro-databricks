@@ -1,5 +1,41 @@
+from kedro.pipeline import Pipeline, node
+
+from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
+
+
+def identity(arg):
+    return arg
+
+
+pipeline = Pipeline(
+    [
+        node(
+            identity,
+            ["input"],
+            ["intermediate"],
+            name="node0",
+            tags=["tag0", "tag1"],
+        ),
+        node(identity, ["intermediate"], ["output"], name="node1"),
+        node(identity, ["intermediate"], ["output2"], name="node2", tags=["tag0"]),
+        node(
+            identity,
+            ["intermediate"],
+            ["output3"],
+            name="node3",
+            tags=["tag1", "tag2"],
+        ),
+        node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
+    ],
+    tags="pipeline0",
+)
+
+pipelines = {
+    "__default__": pipeline,
+    "ds": pipeline,
+}
 
 
 def test_deploy(cli_runner, metadata):
@@ -21,6 +57,13 @@ def test_deploy(cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
+    controller = DeployController(metadata)
+    resources = controller.log_deployed_resources(pipelines, only_dev=True)
+    assert len(resources) > 0, f"There are no resources: {resources}"
+    assert all(
+        metadata.package_name in p.name for p in resources
+    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+
 
 def test_deploy_prod(cli_runner, metadata):
     """Test the `deploy` command"""
@@ -40,6 +83,13 @@ def test_deploy_prod(cli_runner, metadata):
     deploy_cmd = ["databricks", "deploy", "--env", "prod", "--bundle", "--debug"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+    controller = DeployController(metadata)
+    resources = controller.log_deployed_resources(pipelines)
+    assert len(resources) > 0, f"There are no resources: {resources}"
+    assert all(
+        metadata.package_name in p.name for p in resources
+    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
 
 
 def test_deploy_with_conf(cli_runner, metadata):
