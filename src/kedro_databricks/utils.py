@@ -86,18 +86,57 @@ class Command:
         yield "program", self.command[0]
         yield "args", self.command[1:]
 
+    def _handle_command_error(self, popen: subprocess.Popen, raise_error: bool = True):
+        err_lines = []
+        while line := popen.stdout.readline():
+            err_lines.append(line.strip())
+        while line := popen.stderr.readline():
+            err_lines.append(line.strip())
+
+        log = self.log.error if raise_error else self.log.warning
+        for line in err_lines:
+            log(f"{self}: - {line}")
+
+        if raise_error:
+            raise RuntimeError(f"{self.msg} {self.command}\n\n", "\n".join(err_lines))
+
+    def _execute(self, cmd):
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+        ) as popen:
+            while line := popen.stdout.readline():
+                self.log.info(line.strip())
+
+            return_code = popen.wait()
+            result = subprocess.CompletedProcess(
+                args=cmd,
+                returncode=return_code,
+                stdout=popen.stdout.read().encode("utf-8"),
+                stderr=popen.stderr.read().encode("utf-8"),
+            )
+
+            if return_code != 0:
+                self._handle_command_error(popen, raise_error=not self.warn)
+
+            return result
+
     def run(self, *args):
         cmd = self.command + list(*args)
-        result = subprocess.run(cmd, check=False, capture_output=True)
-        if result.returncode != 0:
-            error_msg = self._get_error_message(result)
+        self.log.info(f"Running command: {cmd}")
+        return self._execute(cmd)
 
-            if self.warn:
-                self.log.warning(f"{self.msg}: {self.command}\n{error_msg}")
-                return result
+        # result = subprocess.run(cmd, check=False, capture_output=True)
+        # if result.returncode != 0:
+        #     error_msg = self._get_error_message(result)
 
-            raise RuntimeError(f"{self.msg}: {self.command}\n{error_msg}")
-        return result
+        #     if self.warn:
+        #         self.log.warning(f"{self.msg}: {self.command}\n{error_msg}")
+        #         return result
+
+        #     raise RuntimeError(f"{self.msg}: {self.command}\n{error_msg}")
+        # result = result.stdout.decode("utf-8").strip()
+        # print(f"Command: {self.command}\n{result}")
+        # return result
 
     def _get_error_message(self, result):  # pragma: no cover
         error_msg = result.stderr.decode("utf-8").strip()
