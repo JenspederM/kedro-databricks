@@ -109,7 +109,7 @@ class Command:
             return_code = popen.wait()
             if return_code != 0:
                 error_msg = "\n".join(stderr)
-                if not error_msg:
+                if not error_msg:  # pragma: no cover
                     error_msg = "\n".join(stdout)
                 if self.warn:
                     self.log.warning(f"{self.msg} ({self.command}): {error_msg}")

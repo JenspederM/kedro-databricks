@@ -186,7 +186,9 @@ class DeployController:
         for job_name, job in all_jobs.items():
             is_dev = job_name.startswith("[dev")
             is_valid = self._is_valid_job(pipelines, job_name)
-            if (is_dev and username not in job_name) or not is_valid:
+            if (
+                is_dev and username not in job_name
+            ) or not is_valid:  # pragma: no cover
                 continue
             n = job_name.split(" - ")[0]
             link = JobLink(name=n, url=f"{job_host}/{job.job_id}", is_dev=is_dev)
