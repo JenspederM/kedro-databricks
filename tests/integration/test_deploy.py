@@ -45,7 +45,7 @@ def test_deploy(cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -53,7 +53,7 @@ def test_deploy(cli_runner, metadata):
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert override_path.exists(), "Override file not created"
 
-    deploy_cmd = ["databricks", "deploy", "--bundle", "--debug"]
+    deploy_cmd = ["databricks", "deploy", "--bundle"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
