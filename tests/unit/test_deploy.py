@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
+from kedro.pipeline import Pipeline, node
 
 from kedro_databricks.deploy import DeployController
 
@@ -50,3 +51,30 @@ def test_deploy_build_project(metadata):
     controller = DeployController(metadata)
     result = controller.build_project()
     assert result.returncode == 0, (result.returncode, result.stdout)
+
+
+def test_deploy_log_deployed_resources(metadata):
+    def identity(arg):
+        return arg
+
+    pipelines = {
+        "__default__": Pipeline(
+            [
+                node(identity, ["input"], ["a_output"], name="a_node"),
+            ]
+        ),
+        "a_pipeline": Pipeline(
+            [
+                node(identity, ["input"], ["a_output"], name="a_node"),
+            ]
+        ),
+        "b_pipeline": Pipeline(
+            [
+                node(identity, ["input"], ["b_output"], name="b_node"),
+            ]
+        ),
+    }
+    controller = DeployController(metadata)
+    pipelines = controller.log_deployed_resources(pipelines)
+    assert len(pipelines) > 0, pipelines
+    assert all(metadata.package_name in p.name for p in pipelines), pipelines
