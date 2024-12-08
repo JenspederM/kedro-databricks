@@ -86,16 +86,6 @@ class Command:
         yield "program", self.command[0]
         yield "args", self.command[1:]
 
-    def _read(self, io: IO, log_func: Any) -> list[str]:
-        lines = []
-        while True:
-            line = io.readline().decode("utf-8", errors="replace").strip()
-            if not line:
-                break
-            log_func(f"{self}: {line}")
-            lines.append(line)
-        return lines
-
     def run(self, *args):
         cmd = self.command + list(*args)
         self.log.info(f"Running command: {cmd}")
@@ -108,13 +98,7 @@ class Command:
             stderr = self._read(popen.stderr, self.log.error)
             return_code = popen.wait()
             if return_code != 0:
-                error_msg = "\n".join(stderr)
-                if not error_msg:  # pragma: no cover
-                    error_msg = "\n".join(stdout)
-                if self.warn:
-                    self.log.warning(f"{self.msg} ({self.command}): {error_msg}")
-                else:
-                    raise RuntimeError(f"{self.msg} ({self.command}): {error_msg}")
+                self._handle_error(stdout, stderr)
 
             return subprocess.CompletedProcess(
                 args=cmd,
@@ -122,6 +106,25 @@ class Command:
                 stdout=stdout,
                 stderr=stderr or "",
             )
+
+    def _read(self, io: IO, log_func: Any) -> list[str]:
+        lines = []
+        while True:
+            line = io.readline().decode("utf-8", errors="replace").strip()
+            if not line:
+                break
+            log_func(f"{self}: {line}")
+            lines.append(line)
+        return lines
+
+    def _handle_error(self, stdout: list[str], stderr: list[str]):
+        error_msg = "\n".join(stderr)
+        if not error_msg:  # pragma: no cover
+            error_msg = "\n".join(stdout)
+        if self.warn:
+            self.log.warning(f"{self.msg} ({self.command}): {error_msg}")
+        else:
+            raise RuntimeError(f"{self.msg} ({self.command}): {error_msg}")
 
 
 def make_workflow_name(package_name, pipeline_name: str) -> str:
