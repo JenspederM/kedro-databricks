@@ -79,15 +79,15 @@ class InitController:
         ]
         try:
             result = Command(init_cmd, msg=MSG, warn=True).run()
+            self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")
+            shutil.rmtree(assets_dir)
             return result
         except subprocess.CalledProcessError as e:  # pragma: no cover
             if "Asset Bundle successfully created for project" not in e.stderr.decode(
                 "utf-8"
-            ):
+            ):  # pragma: no cover
+                shutil.rmtree(assets_dir)
                 raise e
-        self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")
-
-        shutil.rmtree(assets_dir)
 
     def write_kedro_databricks_config(self, default_key: str, provider_name: str):
         MSG = "Creating bundle override configuration"
