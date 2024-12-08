@@ -102,12 +102,19 @@ class DeployController:
         Args:
             conf (str): The conf folder.
         """
-        conf_tar = self.project_path / f"dist/conf-{self.package_name}.tar.gz"
-        with tarfile.open(conf_tar) as f:
-            f.extractall("dist/", filter="tar")
-
         target_path = f"dbfs:/FileStore/{self.package_name}/{conf}"
         source_path = self.project_path / "dist" / conf
+        conf_tar = self.project_path / f"dist/conf-{self.package_name}.tar.gz"
+
+        if not conf_tar.exists():
+            self.log.error("No files found")
+            raise FileNotFoundError(f"Configuration tar file {conf_tar} does not exist")
+
+        with tarfile.open(conf_tar) as tar:
+            file_names = tar.getnames()
+            for _file in file_names:
+                tar.extract(_file, source_path)
+
         if not source_path.exists():
             raise FileNotFoundError(f"Configuration path {source_path} does not exist")
 
