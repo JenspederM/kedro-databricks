@@ -103,9 +103,7 @@ def test_deploy_with_conf(cli_runner, metadata):
 
     init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = (
-        metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
-    )
+    override_path = metadata.project_path / "custom_conf" / "base" / "databricks.yml"
     override_path.parent.mkdir(parents=True, exist_ok=True)
     override_path.write_text(
         """
@@ -131,7 +129,7 @@ def test_deploy_with_conf(cli_runner, metadata):
         "databricks",
         "deploy",
         "--bundle",
-        "--conf=conf/sub_pipeline",
+        "--conf=custom_conf",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
