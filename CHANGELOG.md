@@ -1,3 +1,16 @@
+## 0.6.7 (2024-12-28)
+
+### Fix
+
+- allow usage of environment variables to configure workspace client
+- command should return CompletedProcess
+- tarfile fitler was implemented in python 3.12
+- completion logging was unreachable
+
+### Refactor
+
+- command run
+
 ## 0.6.6 (2024-11-28)
 
 ### Fix
