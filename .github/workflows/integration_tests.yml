@@ -1,0 +1,51 @@
+name: Integration Tests
+
+on:
+  workflow_call:
+    secrets:
+      DATABRICKS_HOST:
+        required: true
+        description: The hostname of the Databricks workspace.
+      DATABRICKS_CLIENT_ID:
+        required: true
+        description: The client ID a service principal.
+      DATABRICKS_CLIENT_SECRET:
+        required: true
+        description: The client secret of a service principal.
+      CODECOV_TOKEN:
+        required: true
+        description: The token to upload coverage reports to Codecov.
+
+jobs:
+  test:
+    name: Run tests
+    if: ${{ !startsWith(github.event.head_commit.message, 'bump:') && github.repository_owner_id == github.actor_id }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - uses: eifinger/setup-rye@v3
+        id: setup-rye
+        with:
+          version: "0.42.0"
+      - name: Pin python-version ${{ matrix.python-version }}
+        run: rye pin ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: rye sync --no-lock
+      - name: Lint code
+        run: rye lint
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          rye test -- -x
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
