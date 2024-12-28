@@ -163,7 +163,17 @@ class DeployController:
         self, pipelines: _ProjectPipelines = kedro_pipelines, only_dev: bool = False
     ) -> dict[str, set[str]]:
         """Print the pipelines."""
-        w = WorkspaceClient()
+        w = WorkspaceClient(
+            host=os.getenv("DATABRICKS_HOST"),
+            account_id=os.getenv("DATABRICKS_ACCOUNT_ID"),
+            username=os.getenv("DATABRICKS_USERNAME"),
+            password=os.getenv("DATABRICKS_PASSWORD"),
+            client_id=os.getenv("DATABRICKS_CLIENT_ID"),
+            client_secret=os.getenv("DATABRICKS_CLIENT_SECRET"),
+            token=os.getenv("DATABRICKS_TOKEN"),
+            profile=os.getenv("DATABRICKS_PROFILE"),
+            config_file=os.getenv("DATABRICKS_CONFIG_FILE"),
+        )
         job_host = f"{w.config.host}/jobs"
         username = w.current_user.me().user_name.split("@")[0]
         all_jobs = {job.settings.name: job for job in w.jobs.list()}
