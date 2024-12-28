@@ -30,3 +30,19 @@ jobs:
           github-token: ${{ github.token }}
           title: "Unit Test Coverage Report"
           pytest-xml-coverage-path: "coverage.xml"
+      - name: Set Name and Version from pyproject.toml to output
+        id: project
+        run: |
+          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+          echo "NAME=$name" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Releasing $name version $version"
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ github.token }}
+          changelog_increment_filename: body.md
+          dry_run: true
+          push: false

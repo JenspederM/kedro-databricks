@@ -15,11 +15,43 @@ jobs:
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  pypi-publish:
-    name: Upload release to PyPI
+  version:
+    name: Set Name and Version from pyproject.toml to output
     runs-on: ubuntu-latest
     needs:
       - integration_tests
+    outputs:
+      name: ${{ steps.project.outputs.NAME }}
+      old_version: ${{ steps.project.outputs.OLD_VERSION }}
+      new_version: ${{ steps.cz.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          fetch-depth: 0
+      - name: Set Name and Version from pyproject.toml to output
+        id: project
+        run: |
+          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+          echo "NAME=$name" >> $GITHUB_OUTPUT
+          echo "OLD_VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Releasing $name version $version"
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          changelog_increment_filename: body.md
+          push: true
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    if: ${{ needs.version.outputs.new_version != needs.version.outputs.old_version }}
+    needs:
+      - integration_tests
+      - version
     strategy:
       matrix:
         python-version: ["3.9"]
@@ -34,48 +66,25 @@ jobs:
         with:
           token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
           fetch-depth: 0
-      - name: Create bump and changelog
-        id: cz
-        uses: commitizen-tools/commitizen-action@master
-        with:
-          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          changelog_increment_filename: body.md
-          push: true
       - uses: databricks/setup-cli@main
-      - uses: eifinger/setup-rye@v3
-        id: setup-rye
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: "0.29.0"
-          enable-cache: true
-          cache-prefix: ${{ matrix.python-version }}
-      - name: Pin python-version ${{ matrix.python-version }}
-        if: steps.setup-rye.outputs.cache-hit != 'true'
-        run: rye pin ${{ matrix.python-version }}
-      - name: Install dependencies
-        if: steps.setup-rye.outputs.cache-hit != 'true'
-        run: |
-          rye sync --no-lock
+          python-version: ${{ matrix.python-version }}
+      - name: Sync kedro-databricks
+        run: uv sync
       - name: Build package
-        run: rye build
-      - name: Set Name and Version from pyproject.toml to output
-        id: project
-        run: |
-          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
-          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
-          echo "NAME=$name" >> $GITHUB_OUTPUT
-          echo "VERSION=$version" >> $GITHUB_OUTPUT
-          echo "Releasing $name version $version"
-          ls -laR dist
+        run: uv build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@v1
         env:
-          PACKAGE_NAME: ${{ steps.project.outputs.NAME }}
-          VERSION: ${{ steps.project.outputs.VERSION }}
+          PACKAGE_NAME: ${{ needs.version.outputs.name }}
+          VERSION: ${{ needs.version.outputs.new_version }}
         with:
-          tag_name: ${{ steps.cz.outputs.version }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          tag_name: ${{ env.VERSION }}
           body_path: "body.md"
           files: |
             dist/${{ env.PACKAGE_NAME }}-${{ env.VERSION }}-py3-none-any.whl
