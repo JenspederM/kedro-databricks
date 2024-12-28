@@ -58,7 +58,9 @@ def test_deploy(cli_runner, metadata):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(pipelines, only_dev=True)
+    resources = controller.log_deployed_resources(
+        pipelines, only_dev=True, _custom_username="github"
+    )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
         metadata.package_name in p.name for p in resources
@@ -72,7 +74,7 @@ def test_deploy_prod(cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -85,7 +87,7 @@ def test_deploy_prod(cli_runner, metadata):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(pipelines)
+    resources = controller.log_deployed_resources(pipelines, _custom_username="github")
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
         metadata.package_name in p.name for p in resources
@@ -99,7 +101,7 @@ def test_deploy_with_conf(cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = (
         metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
