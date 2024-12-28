@@ -29,7 +29,6 @@ JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 class DeployController:
     def __init__(self, metadata: ProjectMetadata) -> None:
         self._msg = "Deploying to Databricks"
-        self.metadata = metadata
         self.package_name = metadata.package_name
         self.project_path = metadata.project_path
         self.log = logging.getLogger(metadata.package_name)
@@ -156,6 +155,7 @@ class DeployController:
         if debug:
             deploy_cmd.append("--debug")
         result = Command(deploy_cmd, msg=self._msg).run()
+        self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
         return result
 
@@ -178,7 +178,6 @@ class DeployController:
         username = w.current_user.me().user_name.split("@")[0]
         all_jobs = {job.settings.name: job for job in w.jobs.list()}
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
-        self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         for job in jobs:
             if only_dev and not job.is_dev:
                 continue
