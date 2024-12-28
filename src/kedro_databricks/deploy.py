@@ -177,9 +177,8 @@ class DeployController:
         job_host = f"{w.config.host}/jobs"
         username = w.current_user.me().user_name.split("@")[0]
         all_jobs = {job.settings.name: job for job in w.jobs.list()}
-        self.log.info(
-            f"{self._msg}: Found the following jobs\n\t{'\t\n'.join(all_jobs.keys())}"
-        )
+        job_names = "\t\n".join(all_jobs.keys())
+        self.log.info(f"{self._msg}: Found the following jobs\n\t{job_names}")
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         for job in jobs:
             if only_dev and not job.is_dev:
