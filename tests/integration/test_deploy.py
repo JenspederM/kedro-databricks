@@ -80,7 +80,7 @@ def test_deploy_prod(cli_runner, metadata):
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert override_path.exists(), "Override file not created"
 
-    deploy_cmd = ["databricks", "deploy", "--env", "prod", "--bundle", "--debug"]
+    deploy_cmd = ["databricks", "deploy", "--env", "prod", "--bundle"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
@@ -129,7 +129,6 @@ def test_deploy_with_conf(cli_runner, metadata):
         "databricks",
         "deploy",
         "--bundle",
-        "--debug",
         "--conf=conf/sub_pipeline",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
