@@ -12,7 +12,6 @@ on:
       DATABRICKS_CLIENT_SECRET:
         required: true
         description: The client secret of a service principal.
-
       CODECOV_TOKEN:
         required: true
         description: The token to upload coverage reports to Codecov.
