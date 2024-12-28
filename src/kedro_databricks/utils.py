@@ -100,10 +100,6 @@ class Command:
             if return_code != 0:
                 self._handle_error(stdout, stderr)
 
-            # databricks bundle deploy logs to stderr for some reason.
-            if stderr and "Deployment complete!" in stderr[-1]:
-                return_code = 0
-
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=return_code,
