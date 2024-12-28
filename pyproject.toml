@@ -3,14 +3,23 @@ name = "kedro-databricks"
 version = "0.6.7"
 description = "A plugin to run Kedro pipelines on Databricks."
 authors = [{ name = "Jens Peder Meldgaard", email = "jenspederm@gmail.com" }]
+readme = "README.md"
+requires-python = ">= 3.9"
+
 dependencies = [
     "kedro>=0.19.8",
     "mergedeep>=1.3.4",
     "tomlkit>=0.13.0",
     "databricks-sdk>=0.36.0",
 ]
-readme = "README.md"
-requires-python = ">= 3.9"
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
+    "pytest-cov>=6.0.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.7.2",
+    "commitizen>=3.30.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/jenspederm/kedro-databricks"
@@ -22,16 +31,6 @@ databricks = "kedro_databricks.plugin:commands"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.rye]
-managed = true
-dev-dependencies = [
-    "pytest>=8.3.3",
-    "pytest-cov>=6.0.0",
-    "pre-commit>=4.0.1",
-    "ruff>=0.7.2",
-    "commitizen>=3.30.0",
-]
 
 [tool.hatch.metadata]
 allow-direct-references = true
