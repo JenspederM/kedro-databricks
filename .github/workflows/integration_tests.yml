@@ -1,7 +1,21 @@
 name: Integration Tests
 
 on:
-  workflow_call: {}
+  workflow_call:
+    secrets:
+      DATABRICKS_HOST:
+        required: true
+        description: The hostname of the Databricks workspace.
+      DATABRICKS_CLIENT_ID:
+        required: true
+        description: The client ID a service principal.
+      DATABRICKS_CLIENT_SECRET:
+        required: true
+        description: The client secret of a service principal.
+
+      CODECOV_TOKEN:
+        required: true
+        description: The token to upload coverage reports to Codecov.
 
 jobs:
   test:
