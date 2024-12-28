@@ -160,7 +160,10 @@ class DeployController:
         return result
 
     def log_deployed_resources(
-        self, pipelines: _ProjectPipelines = kedro_pipelines, only_dev: bool = False
+        self,
+        pipelines: _ProjectPipelines = kedro_pipelines,
+        only_dev: bool = False,
+        _custom_username: str | None = None,
     ) -> dict[str, set[str]]:
         """Print the pipelines."""
         w = WorkspaceClient(
@@ -175,10 +178,8 @@ class DeployController:
             config_file=os.getenv("DATABRICKS_CONFIG_FILE"),
         )
         job_host = f"{w.config.host}/jobs"
-        username = w.current_user.me().user_name.split("@")[0]
+        username = _custom_username or w.current_user.me().user_name.split("@")[0]
         all_jobs = {job.settings.name: job for job in w.jobs.list()}
-        job_names = "\t\n".join(all_jobs.keys())
-        self.log.info(f"{self._msg}: Found the following jobs\n\t{job_names}")
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         for job in jobs:
             if only_dev and not job.is_dev:
