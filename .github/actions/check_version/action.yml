@@ -56,7 +56,7 @@ runs:
       id: fc
       with:
         issue-number: ${{ inputs.pr_number }}
-        comment-author: "version-reporter[bot]"
+        comment-author: "github-actions[bot]"
     - name: Create bump comment
       if: ${{ inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
       uses: peter-evans/create-or-update-comment@v4
