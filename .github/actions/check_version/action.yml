@@ -1,0 +1,67 @@
+name: Check Version
+description: "Check the version of the project and create a bump and changelog"
+inputs:
+  github_token:
+    description: "The GitHub token to use for authentication"
+    required: true
+    default: ${{ github.token }}
+  push:
+    description: "Whether to push the changes to the repository"
+    required: false
+    default: "false"
+  pr_number:
+    description: "The pull request number"
+    required: false
+    default: ""
+outputs:
+  name:
+    description: "The name of the project"
+    value: ${{ steps.project.outputs.name }}
+  old_version:
+    description: "The old version of the project"
+    value: ${{ steps.project.outputs.old_version }}
+  new_version:
+    description: "The new version of the project"
+    value: ${{ steps.cz.outputs.version }}
+  is_changed:
+    description: "Whether the version has changed"
+    value: ${{ steps.cz.outputs.version != steps.project.outputs.old_version }}
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      uses: actions/checkout@v4
+      with:
+        token: ${{ inputs.github_token }}
+        fetch-depth: 0
+    - name: Set Name and Version from pyproject.toml to output
+      id: project
+      shell: bash
+      run: |
+        name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+        version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+        echo "name=$name" >> $GITHUB_OUTPUT
+        echo "old_version=$version" >> $GITHUB_OUTPUT
+        echo "Releasing $name version $version"
+    - name: Create bump and changelog
+      id: cz
+      uses: commitizen-tools/commitizen-action@master
+      with:
+        github_token: ${{ inputs.github_token }}
+        changelog_increment_filename: body.md
+        push: ${{ inputs.push }}
+    - name: Find Comment
+      if: ${{ inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
+      uses: peter-evans/find-comment@v3
+      id: fc
+      with:
+        issue-number: ${{ inputs.pr_number }}
+        comment-author: "version-reporter[bot]"
+    - name: Create bump comment
+      if: ${{ inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ inputs.pr_number }}
+        body-file: body.md
+        edit-mode: replace
