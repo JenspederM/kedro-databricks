@@ -42,7 +42,7 @@ jobs:
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
-    if: ${{ needs.version.outputs.is_changed }}
+    if: ${{ needs.version.outputs.is_changed == 'true' }}
     needs:
       - integration_tests
       - version
