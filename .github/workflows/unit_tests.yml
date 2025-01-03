@@ -22,6 +22,8 @@ jobs:
         run: |
           uv sync --dev
           uv add "kedro==${{ matrix.kedro_version }}"
+      - name: Lint kedro-databricks
+        run: uv run ruff check
       - name: Test kedro-databricks
         run: uv run pytest tests/unit
       - name: Coverage comment
