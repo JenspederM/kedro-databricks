@@ -1,3 +1,11 @@
+## 0.7.0 (2025-01-03)
+
+### Feat
+
+- check for version
+- check for version before publish
+- check for version before publish
+
 ## 0.6.7 (2024-12-28)
 
 ### Fix
