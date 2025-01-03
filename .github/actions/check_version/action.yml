@@ -65,3 +65,10 @@ runs:
         issue-number: ${{ inputs.pr_number }}
         body-file: body.md
         edit-mode: replace
+    - name: Print Output
+      shell: bash
+      run: |
+        echo "Name: ${{ steps.project.outputs.name }}"
+        echo "Old Version: ${{ steps.project.outputs.old_version }}"
+        echo "New Version: ${{ steps.cz.outputs.version }}"
+        echo "Changed: ${{ steps.cz.outputs.version != steps.project.outputs.old_version }}"
