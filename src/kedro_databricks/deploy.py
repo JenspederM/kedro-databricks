@@ -101,7 +101,10 @@ class DeployController:
 
         if not conf_tar.exists():  # pragma: no cover
             self.log.error("No files found")
-            raise FileNotFoundError(f"Configuration tar file {conf_tar} does not exist")
+            dist_files = list(dist_dir.rglob("*"))
+            raise FileNotFoundError(
+                f"Configuration tar file {conf_tar} does not exist - {dist_files}"
+            )
 
         with tarfile.open(conf_tar) as tar:
             file_names = tar.getnames()
@@ -112,7 +115,10 @@ class DeployController:
 
         source_dir = dist_dir / conf
         if not source_dir.exists():  # pragma: no cover
-            raise FileNotFoundError(f"Configuration path {dist_dir} does not exist")
+            dist_files = list(dist_dir.rglob("*"))
+            raise FileNotFoundError(
+                f"Configuration path {source_dir} does not exist - {dist_files}"
+            )
 
         return source_dir
 
