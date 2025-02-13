@@ -1,3 +1,9 @@
+## 0.7.2 (2025-02-13)
+
+### Fix
+
+- make success check a variable
+
 ## 0.7.1 (2025-02-13)
 
 ### Fix
