@@ -5,7 +5,7 @@ import logging
 import re
 import shutil
 import subprocess
-from typing import IO, Any
+from typing import Any
 
 from kedro import __version__ as kedro_version
 
@@ -86,48 +86,48 @@ class Command:
         yield "program", self.command[0]
         yield "args", self.command[1:]
 
+    def _read_stdout(self, process: subprocess.Popen):
+        stdout = []
+        while True:
+            line = process.stdout.readline()  # type: ignore - we know it's there
+            if not line and process.poll() is not None:
+                break
+            print(line, end="")  # noqa: T201
+            stdout.append(line)
+        return stdout
+
+    def _run_command(self, command, **kwargs):
+        """Run a command while printing the live output"""
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            **kwargs,
+        )
+        stdout = self._read_stdout(process)
+        process.stdout.close()  # type: ignore - we know it's there
+        process.wait()
+        if process.returncode != 0 and "deploy" not in command:
+            self._handle_error()
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=process.returncode,
+            stdout=stdout or [""],
+            stderr=[],
+        )
+
     def run(self, *args):
         cmd = self.command + list(*args)
         self.log.info(f"Running command: {cmd}")
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        ) as popen:
-            stdout = self._read("stdout", popen.stdout, self.log.info)
-            stderr = self._read("stderr", popen.stderr, self.log.error)
-            return_code = popen.wait()
-            if return_code != 0:
-                self._handle_error(stdout, stderr)
+        return self._run_command(cmd)
 
-            return subprocess.CompletedProcess(
-                args=cmd,
-                returncode=return_code,
-                stdout=stdout,
-                stderr=stderr or "",
-            )
-
-    def _read(self, ident: str, io: IO | None, log_func: Any) -> list[str]:
-        lines = []
-        if io is None:  # pragma: no cover
-            self.log.warning(f"{self.msg}: No output from command")
-            return lines
-        while True:
-            line = io.readline().decode("utf-8", errors="replace").strip()
-            if not line:
-                break
-            log_func(f"{self.msg}: {line}")
-            lines.append(line)
-        return lines
-
-    def _handle_error(self, stdout: list[str], stderr: list[str]):
-        error_msg = "\n".join(stderr)
-        if not error_msg:  # pragma: no cover
-            error_msg = "\n".join(stdout)
+    def _handle_error(self):
+        error_msg = f"{self.msg}: Failed to run command - `{' '.join(self.command)}`"
         if self.warn:
-            self.log.warning(f"{self.msg} ({self.command}): {error_msg}")
+            self.log.warning(error_msg)
         else:
-            raise RuntimeError(f"{self.msg} ({self.command}): {error_msg}")
+            raise RuntimeError(error_msg)
 
 
 def make_workflow_name(package_name, pipeline_name: str) -> str:
