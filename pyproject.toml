@@ -1,6 +1,6 @@
 [project]
 name = "kedro-databricks"
-version = "0.7.0"
+version = "0.7.1"
 description = "A plugin to run Kedro pipelines on Databricks."
 authors = [{ name = "Jens Peder Meldgaard", email = "jenspederm@gmail.com" }]
 readme = "README.md"
