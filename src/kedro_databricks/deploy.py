@@ -153,6 +153,13 @@ class DeployController:
         result = Command(build_cmd, msg=self._msg).run()
         return result
 
+    def _check_result(self, messages):
+        return (
+            messages is not None
+            and len(messages) > 0
+            and "Deployment complete!" in messages[-1]
+        )
+
     def deploy_project(self, databricks_args: list[str]):  # pragma: no cover
         """Deploy the project to Databricks.
 
@@ -171,19 +178,20 @@ class DeployController:
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
 
-        def check_result(messages):
-            return (
-                messages is not None
-                and len(messages) > 0
-                and "Deployment complete!" in messages[-1]
-            )
-
         # databricks bundle deploy logs to stderr for some reason.
-        if check_result(result.stdout) or check_result(result.stderr):
+        if self._check_result(result.stdout) or self._check_result(result.stderr):
             result.returncode = 0
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
         return result
+
+    def _get_username(self, w: WorkspaceClient, _custom_username: str | None):
+        username = _custom_username or w.current_user.me().user_name
+        if username is None:
+            raise ValueError("Could not get username from Databricks")
+        if "@" in username:
+            username = username.split("@")[0]
+        return username
 
     def log_deployed_resources(
         self,
@@ -213,11 +221,7 @@ class DeployController:
             config_file=os.getenv("DATABRICKS_CONFIG_FILE"),
         )
         job_host = f"{w.config.host}/jobs"
-        username = _custom_username or w.current_user.me().user_name
-        if username is None:
-            raise ValueError("Could not get username from Databricks")
-        if "@" in username:
-            username = username.split("@")[0]
+        username = self._get_username(w, _custom_username)
         all_jobs = {
             job.settings.name: job
             for job in w.jobs.list()
