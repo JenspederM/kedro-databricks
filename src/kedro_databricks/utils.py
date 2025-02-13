@@ -68,9 +68,9 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
 
 
 class Command:
-    def __init__(
-        self, command: list[str], warn: bool = False, msg: str = "Error when running"
-    ):
+    def __init__(self, command: list[str], warn: bool = False, msg: str = None):
+        if msg is None:
+            msg = f'Executing ({" ".join(command)})'
         self.log = logging.getLogger(self.__class__.__name__)
         self.command = command
         self.warn = warn
@@ -113,7 +113,7 @@ class Command:
             line = io.readline().decode("utf-8", errors="replace").strip()
             if not line:
                 break
-            log_func(f"{self}: {line}")
+            log_func(f"{self.msg}: {line}")
             lines.append(line)
         return lines
 

@@ -95,6 +95,27 @@ class DeployController:
         self.log.info(f"{self._msg}: Data uploaded to {target_path}")
         return result
 
+    def _untar_conf(self, conf: str):
+        dist_dir = self.project_path / "dist"
+        conf_tar = dist_dir / f"conf-{self.package_name}.tar.gz"
+
+        if not conf_tar.exists():  # pragma: no cover
+            self.log.error("No files found")
+            raise FileNotFoundError(f"Configuration tar file {conf_tar} does not exist")
+
+        with tarfile.open(conf_tar) as tar:
+            file_names = tar.getnames()
+            for _file in file_names:
+                if _file.startswith("."):
+                    continue
+                tar.extract(_file, dist_dir)
+
+        source_dir = dist_dir / conf
+        if not source_dir.exists():  # pragma: no cover
+            raise FileNotFoundError(f"Configuration path {dist_dir} does not exist")
+
+        return source_dir
+
     def upload_project_config(self, conf: str):  # pragma: no cover
         """Upload the project configuration to DBFS.
 
@@ -102,21 +123,7 @@ class DeployController:
             conf (str): The conf folder.
         """
         target_path = f"dbfs:/FileStore/{self.package_name}/{conf}"
-        source_path = self.project_path / "dist" / conf
-        conf_tar = self.project_path / f"dist/conf-{self.package_name}.tar.gz"
-
-        if not conf_tar.exists():
-            self.log.error("No files found")
-            raise FileNotFoundError(f"Configuration tar file {conf_tar} does not exist")
-
-        with tarfile.open(conf_tar) as tar:
-            file_names = tar.getnames()
-            for _file in file_names:
-                tar.extract(_file, source_path)
-
-        if not source_path.exists():
-            raise FileNotFoundError(f"Configuration path {source_path} does not exist")
-
+        source_path = self._untar_conf(conf)
         self.log.info(f"{self._msg}: Uploading configuration to {target_path}")
         cmd = [
             "databricks",
