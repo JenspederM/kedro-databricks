@@ -187,7 +187,16 @@ class DeployController:
         only_dev: bool = False,
         _custom_username: str | None = None,
     ) -> dict[str, set[str]]:
-        """Print the pipelines."""
+        """Print deployed pipelines.
+
+        Args:
+            pipelines (_ProjectPipelines): Project pipelines.
+            only_dev (bool): Whether to show only dev jobs.
+            _custom_username (str): Custom username to use.
+
+        Returns:
+            dict[str, set[str]]: Deployed pipelines.
+        """
         w = WorkspaceClient(
             host=os.getenv("DATABRICKS_HOST"),
             account_id=os.getenv("DATABRICKS_ACCOUNT_ID"),
