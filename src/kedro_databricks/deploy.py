@@ -169,9 +169,10 @@ class DeployController:
             deploy_cmd.append("--debug")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
         # databricks bundle deploy logs to stderr for some reason.
-        if (result.stderr and "Deployment complete!" in result.stderr[-1]) or (
-            result.stdout and "Deployment complete!" in result.stdout[-1]
-        ):
+        is_successful = (
+            result.stderr and "Deployment complete!" in result.stderr[-1]
+        ) or (result.stdout and "Deployment complete!" in result.stdout[-1])
+        if is_successful:  # pragma: no cover
             result.returncode = 0
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
