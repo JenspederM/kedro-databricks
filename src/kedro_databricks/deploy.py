@@ -152,21 +152,22 @@ class DeployController:
         result = Command(build_cmd, msg=self._msg).run()
         return result
 
-    def deploy_project(self, target: str, debug: bool = False, var: list[str] = []):
+    def deploy_project(self, databricks_args: list[str]):  # pragma: no cover
         """Deploy the project to Databricks.
 
         Args:
-            target (str): Databricks target environment to deploy to.
-            debug (bool): Whether to enable debug mode.
-            variables (list[str]): List of variables to set.
+            databricks_args (list[str]): Databricks arguments.
+
+        Returns:
+            subprocess.CompletedProcess: The result of the deployment.
         """
-        self.log.info(
-            f"{self._msg}: Running `databricks bundle deploy --target {target}`"
-        )
-        _var = [_v for v in var for _v in ["--var", v]]
-        deploy_cmd = ["databricks", "bundle", "deploy", "--target", target, *_var]
-        if debug:
-            deploy_cmd.append("--debug")
+        deploy_cmd = ["databricks", "bundle", "deploy"] + databricks_args
+        target = "dev"
+        for i, arg in enumerate(databricks_args):
+            if arg == "--target":
+                target = databricks_args[i + 1]
+                break
+        self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
         success_stdout: bool = (
             result.stdout and "Deployment complete!" in result.stdout[-1]

@@ -34,7 +34,18 @@ class InitController:
         self.package_name = metadata.package_name
         self.log = logging.getLogger(self.package_name)
 
-    def bundle_init(self):
+    def bundle_init(self, databricks_args: list[str]):
+        """Initialize Databricks Asset Bundle configuration.
+
+        Args:
+            databricks_args: Additional arguments to pass to the databricks CLI.
+
+        Raises:
+            Exception: If the databricks CLI is not installed.
+
+        Returns:
+            subprocess.CompletedProcess: The result of the databricks CLI command.
+        """
         MSG = "Creating databricks configuration"
         if not has_databricks_cli():  # pragma: no cover
             raise Exception("databricks CLI is not installed")
@@ -76,7 +87,7 @@ class InitController:
             template_params.name,
             "--output-dir",
             self.project_path.as_posix(),
-        ]
+        ] + databricks_args
         try:
             result = Command(init_cmd, msg=MSG, warn=True).run()
             self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")

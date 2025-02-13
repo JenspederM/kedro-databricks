@@ -46,16 +46,18 @@ def databricks_commands():
 @databricks_commands.command()
 @click.option("-d", "--default", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP)
 @click.option("--provider", prompt=_PROVIDER_PROMPT, default="1")
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def init(
     metadata: ProjectMetadata,
     default: str,
     provider: str,
+    databricks_args: list[str],
 ):
     """Initialize Databricks Asset Bundle configuration"""
     provider_name = _PROVIDER_MAP.get(provider)
     controller = InitController(metadata)
-    controller.bundle_init()
+    controller.bundle_init(databricks_args)
     controller.write_kedro_databricks_config(default, provider_name)
     if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
@@ -103,37 +105,22 @@ def bundle(
 @databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_RUN_ENV, help=ENV_HELP)
 @click.option(
-    "-t",
-    "--target",
-    default=None,
-    help="Databricks target environment. Defaults to the `env` value.",
-)
-@click.option(
     "-b",
     "--bundle/--no-bundle",
     default=False,
     help="Bundle the project before deploying",
 )
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
-@click.option("-d", "--debug/--no-debug", default=False, help="Enable debug mode")
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option(
-    "-v",
-    "--var",
-    default=[],
-    help='set values for variables defined in bundle config. Example: --var="foo=bar"',
-    multiple=True,
-)
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,
     env: str,
-    target: str | None,
     bundle: bool,
     conf: str,
     pipeline: str,
-    debug: bool,
-    var: list[str],
+    databricks_args: list[str],
 ):
     """Deploy the asset bundle to Databricks"""
 
@@ -151,6 +138,4 @@ def deploy(
     controller.create_dbfs_dir()
     controller.upload_project_config(conf)
     controller.upload_project_data()
-    if target is None:
-        target = env
-    controller.deploy_project(target=target, debug=debug, var=var)
+    controller.deploy_project(databricks_args)
