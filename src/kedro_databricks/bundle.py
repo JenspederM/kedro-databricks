@@ -219,18 +219,16 @@ class BundleController:
         ## Follows the Databricks REST API schema. See "tasks" in the link below
         ## https://docs.databricks.com/api/workspace/jobs/create
         entry_point = get_entry_point(self.project_name)
-        params = [
-            "--nodes",
-            name,
-            "--conf-source",
-            self.remote_conf_dir,
-            "--env",
-            self.env,
-        ]
+
+        named_params = {
+            "nodes": name,
+            "conf-source": self.remote_conf_dir,
+            "env": self.env,
+        }
 
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
-            params = params + ["--package-name", self.package_name]
+            named_params["package-name"] = self.package_name
 
         depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
@@ -242,7 +240,7 @@ class BundleController:
             "python_wheel_task": {
                 "package_name": self.package_name,
                 "entry_point": entry_point,
-                "parameters": params,
+                "named_parameters": named_params,
             },
         }
 
