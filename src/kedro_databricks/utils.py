@@ -113,7 +113,7 @@ class Command:
             line = io.readline().decode("utf-8", errors="replace").strip()
             if not line:
                 break
-            log_func(f"{self}: {line}")
+            log_func(f"{self.msg}: {line}")
             lines.append(line)
         return lines
 
