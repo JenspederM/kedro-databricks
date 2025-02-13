@@ -11,9 +11,18 @@ import os
 from pathlib import Path
 
 from click.testing import CliRunner
+from dotenv import load_dotenv
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
 from pytest import fixture
+
+load_dotenv()
+
+
+@fixture(scope="session")
+def custom_username():
+    custom_username = os.getenv("CUSTOM_USERNAME")
+    return custom_username
 
 
 @fixture(name="cli_runner", scope="session")

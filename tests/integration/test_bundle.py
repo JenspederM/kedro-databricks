@@ -10,7 +10,7 @@ def test_databricks_bundle_fail(cli_runner, metadata):
 
 
 def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -63,7 +63,7 @@ def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
 def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = (
         metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
@@ -118,7 +118,7 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
 def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)

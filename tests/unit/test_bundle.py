@@ -212,12 +212,14 @@ def test_generate_workflow(metadata):
 def test_create_task(metadata):
     controller = BundleController(metadata, "fake_env", "conf")
     expected_task = _generate_task("task", ["a", "b"])
+    node_a = node(identity, ["input"], ["output"], name="a")
+    node_b = node(identity, ["input"], ["output"], name="b")
     assert (
         controller._create_task(
             "task",
             [
-                node(identity, ["input"], ["output"], name="b"),
-                node(identity, ["input"], ["output"], name="a"),
+                node_b,
+                node_a,
             ],
         )
         == expected_task

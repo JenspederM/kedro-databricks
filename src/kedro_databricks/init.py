@@ -23,18 +23,28 @@ NODE_TYPE_MAP = {
 DEFAULT_PROVIDER = "azure"
 DEFAULT_NODE_TYPE_ID = NODE_TYPE_MAP.get(DEFAULT_PROVIDER, None)
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
-
 assert NODE_TYPE_MAP is not None, "Invalid default provider"
 
 
 class InitController:
     def __init__(self, metadata: ProjectMetadata) -> None:
-        self.metadata = metadata
-        self.project_path = metadata.project_path
-        self.package_name = metadata.package_name
-        self.log = logging.getLogger(self.package_name)
+        self.metadata: ProjectMetadata = metadata
+        self.project_path: Path = metadata.project_path
+        self.package_name: str = metadata.package_name
+        self.log: logging.Logger = logging.getLogger(self.package_name)
 
-    def bundle_init(self):
+    def bundle_init(self, databricks_args: list[str]):
+        """Initialize Databricks Asset Bundle configuration.
+
+        Args:
+            databricks_args: Additional arguments to pass to the databricks CLI.
+
+        Raises:
+            Exception: If the databricks CLI is not installed.
+
+        Returns:
+            subprocess.CompletedProcess: The result of the databricks CLI command.
+        """
         MSG = "Creating databricks configuration"
         if not has_databricks_cli():  # pragma: no cover
             raise Exception("databricks CLI is not installed")
@@ -48,14 +58,15 @@ class InitController:
 
         assets_dir = Path(tempfile.mkdtemp())
         shutil.copy(
-            TEMPLATES / "databricks_template_schema.json",
-            assets_dir / "databricks_template_schema.json",
+            str(TEMPLATES / "databricks_template_schema.json"),
+            str(assets_dir / "databricks_template_schema.json"),
         )
 
         template_dir = assets_dir / "template"
         template_dir.mkdir(exist_ok=True)
         shutil.copy(
-            TEMPLATES / "databricks.yml.tmpl", template_dir / "databricks.yml.tmpl"
+            str(TEMPLATES / "databricks.yml.tmpl"),
+            str(template_dir / "databricks.yml.tmpl"),
         )
 
         config = {"project_name": self.package_name, "project_slug": self.package_name}
@@ -76,7 +87,7 @@ class InitController:
             template_params.name,
             "--output-dir",
             self.project_path.as_posix(),
-        ]
+        ] + databricks_args
         try:
             result = Command(init_cmd, msg=MSG, warn=True).run()
             self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")
@@ -116,7 +127,7 @@ class InitController:
             self.project_path / "src" / self.package_name / "databricks_run.py"
         )
         toml_path = self.project_path / "pyproject.toml"
-        shutil.copy(TEMPLATES / "databricks_run.py", script_path)
+        shutil.copy(str(TEMPLATES / "databricks_run.py"), str(script_path))
         self.log.info(f"{MSG}: Wrote {script_path.relative_to(self.project_path)}")
 
         with open(toml_path) as f:
@@ -125,7 +136,8 @@ class InitController:
         scripts = toml.get("project", {}).get("scripts", {})
         if "databricks_run" not in scripts:
             scripts["databricks_run"] = f"{self.package_name}.databricks_run:main"
-            toml["project"]["scripts"] = scripts
+            toml.get("project", {})["scripts"] = scripts
+            toml["project"]["scripts"] = scripts  # type: ignore
 
         self.log.info(
             f"{MSG}: Added script to {toml_path.relative_to(self.project_path)}"

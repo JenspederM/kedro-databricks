@@ -1,14 +1,34 @@
 {
-  "python.testing.pytestArgs": [
-    "tests",
-    "--log-format=\"%(asctime)s %(levelname)s %(message)s\"",
-    "--log-date-format=\"%Y-%m-%d %H:%M:%S\"",
-    "--cov-report=xml:coverage.xml",
-    "--cov-report=term-missing",
-    "--cov=kedro_databricks",
-    "--no-cov-on-fail",
-    "-ra"
+  // Editor settings
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [
+    88
   ],
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "search.exclude": {
+    "**/.git": true,
+    "**/.cache": true,
+    "**/.venv": true
+  },
+  "git.openRepositoryInParentFolders": "always", // Open the repository in the parent folder
+  "files.eol": "\n", // Use LF line endings
+  "files.autoSave": "onFocusChange", // Automatically save files when focus changes
+  "github.copilot.editor.enableAutoCompletions": true,
+  // Ruff Settings
+  "ruff.lineLength": 88,
+  "ruff.organizeImports": true,
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit", // Organize imports on save
+      "source.fixAll": "explicit" // Run the Ruff formatter on save
+    }
+  },
+  // Python settings
+  "python.languageServer": "Pylance", // Use Pylance as the language server        
+  "python.testing.pytestEnabled": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.languageServerMode": "full", // Use the full language server mode
+  "python.analysis.autoFormatStrings": true // Automatically format strings
 }

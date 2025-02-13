@@ -24,7 +24,7 @@ def test_command_fail_default():
         assert "Failed to run command" in str(
             e.value
         ), f"Failed to raise exception: {cmd}"
-        raise e
+        raise Exception(e)
 
 
 def test_command_fail_custom():
@@ -33,7 +33,7 @@ def test_command_fail_custom():
         msg = "Custom message"
         Command(cmd, msg=msg).run()
         assert "Custom message" in str(e.value), f"Failed to raise exception: {cmd}"
-        raise e
+        raise Exception(e)
 
 
 def test_command_success():
