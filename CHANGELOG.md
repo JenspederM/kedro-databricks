@@ -1,3 +1,10 @@
+## 0.7.3 (2025-02-13)
+
+### Fix
+
+- refactor databricks success check
+- upload changelog when checking version
+
 ## 0.7.2 (2025-02-13)
 
 ### Fix
