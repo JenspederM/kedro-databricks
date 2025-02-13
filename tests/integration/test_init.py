@@ -5,7 +5,7 @@ from tests.utils import reset_init
 def test_databricks_init(kedro_project, cli_runner, metadata):
     """Test the `init` command"""
     reset_init(metadata)
-    command = ["databricks", "init"]
+    command = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, command, obj=metadata)
 
     files = [f"{f.parent.name}/{f.name}" for f in kedro_project.rglob("*")]

@@ -38,7 +38,7 @@ pipelines = {
 }
 
 
-def test_deploy(cli_runner, metadata):
+def test_deploy(cli_runner, metadata, custom_username):
     """Test the `deploy` command"""
     reset_init(metadata)
     deploy_fail = ["databricks", "deploy"]
@@ -59,7 +59,7 @@ def test_deploy(cli_runner, metadata):
 
     controller = DeployController(metadata)
     resources = controller.log_deployed_resources(
-        pipelines, only_dev=True, _custom_username="github"
+        pipelines, only_dev=True, _custom_username=custom_username
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
@@ -67,7 +67,7 @@ def test_deploy(cli_runner, metadata):
     ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
 
 
-def test_deploy_prod(cli_runner, metadata):
+def test_deploy_prod(cli_runner, metadata, custom_username):
     """Test the `deploy` command"""
     reset_init(metadata)
     deploy_fail = ["databricks", "deploy"]
@@ -87,7 +87,9 @@ def test_deploy_prod(cli_runner, metadata):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(pipelines, _custom_username="github")
+    resources = controller.log_deployed_resources(
+        pipelines, _custom_username=custom_username
+    )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
         metadata.package_name in p.name for p in resources

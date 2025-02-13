@@ -60,7 +60,7 @@ def init(
     """
     provider_name = _PROVIDER_MAP.get(provider, DEFAULT_PROVIDER)
     controller = InitController(metadata)
-    controller.bundle_init(databricks_args)
+    controller.bundle_init(list(databricks_args))
     controller.write_kedro_databricks_config(default, provider_name)
     if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
@@ -143,4 +143,4 @@ def deploy(
     controller.create_dbfs_dir()
     controller.upload_project_config(conf)
     controller.upload_project_data()
-    controller.deploy_project(databricks_args)
+    controller.deploy_project(list(databricks_args))

@@ -153,12 +153,8 @@ class DeployController:
         result = Command(build_cmd, msg=self._msg).run()
         return result
 
-    def _check_result(self, messages):
-        return (
-            messages is not None
-            and len(messages) > 0
-            and "Deployment complete!" in messages[-1]
-        )
+    def _check_result(self, messages) -> bool:
+        return messages and "Deployment complete!" in messages[-1]
 
     def deploy_project(self, databricks_args: list[str]):  # pragma: no cover
         """Deploy the project to Databricks.
@@ -177,7 +173,6 @@ class DeployController:
                 break
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
-
         # databricks bundle deploy logs to stderr for some reason.
         if self._check_result(result.stdout) or self._check_result(result.stderr):
             result.returncode = 0
@@ -187,7 +182,7 @@ class DeployController:
 
     def _get_username(self, w: WorkspaceClient, _custom_username: str | None):
         username = _custom_username or w.current_user.me().user_name
-        if username is None:
+        if username is None:  # pragma: no cover
             raise ValueError("Could not get username from Databricks")
         if "@" in username:
             username = username.split("@")[0]
@@ -222,6 +217,7 @@ class DeployController:
         )
         job_host = f"{w.config.host}/jobs"
         username = self._get_username(w, _custom_username)
+        self.log.info(f"{self._msg}: Getting jobs for {username}")
         all_jobs = {
             job.settings.name: job
             for job in w.jobs.list()
@@ -229,7 +225,7 @@ class DeployController:
         }
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         for job in jobs:
-            if only_dev and not job.is_dev:
+            if only_dev and not job.is_dev:  # pragma: no cover
                 continue
             self.log.info(f"Run '{job.name}' at {job.url}")
         return jobs

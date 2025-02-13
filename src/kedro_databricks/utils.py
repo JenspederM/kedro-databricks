@@ -69,7 +69,7 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
 
 class Command:
     def __init__(self, command: list[str], warn: bool = False, msg: str = ""):
-        if msg is None:
+        if msg is None:  # pragma: no cover
             msg = f'Executing ({" ".join(command)})'
         self.log = logging.getLogger(self.__class__.__name__)
         self.command = command
@@ -109,7 +109,7 @@ class Command:
 
     def _read(self, ident: str, io: IO | None, log_func: Any) -> list[str]:
         lines = []
-        if io is None:
+        if io is None:  # pragma: no cover
             self.log.warning(f"{self.msg}: No output from command")
             return lines
         while True:
