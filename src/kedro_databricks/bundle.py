@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import logging
+from collections.abc import Iterable, MutableMapping
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -9,7 +11,8 @@ from kedro.config import MissingConfigException
 from kedro.framework.project import pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
-from kedro.pipeline import Pipeline, node
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
 
 from kedro_databricks.utils import (
     TASK_KEY_ORDER,
@@ -27,7 +30,7 @@ DEFAULT = "default"
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = None
+        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf"
     ) -> None:
         """Create a new instance of the BundleController.
 
@@ -37,17 +40,17 @@ class BundleController:
             config_dir (str, optional): The name of the configuration directory. Defaults to None.
         """
 
-        self.metadata = metadata
-        self.env = env
-        self._conf = config_dir
-        self.project_name = metadata.project_name
-        self.project_path = metadata.project_path
-        self.package_name = metadata.package_name
-        self.pipelines = pipelines
-        self.log = logging.getLogger(self.package_name)
-        self.remote_conf_dir = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
-        self.local_conf_dir = self.metadata.project_path / config_dir / env
-        self.conf = self._load_env_config(MSG="Loading configuration")
+        self.metadata: ProjectMetadata = metadata
+        self.env: str = env
+        self._conf: str = config_dir
+        self.project_name: str = metadata.project_name
+        self.project_path: Path = metadata.project_path
+        self.package_name: str = metadata.package_name
+        self.pipelines: MutableMapping = pipelines
+        self.log: logging.Logger = logging.getLogger(self.package_name)
+        self.remote_conf_dir: str = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
+        self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
+        self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
 
     def _workflows_to_resources(
         self, workflows: dict[str, dict[str, Any]], MSG: str = ""
@@ -86,7 +89,7 @@ class BundleController:
         """
         workflows = {}
         pipeline = self.pipelines.get(pipeline_name)
-        if pipeline:
+        if pipeline_name and pipeline:
             self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
             name = make_workflow_name(self.package_name, pipeline_name)
             workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
@@ -163,12 +166,12 @@ class BundleController:
                 )  # pragma: no cover
 
             # Set the default pattern for `databricks` if not provided in `settings.py`
-            if "databricks" not in config_loader.config_patterns.keys():
-                config_loader.config_patterns.update(  # pragma: no cover
+            if "databricks" not in config_loader.config_patterns.keys():  # type: ignore
+                config_loader.config_patterns.update(  # pragma: no cover # type: ignore
                     {"databricks": ["databricks*", "databricks/**"]}
                 )
 
-            assert "databricks" in config_loader.config_patterns.keys()
+            assert "databricks" in config_loader.config_patterns.keys()  # type: ignore
 
             # Load the config
             try:
@@ -204,7 +207,7 @@ class BundleController:
     def _create_task(
         self,
         name: str,
-        depends_on: list[node],
+        depends_on: Iterable[Node],
     ) -> dict[str, Any]:
         """Create a Databricks task for a given node.
 
@@ -231,13 +234,12 @@ class BundleController:
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
-
-        depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
-                {"task_key": dep.name.replace(".", "_")} for dep in depends_on
+                {"task_key": dep.name.replace(".", "_")}
+                for dep in sorted(list(depends_on), key=lambda dep: dep.name)
             ],
             "python_wheel_task": {
                 "package_name": self.package_name,

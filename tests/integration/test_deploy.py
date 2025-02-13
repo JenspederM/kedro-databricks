@@ -62,9 +62,9 @@ def test_deploy(cli_runner, metadata):
         pipelines, only_dev=True, _custom_username="github"
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
-    assert all(metadata.package_name in p.name for p in resources), (
-        f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
-    )
+    assert all(
+        metadata.package_name in p.name for p in resources
+    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
 
 
 def test_deploy_prod(cli_runner, metadata):
@@ -89,9 +89,9 @@ def test_deploy_prod(cli_runner, metadata):
     controller = DeployController(metadata)
     resources = controller.log_deployed_resources(pipelines, _custom_username="github")
     assert len(resources) > 0, f"There are no resources: {resources}"
-    assert all(metadata.package_name in p.name for p in resources), (
-        f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
-    )
+    assert all(
+        metadata.package_name in p.name for p in resources
+    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
 
 
 def test_deploy_with_conf(cli_runner, metadata):
@@ -146,7 +146,7 @@ def test_deploy_with_conf(cli_runner, metadata):
     conf_path = metadata.project_path / "dist" / CONF_KEY / "base" / "databricks.yml"
     files = list((metadata.project_path / "dist" / CONF_KEY).rglob("*"))
     assert conf_path.exists(), f"Conf file not created - found {files}"
-    assert conf_path.read_text() == override_path.read_text(), (
-        f"Conf file not copied - found {files}"
-    )
+    assert (
+        conf_path.read_text() == override_path.read_text()
+    ), f"Conf file not copied - found {files}"
     settings.write_text(original_settings)

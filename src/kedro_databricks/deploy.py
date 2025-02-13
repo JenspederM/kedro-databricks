@@ -4,10 +4,11 @@ import logging
 import os
 import tarfile
 from collections import namedtuple
+from collections.abc import MutableMapping
 from pathlib import Path
 
 from databricks.sdk import WorkspaceClient
-from kedro.framework.project import _ProjectPipelines
+from databricks.sdk.service.jobs import BaseJob
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
@@ -29,9 +30,9 @@ JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 class DeployController:
     def __init__(self, metadata: ProjectMetadata) -> None:
         self._msg = "Deploying to Databricks"
-        self.package_name = metadata.package_name
-        self.project_path = metadata.project_path
-        self.log = logging.getLogger(metadata.package_name)
+        self.package_name: str = metadata.package_name
+        self.project_path: Path = metadata.project_path
+        self.log: logging.Logger = logging.getLogger(metadata.package_name)
 
     def go_to_project(self) -> Path:
         """Change the current working directory to the project path.
@@ -169,14 +170,16 @@ class DeployController:
                 break
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
-        success_stdout: bool = (
-            result.stdout and "Deployment complete!" in result.stdout[-1]
-        )
-        success_stderr: bool = (
-            result.stderr and "Deployment complete!" in result.stderr[-1]
-        )
+
+        def check_result(messages):
+            return (
+                messages is not None
+                and len(messages) > 0
+                and "Deployment complete!" in messages[-1]
+            )
+
         # databricks bundle deploy logs to stderr for some reason.
-        if success_stdout or success_stderr:  # pragma: no cover
+        if check_result(result.stdout) or check_result(result.stderr):
             result.returncode = 0
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
@@ -184,10 +187,10 @@ class DeployController:
 
     def log_deployed_resources(
         self,
-        pipelines: _ProjectPipelines = kedro_pipelines,
+        pipelines: MutableMapping = kedro_pipelines,
         only_dev: bool = False,
         _custom_username: str | None = None,
-    ) -> dict[str, set[str]]:
+    ) -> set[JobLink]:
         """Print deployed pipelines.
 
         Args:
@@ -210,8 +213,16 @@ class DeployController:
             config_file=os.getenv("DATABRICKS_CONFIG_FILE"),
         )
         job_host = f"{w.config.host}/jobs"
-        username = _custom_username or w.current_user.me().user_name.split("@")[0]
-        all_jobs = {job.settings.name: job for job in w.jobs.list()}
+        username = _custom_username or w.current_user.me().user_name
+        if username is None:
+            raise ValueError("Could not get username from Databricks")
+        if "@" in username:
+            username = username.split("@")[0]
+        all_jobs = {
+            job.settings.name: job
+            for job in w.jobs.list()
+            if job.settings is not None and job.settings.name is not None
+        }
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         for job in jobs:
             if only_dev and not job.is_dev:
@@ -221,8 +232,8 @@ class DeployController:
 
     def _gather_user_jobs(
         self,
-        all_jobs: dict[str, str],
-        pipelines: _ProjectPipelines,
+        all_jobs: dict[str, BaseJob],
+        pipelines: MutableMapping,
         username,
         job_host,
     ) -> set[JobLink]:
@@ -239,7 +250,7 @@ class DeployController:
             jobs.add(link)
         return jobs
 
-    def _is_valid_job(self, pipelines: _ProjectPipelines, job_name: str) -> bool:
+    def _is_valid_job(self, pipelines: MutableMapping, job_name: str) -> bool:
         return any(
             make_workflow_name(self.package_name, pipeline_name) in job_name
             for pipeline_name in pipelines

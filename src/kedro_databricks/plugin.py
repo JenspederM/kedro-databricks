@@ -11,7 +11,7 @@ from kedro_databricks.bundle import (
     BundleController,
 )
 from kedro_databricks.deploy import DeployController
-from kedro_databricks.init import InitController
+from kedro_databricks.init import DEFAULT_PROVIDER, InitController
 from kedro_databricks.utils import require_databricks_run_script
 
 DEFAULT_RUN_ENV = "local"
@@ -54,8 +54,11 @@ def init(
     provider: str,
     databricks_args: list[str],
 ):
-    """Initialize Databricks Asset Bundle configuration"""
-    provider_name = _PROVIDER_MAP.get(provider)
+    """Initialize Databricks Asset Bundle configuration
+
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
+    provider_name = _PROVIDER_MAP.get(provider, DEFAULT_PROVIDER)
     controller = InitController(metadata)
     controller.bundle_init(databricks_args)
     controller.write_kedro_databricks_config(default, provider_name)
@@ -122,8 +125,10 @@ def deploy(
     pipeline: str,
     databricks_args: list[str],
 ):
-    """Deploy the asset bundle to Databricks"""
+    """Deploy the asset bundle to Databricks
 
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
     controller = DeployController(metadata)

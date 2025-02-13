@@ -80,10 +80,10 @@ def test_bundle_init(metadata):
     controller = InitController(metadata)
     if not has_databricks_cli():
         with pytest.raises(Exception):
-            controller.bundle_init()
+            controller.bundle_init([])
     else:
         reset_init(metadata)
-        controller.bundle_init()
+        controller.bundle_init([])
         bundle_path = Path(metadata.project_path) / "databricks.yml"
         if not bundle_path.exists():
             files = [
@@ -103,7 +103,7 @@ def test_bundle_init(metadata):
         assert bundle.get("bundle", {}).get("name") == metadata.package_name, bundle
 
         try:
-            controller.bundle_init()
+            controller.bundle_init([])
         except Exception:
             pytest.fail(
                 "If a bundle file already exists, it should not be overwritten."

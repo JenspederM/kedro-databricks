@@ -68,7 +68,7 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
 
 
 class Command:
-    def __init__(self, command: list[str], warn: bool = False, msg: str = None):
+    def __init__(self, command: list[str], warn: bool = False, msg: str = ""):
         if msg is None:
             msg = f'Executing ({" ".join(command)})'
         self.log = logging.getLogger(self.__class__.__name__)
@@ -94,8 +94,8 @@ class Command:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         ) as popen:
-            stdout = self._read(popen.stdout, self.log.info)
-            stderr = self._read(popen.stderr, self.log.error)
+            stdout = self._read("stdout", popen.stdout, self.log.info)
+            stderr = self._read("stderr", popen.stderr, self.log.error)
             return_code = popen.wait()
             if return_code != 0:
                 self._handle_error(stdout, stderr)
@@ -107,8 +107,11 @@ class Command:
                 stderr=stderr or "",
             )
 
-    def _read(self, io: IO, log_func: Any) -> list[str]:
+    def _read(self, ident: str, io: IO | None, log_func: Any) -> list[str]:
         lines = []
+        if io is None:
+            self.log.warning(f"{self.msg}: No output from command")
+            return lines
         while True:
             line = io.readline().decode("utf-8", errors="replace").strip()
             if not line:
@@ -173,8 +176,8 @@ def update_list(
     for key in keys:
         update = copy.deepcopy(default)
         update.update(new_obj.get(key, {}))
-        new = merge(old_obj.get(key, {}), update)
-        old_obj[key] = new
+        new = merge(old_obj.get(key, {}), update)  # type: ignore
+        old_obj[key] = new  # type: ignore
 
     return [{lookup_key: k, **v} for k, v in old_obj.items()]
 
@@ -207,16 +210,11 @@ def _is_null_or_empty(x: Any) -> bool:
     return x is None or (isinstance(x, (dict, list)) and len(x) == 0)
 
 
-def _remove_nulls_from_list(
-    lst: list[dict | float | int | str | bool],
-) -> list[dict | list]:
+def _remove_nulls_from_list(lst: list) -> list:
     """Remove None values from a list.
 
     Args:
         l (List[Dict[Any, Any]]): list to remove None values from
-
-    Returns:
-        List[Dict[Any, Any]]: list with None values removed
     """
     for i, item in enumerate(lst):
         value = remove_nulls(item)
@@ -224,11 +222,10 @@ def _remove_nulls_from_list(
             lst.remove(item)
         else:
             lst[i] = value
+    return lst
 
 
-def _remove_nulls_from_dict(
-    d: dict[str, Any],
-) -> dict[str, float | int | str | bool]:
+def _remove_nulls_from_dict(d: dict) -> dict:
     """Remove None values from a dictionary.
 
     Args:
