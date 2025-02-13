@@ -50,3 +50,21 @@ def test_deploy_build_project(metadata):
     controller = DeployController(metadata)
     result = controller.build_project()
     assert result.returncode == 0, (result.returncode, result.stdout)
+
+
+def test_deploy_build_project_and_create_conf_tar(metadata):
+    controller = DeployController(metadata)
+    result = controller.build_project()
+    assert result.returncode == 0, (result.returncode, result.stdout)
+    # Check that the tarball is created
+    controller._untar_conf("conf")
+    dist_dir = metadata.project_path / "dist"
+    conf_dir = dist_dir / "conf"
+    assert (conf_dir).exists(), "Failed to untar conf tarball"
+    conf_files = list(conf_dir.iterdir())
+    assert (conf_dir / "base").exists(), f"Base not found - found {conf_files}"
+    assert (conf_dir / "local").exists(), f"Local not found - found {conf_files}"
+
+    # Check that wheel is created
+    wheel = dist_dir / f"{metadata.package_name}-0.1-py3-none-any.whl"
+    assert wheel.exists(), f"Wheel not found - found {list(dist_dir.iterdir())}"
