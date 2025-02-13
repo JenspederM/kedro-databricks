@@ -128,6 +128,7 @@ def test_deploy_with_conf(cli_runner, metadata):
     assert metadata.project_path.is_dir(), "Project path is not a directory"
 
     settings = metadata.project_path / "src" / metadata.package_name / "settings.py"
+    original_settings = settings.read_text()
     with open(settings, "a"):
         settings.write_text(f"CONF_SOURCE = '{CONF_KEY}'")
 
@@ -148,3 +149,4 @@ def test_deploy_with_conf(cli_runner, metadata):
     assert conf_path.read_text() == override_path.read_text(), (
         f"Conf file not copied - found {files}"
     )
+    settings.write_text(original_settings)
