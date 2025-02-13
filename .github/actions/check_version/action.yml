@@ -65,6 +65,12 @@ runs:
         issue-number: ${{ inputs.pr_number }}
         body-file: body.md
         edit-mode: replace
+    - name: Upload Changelog Body
+      if: ${{ steps.cz.outputs.version != steps.project.outputs.old_version }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: changelog
+        path: body.md
     - name: Print Output
       shell: bash
       run: |
