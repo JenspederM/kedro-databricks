@@ -64,7 +64,7 @@ jobs:
           token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
           ref: ${{ needs.version.outputs.new_version }}
       - name: Download Changelog Body
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: changelog
       - uses: databricks/setup-cli@main
