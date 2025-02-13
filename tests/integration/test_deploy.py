@@ -62,9 +62,9 @@ def test_deploy(cli_runner, metadata):
         pipelines, only_dev=True, _custom_username="github"
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
-    assert all(
-        metadata.package_name in p.name for p in resources
-    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    assert all(metadata.package_name in p.name for p in resources), (
+        f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    )
 
 
 def test_deploy_prod(cli_runner, metadata):
@@ -89,9 +89,9 @@ def test_deploy_prod(cli_runner, metadata):
     controller = DeployController(metadata)
     resources = controller.log_deployed_resources(pipelines, _custom_username="github")
     assert len(resources) > 0, f"There are no resources: {resources}"
-    assert all(
-        metadata.package_name in p.name for p in resources
-    ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    assert all(metadata.package_name in p.name for p in resources), (
+        f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    )
 
 
 def test_deploy_with_conf(cli_runner, metadata):
@@ -101,9 +101,11 @@ def test_deploy_with_conf(cli_runner, metadata):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
+    CONF_KEY = "custom_conf"
+
     init_cmd = ["databricks", "init", "--provider", "1"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "custom_conf" / "base" / "databricks.yml"
+    override_path = metadata.project_path / CONF_KEY / "base" / "databricks.yml"
     override_path.parent.mkdir(parents=True, exist_ok=True)
     override_path.write_text(
         """
@@ -125,11 +127,24 @@ def test_deploy_with_conf(cli_runner, metadata):
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
 
+    settings = metadata.project_path / "src" / metadata.package_name / "settings.py"
+    with open(settings, "a"):
+        settings.write_text(f"CONF_SOURCE = '{CONF_KEY}'")
+
     deploy_cmd = [
         "databricks",
         "deploy",
         "--bundle",
-        "--conf=custom_conf",
+        f"--conf={CONF_KEY}",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
+
+    controller = DeployController(metadata)
+    controller._untar_conf(CONF_KEY)
+    conf_path = metadata.project_path / "dist" / CONF_KEY / "base" / "databricks.yml"
+    files = list((metadata.project_path / "dist" / CONF_KEY).rglob("*"))
+    assert conf_path.exists(), f"Conf file not created - found {files}"
+    assert conf_path.read_text() == override_path.read_text(), (
+        f"Conf file not copied - found {files}"
+    )
