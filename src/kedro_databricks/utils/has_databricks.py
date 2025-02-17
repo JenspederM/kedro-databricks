@@ -8,7 +8,7 @@ MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
 
 def has_databricks_cli() -> bool:
     """Check if the Databricks CLI is installed."""
-    if shutil.which("databricks") is None:
+    if shutil.which("databricks") is None:  # pragma: no cover
         return False
     _check_version()
     return True
