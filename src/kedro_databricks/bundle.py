@@ -14,7 +14,7 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from kedro_databricks.utils import (
+from kedro_databricks.utils.common import (
     TASK_KEY_ORDER,
     WORKFLOW_KEY_ORDER,
     _remove_nulls_from_dict,

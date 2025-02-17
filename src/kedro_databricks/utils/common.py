@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import logging
 import re
-import shutil
 import subprocess
 from typing import Any
 
@@ -29,11 +28,6 @@ WORKFLOW_KEY_ORDER = [
     "job_clusters",
     "tasks",
 ]
-
-
-def has_databricks_cli() -> bool:
-    """Check if the Databricks CLI is installed."""
-    return shutil.which("databricks") is not None
 
 
 def get_entry_point(project_name: str) -> str:

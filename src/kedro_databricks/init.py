@@ -12,7 +12,8 @@ from pathlib import Path
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import Command, has_databricks_cli
+from kedro_databricks.utils.common import Command
+from kedro_databricks.utils.has_databricks import has_databricks_cli
 
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",

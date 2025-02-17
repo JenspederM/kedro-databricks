@@ -7,12 +7,10 @@ import click
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.bundle import (
-    BundleController,
-)
+from kedro_databricks.bundle import BundleController
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import DEFAULT_PROVIDER, InitController
-from kedro_databricks.utils import require_databricks_run_script
+from kedro_databricks.utils.common import require_databricks_run_script
 
 DEFAULT_RUN_ENV = "local"
 DEFAULT_CONF_FOLDER = "conf"

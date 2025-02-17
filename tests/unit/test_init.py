@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from kedro_databricks.init import NODE_TYPE_MAP, InitController
-from kedro_databricks.utils import has_databricks_cli
+from kedro_databricks.utils.has_databricks import has_databricks_cli
 from tests.utils import reset_init
 
 

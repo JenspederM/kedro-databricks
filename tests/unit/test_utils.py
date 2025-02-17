@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import logging
+import os
 import subprocess
 
 import pytest
 
-from kedro_databricks.utils import (
+from kedro_databricks.utils.common import (
     KEDRO_VERSION,
     Command,
     _is_null_or_empty,
@@ -15,6 +17,20 @@ from kedro_databricks.utils import (
     require_databricks_run_script,
     update_list,
 )
+from kedro_databricks.utils.has_databricks import has_databricks_cli
+
+
+def test_has_databricks_cli():
+    logging.basicConfig(level=logging.INFO)
+    assert has_databricks_cli(), "Databricks CLI is not installed"
+
+
+def test_fail_with_python_databricks_cli():
+    subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
+    with pytest.raises(ValueError):
+        os.environ["DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION"] = "1"
+        has_databricks_cli()
+    subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
 
 
 def test_command_fail_default():

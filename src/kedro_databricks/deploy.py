@@ -12,7 +12,7 @@ from databricks.sdk.service.jobs import BaseJob
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import Command, make_workflow_name
+from kedro_databricks.utils.common import Command, make_workflow_name
 
 _INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
