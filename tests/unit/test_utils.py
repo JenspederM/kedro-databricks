@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import subprocess
 
 import pytest
@@ -20,6 +21,9 @@ from kedro_databricks.utils.common import (
 from kedro_databricks.utils.has_databricks import has_databricks_cli
 
 
+@pytest.mark.skipif(
+    shutil.which("databricks") is None, reason="Databricks CLI is not installed"
+)
 def test_has_databricks_cli():
     logging.basicConfig(level=logging.INFO)
     assert has_databricks_cli(), "Databricks CLI is not installed"
