@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
+import os
+import shutil
 import subprocess
 
 import pytest
 
-from kedro_databricks.utils import (
+from kedro_databricks.utils.common import (
     KEDRO_VERSION,
     Command,
     _is_null_or_empty,
@@ -15,6 +18,23 @@ from kedro_databricks.utils import (
     require_databricks_run_script,
     update_list,
 )
+from kedro_databricks.utils.has_databricks import has_databricks_cli
+
+
+@pytest.mark.skipif(
+    shutil.which("databricks") is None, reason="Databricks CLI is not installed"
+)
+def test_has_databricks_cli():
+    logging.basicConfig(level=logging.INFO)
+    assert has_databricks_cli(), "Databricks CLI is not installed"
+
+
+def test_fail_with_python_databricks_cli():
+    subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
+    with pytest.raises(ValueError):
+        os.environ["DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION"] = "1"
+        has_databricks_cli()
+    subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
 
 
 def test_command_fail_default():
@@ -24,7 +44,7 @@ def test_command_fail_default():
         assert "Failed to run command" in str(
             e.value
         ), f"Failed to raise exception: {cmd}"
-        raise e
+        raise Exception(e)
 
 
 def test_command_fail_custom():
@@ -33,7 +53,7 @@ def test_command_fail_custom():
         msg = "Custom message"
         Command(cmd, msg=msg).run()
         assert "Custom message" in str(e.value), f"Failed to raise exception: {cmd}"
-        raise e
+        raise Exception(e)
 
 
 def test_command_success():

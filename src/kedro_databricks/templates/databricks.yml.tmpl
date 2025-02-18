@@ -9,6 +9,15 @@ artifacts:
     build: kedro package
     path: .
 
+sync:
+  include:
+    - conf/**/*.yml
+    - conf/**/*.gitkeep
+    - data/**/*.csv
+    - data/**/*.gitkeep
+  exclude:
+    - conf/local/**/*
+
 include:
   - resources/*.yml
   - resources/**/*.yml
