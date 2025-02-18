@@ -48,7 +48,7 @@ class BundleController:
         self.package_name: str = metadata.package_name
         self.pipelines: MutableMapping = pipelines
         self.log: logging.Logger = logging.getLogger(self.package_name)
-        self.remote_conf_dir: str = "/Workspace/${workpace.file_path}/" + config_dir
+        self.remote_conf_dir: str = "/Workspace/${workspace.file_path}/" + config_dir
         self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
         self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
 

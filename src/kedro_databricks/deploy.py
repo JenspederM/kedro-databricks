@@ -110,7 +110,7 @@ class DeployController:
         with tarfile.open(conf_tar) as tar:
             file_names = tar.getnames()
             for _file in file_names:
-                if _file.startswith("."):
+                if _file.startswith("."):  # pragma: no cover - hidden files
                     continue
                 tar.extract(_file, dist_dir)
 
