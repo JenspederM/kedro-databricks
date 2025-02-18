@@ -14,7 +14,7 @@ def has_databricks_cli() -> bool:
     return True
 
 
-def _get_databricks_version() -> str:
+def _get_databricks_version() -> list[int]:
     result = subprocess.run(
         ["databricks", "--version"], check=True, capture_output=True
     )
@@ -24,7 +24,7 @@ def _get_databricks_version() -> str:
     return list(map(int, version_str.split(".")))
 
 
-def _to_str(version: str):
+def _to_str(version: list[int]) -> str:
     return ".".join(str(x) for x in version)
 
 
