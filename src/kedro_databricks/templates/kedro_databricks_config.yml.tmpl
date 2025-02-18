@@ -12,7 +12,7 @@
               num_workers: 1
               data_security_mode: USER_ISOLATION
               spark_env_vars:
-                  KEDRO_LOGGING_CONFIG: "/dbfs/FileStore/{package_name}/conf/logging.yml"
+                  KEDRO_LOGGING_CONFIG: /Workspace/\${{workspace.file_path}}/conf/logging.yml
     tasks:
         - task_key: {default_key}
           job_cluster_key: {default_key}

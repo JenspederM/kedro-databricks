@@ -48,7 +48,7 @@ class BundleController:
         self.package_name: str = metadata.package_name
         self.pipelines: MutableMapping = pipelines
         self.log: logging.Logger = logging.getLogger(self.package_name)
-        self.remote_conf_dir: str = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
+        self.remote_conf_dir: str = "/Workspace/${workpace.file_path}/" + config_dir
         self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
         self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
 
@@ -199,7 +199,6 @@ class BundleController:
                 self._create_task(node.name, depends_on=deps)
                 for node, deps in sorted(pipeline.node_dependencies.items())
             ],
-            "format": "MULTI_TASK",
         }
 
         return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
@@ -349,8 +348,6 @@ def _apply_overrides(
         overrides.get("environments", []),
         "environment_key",
     )
-
-    workflow["format"] = "MULTI_TASK"
 
     return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
