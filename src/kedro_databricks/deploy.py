@@ -166,11 +166,9 @@ class DeployController:
             subprocess.CompletedProcess: The result of the deployment.
         """
         deploy_cmd = ["databricks", "bundle", "deploy"] + databricks_args
-        target = "dev"
-        for i, arg in enumerate(databricks_args):
-            if arg == "--target":
-                target = databricks_args[i + 1]
-                break
+        target = self._get_target(databricks_args)
+        if target is None:
+            deploy_cmd += ["--target", "local"]
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
         # databricks bundle deploy logs to stderr for some reason.
@@ -179,6 +177,11 @@ class DeployController:
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
         return result
+
+    def _get_target(self, args: list[str]):
+        for i, arg in enumerate(args):
+            if arg == "--target":
+                return args[i + 1]
 
     def _get_username(self, w: WorkspaceClient, _custom_username: str | None):
         username = _custom_username or w.current_user.me().user_name
