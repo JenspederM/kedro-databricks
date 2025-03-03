@@ -196,7 +196,6 @@ class BundleController:
                 self._create_task(node.name, depends_on=deps)
                 for node, deps in sorted(pipeline.node_dependencies.items())
             ],
-            "format": "MULTI_TASK",
         }
 
         return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
@@ -347,8 +346,6 @@ def _apply_overrides(
         overrides.get("environments", []),
         "environment_key",
     )
-
-    workflow["format"] = "MULTI_TASK"
 
     return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
 
