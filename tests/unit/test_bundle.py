@@ -81,7 +81,6 @@ def generate_workflow(conf="conf"):
     return {
         "name": "workflow1",
         "tasks": tasks,
-        "format": "MULTI_TASK",
     }
 
 
@@ -236,7 +235,6 @@ def test_generate_resources(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("node"),
@@ -259,7 +257,6 @@ def test_generate_resources_another_conf(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("node", conf="sub_conf"),
@@ -286,7 +283,6 @@ def test_generate_resources_in_a_sorted_manner(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("a_node"),
@@ -325,7 +321,6 @@ def test_generate_resources_for_a_single_pipeline(metadata):
             "resources": {
                 "jobs": {
                     "fake_project_b_pipeline": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project_b_pipeline",
                         "tasks": [
                             _generate_task("b_node"),
