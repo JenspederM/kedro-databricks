@@ -12,17 +12,8 @@ from databricks.sdk.service.jobs import BaseJob
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
+from kedro_databricks.constants import DEFAULT_TARGET, INVALID_CONFIG_MSG
 from kedro_databricks.utils.common import Command, make_workflow_name
-
-_INVALID_CONFIG_MSG = """
-No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
-
-You can initialize the Databricks bundle by running:
-
-```
-kedro databricks init
-```
-"""
 
 JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 
@@ -59,7 +50,7 @@ class DeployController:
             FileNotFoundError: If the Databricks configuration file does not exist.
         """
         if not (self.project_path / "databricks.yml").exists():
-            raise FileNotFoundError(_INVALID_CONFIG_MSG)
+            raise FileNotFoundError(INVALID_CONFIG_MSG)
         return True
 
     def create_dbfs_dir(self):  # pragma: no cover
@@ -168,7 +159,7 @@ class DeployController:
         deploy_cmd = ["databricks", "bundle", "deploy"] + databricks_args
         target = self._get_target(databricks_args)
         if target is None:
-            deploy_cmd += ["--target", "local"]
+            deploy_cmd += ["--target", DEFAULT_TARGET]
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
         # databricks bundle deploy logs to stderr for some reason.

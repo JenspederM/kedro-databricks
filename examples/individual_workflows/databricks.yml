@@ -1,0 +1,9 @@
+my_workflow:
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        spark_version: 7.3.x-scala2.12
+        node_type_id: Standard_DS3_v2
+        num_workers: 2
+        spark_env_vars:
+            KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml

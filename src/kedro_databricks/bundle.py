@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import logging
 from collections.abc import Iterable, MutableMapping
 from pathlib import Path
@@ -14,18 +13,15 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
+from kedro_databricks.constants import TASK_KEY_ORDER, WORKFLOW_KEY_ORDER
 from kedro_databricks.utils.common import (
-    TASK_KEY_ORDER,
-    WORKFLOW_KEY_ORDER,
-    _remove_nulls_from_dict,
-    _sort_dict,
     get_entry_point,
     make_workflow_name,
+    remove_nulls,
     require_databricks_run_script,
-    update_list,
+    sort_dict,
 )
-
-DEFAULT = "default"
+from kedro_databricks.utils.override_resources import override_resources
 
 
 class BundleController:
@@ -106,37 +102,20 @@ class BundleController:
 
         return self._workflows_to_resources(workflows, MSG)
 
-    def apply_overrides(self, resources: dict[str, Any], default_key: str = DEFAULT):
+    def apply_overrides(self, resources: dict[str, Any], default_key):
         """Apply overrides to the Databricks resources.
 
         Args:
             resources (Dict[str, Any]): dictionary of Databricks resources
-            overrides (Dict[str, Any]): dictionary of overrides
             default_key (str, optional): default key to use for overrides
 
         Returns:
             Dict[str, Any]: dictionary of Databricks resources with overrides applied
         """
-        default_workflow = self.conf.pop(default_key, {})
-        default_tasks = default_workflow.get("tasks", [])
-        default_task = _get_value_by_key(default_tasks, "task_key", default_key)
-
+        result = {}
         for name, resource in resources.items():
-            workflow = resource["resources"]["jobs"][name]
-            workflow_overrides = copy.deepcopy(default_workflow)
-            workflow_overrides.update(self.conf.get(name, {}))
-            workflow_task_overrides = workflow_overrides.pop("tasks", [])
-            task_overrides = _get_value_by_key(
-                workflow_task_overrides, "task_key", default_key
-            )
-            if not task_overrides:
-                task_overrides = default_task
-
-            resources[name]["resources"]["jobs"][name] = _apply_overrides(
-                workflow, workflow_overrides, default_task=task_overrides
-            )
-
-        return resources
+            result[name] = override_resources(resource, self.conf, default_key)
+        return result
 
     def _load_env_config(self, MSG: str = "") -> dict[str, Any]:
         """Load the Databricks configuration for the given environment.
@@ -200,8 +179,10 @@ class BundleController:
                 for node, deps in sorted(pipeline.node_dependencies.items())
             ],
         }
-
-        return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
+        non_null = remove_nulls(sort_dict(workflow, WORKFLOW_KEY_ORDER))
+        if not isinstance(non_null, dict):  # pragma: no cover - this is a type check
+            raise RuntimeError("Expected a dict")
+        return non_null
 
     def _create_task(
         self,
@@ -247,7 +228,7 @@ class BundleController:
             },
         }
 
-        return _sort_dict(task, TASK_KEY_ORDER)
+        return sort_dict(task, TASK_KEY_ORDER)
 
     def save_bundled_resources(
         self, resources: dict[str, dict[str, Any]], overwrite: bool = False
@@ -277,89 +258,3 @@ class BundleController:
                 yaml.dump(
                     resource, f, default_flow_style=False, indent=4, sort_keys=False
                 )
-
-
-def _apply_overrides(
-    workflow: dict[str, Any],
-    overrides: dict[str, Any],
-    default_task: dict[str, Any] = {},
-):
-    from mergedeep import merge
-
-    workflow["description"] = workflow.get("description", overrides.get("description"))
-    workflow["edit_mode"] = workflow.get("edit_mode", overrides.get("edit_mode"))
-    workflow["max_concurrent_runs"] = workflow.get(
-        "max_concurrent_runs", overrides.get("max_concurrent_runs")
-    )
-    workflow["timeout_seconds"] = workflow.get(
-        "timeout_seconds", overrides.get("timeout_seconds")
-    )
-
-    workflow["health"] = merge(workflow.get("health", {}), overrides.get("health", {}))
-    workflow["email_notifications"] = merge(
-        workflow.get("email_notifications", {}),
-        overrides.get("email_notifications", {}),
-    )
-    workflow["webhook_notifications"] = merge(
-        workflow.get("webhook_notifications", {}),
-        overrides.get("webhook_notifications", {}),
-    )
-    workflow["notification_settings"] = merge(
-        workflow.get("notification_settings", {}),
-        overrides.get("notification_settings", {}),
-    )
-    workflow["schedule"] = merge(
-        workflow.get("schedule", {}), overrides.get("schedule", {})
-    )
-    workflow["trigger"] = merge(
-        workflow.get("trigger", {}), overrides.get("trigger", {})
-    )
-    workflow["continuous"] = merge(
-        workflow.get("continuous", {}), overrides.get("continuous", {})
-    )
-    workflow["git_source"] = merge(
-        workflow.get("git_source", {}), overrides.get("git_source", {})
-    )
-    workflow["tags"] = merge(workflow.get("tags", {}), overrides.get("tags", {}))
-    workflow["queue"] = merge(workflow.get("queue", {}), overrides.get("queue", {}))
-    workflow["run_as"] = merge(workflow.get("run_as", {}), overrides.get("run_as", {}))
-    workflow["deployment"] = merge(
-        workflow.get("deployment", {}), overrides.get("deployment", {})
-    )
-
-    workflow["access_control_list"] = merge(
-        workflow.get("access_control_list", {}),
-        overrides.get("access_control_list", {}),
-    )
-
-    workflow["tasks"] = update_list(
-        workflow.get("tasks", []), overrides.get("tasks", []), "task_key", default_task
-    )
-    workflow["job_clusters"] = update_list(
-        workflow.get("job_clusters", []),
-        overrides.get("job_clusters", []),
-        "job_cluster_key",
-    )
-    workflow["parameters"] = update_list(
-        workflow.get("parameters", []), overrides.get("parameters", []), "name"
-    )
-    workflow["environments"] = update_list(
-        workflow.get("environments", []),
-        overrides.get("environments", []),
-        "environment_key",
-    )
-
-    return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
-
-
-def _get_value_by_key(
-    lst: list[dict[str, Any]], lookup: str, key: str
-) -> dict[str, Any]:
-    result = {}
-    for d in lst:
-        if d.get(lookup) == key:
-            result = copy.deepcopy(d)
-            break
-    if result.get(lookup):
-        result.pop(lookup)
-    return result

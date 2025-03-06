@@ -11,14 +11,19 @@ from kedro_databricks.utils.common import (
     KEDRO_VERSION,
     Command,
     _is_null_or_empty,
-    _sort_dict,
     get_entry_point,
     make_workflow_name,
     remove_nulls,
     require_databricks_run_script,
-    update_list,
+    sort_dict,
 )
+from kedro_databricks.utils.create_target_configs import _substitute_file_path
 from kedro_databricks.utils.has_databricks import has_databricks_cli
+from kedro_databricks.utils.override_resources import (
+    _override_dict,
+    _override_workflow,
+    _update_list_by_key,
+)
 
 
 @pytest.mark.skipif(
@@ -35,6 +40,33 @@ def test_fail_with_python_databricks_cli():
         os.environ["DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION"] = "1"
         has_databricks_cli()
     subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
+
+
+def test_substitute_file_path():
+    tests = [
+        (
+            "file_path: /dbfs/FileStore/develop_eggs/data/01_raw/file.csv",
+            "file_path: file://Workspace/${_file_path}/data/01_raw/file.csv",
+        ),
+        (
+            "file_path: /dbfs/develop_eggs/data/01_raw/file.csv",
+            "file_path: file://Workspace/${_file_path}/data/01_raw/file.csv",
+        ),
+        (
+            "file_path: /dbfs/FileStore/develop_eggs/data/01_raw/file.csv",
+            "file_path: file://Workspace/${_file_path}/data/01_raw/file.csv",
+        ),
+        ("data/01_raw/file.csv", "data/01_raw/file.csv"),
+        ("file_path: data/0_raw/file.csv", "file_path: data/0_raw/file.csv"),
+        ("file_path: data/012_raw/file.csv", "file_path: data/012_raw/file.csv"),
+        (
+            "file_path: /custom/path/data/01_raw/file.csv",
+            "file_path: /custom/path/data/01_raw/file.csv",
+        ),
+    ]
+    for file_path, expected in tests:
+        result = _substitute_file_path(file_path)
+        assert result == expected, f"\n{result}\n{expected}"
 
 
 def test_command_fail_default():
@@ -103,7 +135,7 @@ def test_update_list():
     new = [
         {"task_key": "task1", "job_cluster_key": "cluster4"},
     ]
-    result = update_list(old, new, "task_key")
+    result = _update_list_by_key(old, new, "task_key")
     assert result == [
         {"task_key": "task1", "job_cluster_key": "cluster4"},
         {"task_key": "task2", "job_cluster_key": "cluster2"},
@@ -120,7 +152,7 @@ def test_update_list_default():
     new = [
         {"task_key": "task1", "job_cluster_key": "cluster4"},
     ]
-    result = update_list(old, new, "task_key", {"job_cluster_key": "cluster1"})
+    result = _update_list_by_key(old, new, "task_key", {"job_cluster_key": "cluster1"})
     assert result == [
         {"task_key": "task1", "job_cluster_key": "cluster4"},
         {"task_key": "task2", "job_cluster_key": "cluster1"},
@@ -134,7 +166,7 @@ def test_sort_dict():
         "a": 2,
         "b": 3,
     }
-    result = _sort_dict(old, ["a", "b", "c"])
+    result = sort_dict(old, ["a", "b", "c"])
 
     assert result == {
         "a": 2,
@@ -198,3 +230,98 @@ def test_is_null_or_empty():
     assert not _is_null_or_empty("a"), "Failed to check str"
     assert not _is_null_or_empty({1: 1}), "Failed to check dict"
     assert not _is_null_or_empty([1]), "Failed to check list"
+
+
+@pytest.mark.parametrize(
+    ["dct", "overrides", "expected"],
+    [
+        (
+            {"a": 1, "b": 2},
+            {"a": 3},
+            {"a": 3, "b": 2},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"c": 3},
+            {"a": 1, "b": 2, "c": 3},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+            {"a": 3, "b": 4},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"a": 3, "b": {"c": 4}},
+            {"a": 3, "b": {"c": 4}},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"a": 3, "job_clusters": [{"job_cluster_key": "cluster1"}]},
+            {"a": 3, "b": 2, "job_clusters": [{"job_cluster_key": "cluster1"}]},
+        ),
+    ],
+)
+def test_override_dict(dct, overrides, expected):
+    result = _override_dict(dct, overrides)
+    assert result == expected, result
+
+
+def test_override_dict_fail():
+    with pytest.raises(ValueError):
+        _override_dict(None, {})  # type: ignore
+    with pytest.raises(ValueError):
+        _override_dict({}, None)  # type: ignore
+
+
+@pytest.mark.parametrize(
+    ["dct", "overrides", "expected"],
+    [
+        (
+            {"a": 1, "b": 2},
+            {"default": {"a": 3}},
+            {"a": 3, "b": 2},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"default": {"c": 3}},
+            {"a": 1, "b": 2, "c": 3},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"default": {"a": 3, "b": 4}},
+            {"a": 3, "b": 4},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"default": {"a": 3, "b": {"c": 4}}},
+            {"a": 3, "b": {"c": 4}},
+        ),
+        (
+            {"a": 1, "b": 2},
+            {"default": {"a": 3, "job_clusters": [{"job_cluster_key": "cluster1"}]}},
+            {"a": 3, "b": 2, "job_clusters": [{"job_cluster_key": "cluster1"}]},
+        ),
+        (
+            {"a": 1, "b": {"c": 2}},
+            {
+                "default": {
+                    "a": 3,
+                    "b": {"c": 3},
+                    "job_clusters": [{"job_cluster_key": "cluster1"}],
+                }
+            },
+            {"a": 3, "b": {"c": 3}, "job_clusters": [{"job_cluster_key": "cluster1"}]},
+        ),
+    ],
+)
+def test_override_workflow(dct, overrides, expected):
+    result = _override_workflow(dct, overrides)
+    assert result == expected, result
+
+
+def test_override_workflow_fail():
+    with pytest.raises(ValueError):
+        _override_workflow(None, {})  # type: ignore
+    with pytest.raises(ValueError):
+        _override_workflow({}, None)  # type: ignore

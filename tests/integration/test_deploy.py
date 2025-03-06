@@ -45,7 +45,7 @@ def test_deploy(cli_runner, metadata, custom_username):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
-    init_cmd = ["databricks", "init", "--provider", "1"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -74,7 +74,7 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
     result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
-    init_cmd = ["databricks", "init", "--provider", "1"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -105,7 +105,7 @@ def test_deploy_with_conf(cli_runner, metadata):
 
     CONF_KEY = "custom_conf"
 
-    init_cmd = ["databricks", "init", "--provider", "1"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = metadata.project_path / CONF_KEY / "base" / "databricks.yml"
     override_path.parent.mkdir(parents=True, exist_ok=True)
