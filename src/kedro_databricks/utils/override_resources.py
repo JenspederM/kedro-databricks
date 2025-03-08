@@ -17,7 +17,7 @@ def override_resources(bundle: dict, overrides: dict, default_key):
     result = {"resources": {"jobs": {}}}
     for name, workflow in bundle.get("resources", {}).get("jobs", {}).items():
         result["resources"]["jobs"][name] = _override_workflow(
-            workflow, overrides, default_key
+            workflow, copy.deepcopy(overrides), default_key
         )
     return result
 
