@@ -35,7 +35,7 @@ resources:
                 libraries:
                 -   whl: ../dist/*.whl
             -   task_key: split
-                python_whee_task:
+                python_wheel_task:
                     package_name: develop_eggs
                     entry_point: develop-eggs
                     parameters:
