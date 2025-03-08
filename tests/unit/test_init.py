@@ -19,6 +19,10 @@ def test_read_databricks_config(metadata):
     controller = InitController(metadata)
     controller.bundle_init([])
     databricks_config = _read_databricks_config(metadata.project_path)
+    files = [f.name for f in metadata.project_path.iterdir()]
+    assert (
+        "databricks.yml" in files
+    ), f"Databricks config not created - found files: {files}"
     assert databricks_config is not None, "Databricks config not read"
 
 
