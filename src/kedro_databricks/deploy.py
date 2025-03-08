@@ -19,11 +19,12 @@ JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 
 
 class DeployController:
-    def __init__(self, metadata: ProjectMetadata) -> None:
+    def __init__(self, metadata: ProjectMetadata, env: str = DEFAULT_TARGET) -> None:
         self._msg = "Deploying to Databricks"
         self.package_name: str = metadata.package_name
         self.project_path: Path = metadata.project_path
         self.log: logging.Logger = logging.getLogger(metadata.package_name)
+        self.env = env
 
     def go_to_project(self) -> Path:
         """Change the current working directory to the project path.
@@ -159,7 +160,7 @@ class DeployController:
         deploy_cmd = ["databricks", "bundle", "deploy"] + databricks_args
         target = self._get_target(databricks_args)
         if target is None:
-            deploy_cmd += ["--target", DEFAULT_TARGET]
+            deploy_cmd += ["--target", self.env]
         self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
         # databricks bundle deploy logs to stderr for some reason.

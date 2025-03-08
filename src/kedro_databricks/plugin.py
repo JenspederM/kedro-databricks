@@ -127,7 +127,7 @@ def deploy(
     """
     if shutil.which("databricks") is None:  # pragma: no cover
         raise Exception("databricks CLI is not installed")
-    controller = DeployController(metadata)
+    controller = DeployController(metadata, env)
     controller.go_to_project()
     controller.validate_databricks_config()
     controller.build_project()
