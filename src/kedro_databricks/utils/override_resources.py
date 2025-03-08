@@ -22,6 +22,13 @@ def override_resources(bundle: dict, overrides: dict, default_key):
     return result
 
 
+def _get_lookup_key(key: str):
+    lookup = OVERRIDE_KEY_MAP.get(key)
+    if lookup is None:
+        raise ValueError(f"Key {key} not found in OVERRIDE_KEY_MAP")
+    return lookup
+
+
 def _override_dict(dct: dict, overrides: dict, default_key: str = "default"):
     """Override a dictionary with another dictionary.
 
@@ -41,7 +48,7 @@ def _override_dict(dct: dict, overrides: dict, default_key: str = "default"):
         if isinstance(value, dict):
             result[key] = _override_dict({}, value)
         elif isinstance(value, list):
-            lookup_key = OVERRIDE_KEY_MAP.get(key, key)
+            lookup_key = _get_lookup_key(key)
             default_task = _get_defaults(
                 lst=overrides.get(key, []),
                 lookup_key=lookup_key,
@@ -115,6 +122,15 @@ def _update_list_by_key(
     )
 
 
+def _get_old_value(result: Any, key: Any, value: Any):
+    default = None
+    if isinstance(value, dict):
+        default = {}
+    elif isinstance(value, list):
+        default = []
+    return result.get(key, default)
+
+
 def _override_workflow(workflow: dict, overrides: dict, default_key: str = "default"):
     """Override a Databricks workflow with the given overrides.
 
@@ -133,23 +149,16 @@ def _override_workflow(workflow: dict, overrides: dict, default_key: str = "defa
     default_overrides = overrides.copy().pop(default_key, {})
     workflow_overrides = overrides.copy().pop(workflow.get("name"), {})
     _overrides = {**default_overrides, **workflow_overrides}
+    default_task = _get_defaults(_overrides.get("tasks", []), "task_key", default_key)
     for key, value in _overrides.items():
-        if isinstance(value, dict):
-            old_value = result.get(key, {})
-            if isinstance(old_value, dict):
-                result[key] = _override_dict(old_value, value)
-            else:
-                result[key] = value
-        elif isinstance(value, list):
-            lookup_key = OVERRIDE_KEY_MAP.get(key, key)
-            default_task = _get_defaults(
-                _overrides.get(key, []), lookup_key, default_key
-            )
-            old = result.get(key, [])
+        old_value = _get_old_value(result, key, value)
+        if isinstance(value, dict) and isinstance(old_value, dict):
+            result[key] = _override_dict(old_value, value)
+        elif isinstance(value, list) and isinstance(old_value, list):
             result[key] = _update_list_by_key(
-                old=old,
+                old=old_value,
                 new=value,
-                lookup_key=lookup_key,
+                lookup_key=_get_lookup_key(key),
                 default=default_task if key == "tasks" else {},
                 default_key=default_key,
             )
