@@ -1,5 +1,6 @@
 from kedro.pipeline import Pipeline, node
 
+from kedro_databricks.constants import DEFAULT_TARGET
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
@@ -47,7 +48,7 @@ def test_deploy(cli_runner, metadata, custom_username):
 
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
+    override_path = metadata.project_path / "conf" / DEFAULT_TARGET / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
@@ -76,13 +77,22 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
 
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
+    override_path = metadata.project_path / "conf" / "prod" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert override_path.exists(), "Override file not created"
 
-    deploy_cmd = ["databricks", "deploy", "--env", "prod", "--bundle"]
+    deploy_cmd = [
+        "databricks",
+        "deploy",
+        "--env",
+        "prod",
+        "--bundle",
+        "--",
+        "--target",
+        "prod",
+    ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
@@ -107,7 +117,7 @@ def test_deploy_with_conf(cli_runner, metadata):
 
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / CONF_KEY / "base" / "databricks.yml"
+    override_path = metadata.project_path / CONF_KEY / DEFAULT_TARGET / "databricks.yml"
     override_path.parent.mkdir(parents=True, exist_ok=True)
     override_path.write_text(
         """
@@ -145,7 +155,9 @@ def test_deploy_with_conf(cli_runner, metadata):
 
     controller = DeployController(metadata)
     controller._untar_conf(CONF_KEY)
-    conf_path = metadata.project_path / "dist" / CONF_KEY / "base" / "databricks.yml"
+    conf_path = (
+        metadata.project_path / "dist" / CONF_KEY / DEFAULT_TARGET / "databricks.yml"
+    )
     files = list((metadata.project_path / "dist" / CONF_KEY).rglob("*"))
     assert conf_path.exists(), f"Conf file not created - found {files}"
     assert (

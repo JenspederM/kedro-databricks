@@ -12,6 +12,13 @@ from kedro_databricks.utils.create_target_configs import (
 from tests.utils import reset_init
 
 
+def test_unknown_provider(cli_runner, metadata):
+    reset_init(metadata)
+    command = ["databricks", "init", "--provider", "unknown"]
+    result = cli_runner.invoke(commands, command, obj=metadata)
+    assert result.exit_code == 1, (result.exit_code, result.stdout)
+
+
 def test_databricks_init(kedro_project, cli_runner, metadata):
     """Test the `init` command"""
     reset_init(metadata)
