@@ -3,63 +3,86 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
-from kedro_databricks.init import NODE_TYPE_MAP, InitController
-
-
-def _write_dummy_catalog(catalog_path: Path):
-    catalog = {
-        "test": {
-            "type": "pandas.CSVDataSet",
-            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test.csv",
-        },
-        "test2": {
-            "type": "pandas.CSVDataSet",
-            "filepath": "/dbfs/FileStore/my-project/data/01_raw/test2.csv",
-        },
-    }
-    with open(catalog_path, "w") as f:
-        f.write(yaml.dump(catalog))
+from kedro_databricks.init import InitController
+from kedro_databricks.utils.create_target_configs import (
+    _get_bundle_name,
+    _get_targets,
+    _read_databricks_config,
+    create_target_configs,
+)
 
 
-def test_substitute_catalog_paths(metadata):
+def test_read_databricks_config(metadata):
+    if (metadata.project_path / "databricks.yml").exists():
+        (metadata.project_path / "databricks.yml").unlink()
     controller = InitController(metadata)
-    catalog_path = controller.project_path / "conf" / "base" / "catalog.yml"
-    _write_dummy_catalog(catalog_path)
-    controller.substitute_catalog_paths()
-    with open(catalog_path) as f:
-        new_catalog = f.read()
-    assert "/dbfs/FileStore/fake_project/data" in new_catalog, new_catalog
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    assert databricks_config is not None, "Databricks config not read"
 
 
-def test_write_override_template(metadata):
+def test_read_databricks_config_does_not_exist(metadata):
+    if (metadata.project_path / "databricks.yml").exists():
+        (metadata.project_path / "databricks.yml").unlink()
+    with pytest.raises(FileNotFoundError):
+        _read_databricks_config(metadata.project_path)
+
+
+def test_read_bundle_name(metadata):
+    if (metadata.project_path / "databricks.yml").exists():
+        (metadata.project_path / "databricks.yml").unlink()
     controller = InitController(metadata)
-    default_key = "default"
-    provider = "azure"
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    bundle_name = _get_bundle_name(databricks_config)
+    assert bundle_name == metadata.package_name, "Bundle name not read"
 
-    controller.write_kedro_databricks_config(default_key, provider)
-    override_path = Path(metadata.project_path) / "conf" / "base" / "databricks.yml"
-    assert override_path.exists(), "Override template not written"
 
-    with open(override_path) as f:
-        override = yaml.safe_load(f)
-    assert (
-        override.get(default_key) is not None
-    ), f"Override template not written: {override}"
+def test_read_bundle_name_does_not_exist(metadata):
+    with pytest.raises(ValueError):
+        _get_bundle_name({})
 
-    job_cluster = override.get(default_key, {}).get("job_clusters", []).pop()
-    assert (
-        job_cluster.get("job_cluster_key") == default_key
-    ), f"job_cluster_key is wrong: {override}"
 
-    node_type_id = job_cluster.get("new_cluster", {}).get("node_type_id")
-    assert node_type_id == NODE_TYPE_MAP[provider], f"node_type_id is wrong: {override}"
+def test_get_targets(metadata):
+    if (metadata.project_path / "databricks.yml").exists():
+        (metadata.project_path / "databricks.yml").unlink()
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    targets = _get_targets(databricks_config)
+    assert targets is not None, "Targets not read"
 
-    try:
-        controller.write_kedro_databricks_config(default_key, provider)
-    except Exception:
-        pytest.fail("If an override file already exists, it should not be overwritten.")
+
+def test_get_targets_does_not_exist(metadata):
+    with pytest.raises(ValueError):
+        _get_targets({})
+
+
+def test_create_target_configs(metadata):
+    if (metadata.project_path / "databricks.yml").exists():
+        (metadata.project_path / "databricks.yml").unlink()
+    if (metadata.project_path / "conf" / "base" / "databricks.yml").exists():
+        (metadata.project_path / "conf" / "base" / "databricks.yml").rmdir()
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    create_target_configs(metadata, "test", "test")
+    databricks_config = _read_databricks_config(metadata.project_path)
+
+    targets = _get_targets(databricks_config)
+    for target in targets:
+        target_path = metadata.project_path / "conf" / target
+        assert target_path.exists(), f"Target config not created: {target_path}"
+        assert target_path.is_dir(), f"Target config is not a directory: {target_path}"
+
+
+def test_bundle_init_already_exists(metadata):
+    controller = InitController(metadata)
+    with open(metadata.project_path / "databricks.yml", "w") as f:
+        f.write("test")
+    controller.bundle_init([])
+    with open(metadata.project_path / "databricks.yml") as f:
+        assert f.read() == "test", "Databricks config overwritten"
 
 
 def test_write_databricks_run_script(metadata):

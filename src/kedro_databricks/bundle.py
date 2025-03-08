@@ -241,7 +241,7 @@ class BundleController:
             overwrite (bool): Whether to overwrite existing resources
         """
         resources_dir = self.project_path / "resources"
-        resources_dir.mkdir(exist_ok=True)
+        resources_dir.mkdir(exist_ok=True, parents=True)
         for name, resource in resources.items():
             MSG = f"Writing resource '{name}'"
             p = resources_dir / f"{name}.yml"

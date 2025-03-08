@@ -43,7 +43,7 @@ def databricks_commands():
 @click.pass_obj
 def init(
     metadata: ProjectMetadata,
-    default: str,
+    default_key: str,
     provider: str,
     databricks_args: list[str],
 ):
@@ -56,7 +56,7 @@ def init(
         raise ValueError(f"Invalid provider: {provider}")
     controller = InitController(metadata)
     controller.bundle_init(list(databricks_args))
-    create_target_configs(metadata, node_type_id=node_type_id, default_key=default)
+    create_target_configs(metadata, node_type_id=node_type_id, default_key=default_key)
     if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
         log.warning(
@@ -138,7 +138,4 @@ def deploy(
             workflows, DEFAULT_CONFIG_KEY
         )
         bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
-    controller.create_dbfs_dir()
-    controller.upload_project_config(conf)
-    controller.upload_project_data()
     controller.deploy_project(list(databricks_args))
