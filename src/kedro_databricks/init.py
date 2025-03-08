@@ -9,8 +9,9 @@ from pathlib import Path
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.constants import TEMPLATES
+from kedro_databricks.constants import GITIGNORE, TEMPLATES
 from kedro_databricks.utils.common import Command
+from kedro_databricks.utils.create_target_configs import create_target_configs
 from kedro_databricks.utils.has_databricks import has_databricks_cli
 
 
@@ -80,6 +81,30 @@ class InitController:
         self.log.info(f"{MSG}: Wrote {config_path.relative_to(self.project_path)}")
         shutil.rmtree(assets_dir)
         return result
+
+    def create_override_configs(self, node_type_id: str, default_key: str):
+        """Create override configurations for Databricks targets."
+
+        Args:
+            node_type_id: The node type ID for the Databricks provider.
+            default_key: The default key for the Databricks target.
+
+        Raises:
+            FileNotFoundError: If the project path does not exist.
+        """
+        create_target_configs(
+            self.metadata, node_type_id=node_type_id, default_key=default_key
+        )
+
+    def update_gitignore(self):
+        gitignore_path = self.project_path / ".gitignore"
+        if not gitignore_path.exists():
+            gitignore_path.touch()
+
+        current_gitignore = gitignore_path.read_text()
+
+        with open(gitignore_path, "w") as f:
+            f.write(f"{GITIGNORE}\n{current_gitignore}")
 
     def write_databricks_run_script(self):
         MSG = "Creating Databricks run script"

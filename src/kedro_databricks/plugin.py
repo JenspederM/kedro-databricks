@@ -20,7 +20,6 @@ from kedro_databricks.constants import (
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import InitController
 from kedro_databricks.utils.common import require_databricks_run_script
-from kedro_databricks.utils.create_target_configs import create_target_configs
 
 
 @click.group(name="Kedro-Databricks")
@@ -56,7 +55,8 @@ def init(
         raise ValueError(f"Invalid provider: {provider}")
     controller = InitController(metadata)
     controller.bundle_init(list(databricks_args))
-    create_target_configs(metadata, node_type_id=node_type_id, default_key=default_key)
+    controller.create_override_configs(default_key, node_type_id)
+    controller.update_gitignore()
     if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
         log.warning(
