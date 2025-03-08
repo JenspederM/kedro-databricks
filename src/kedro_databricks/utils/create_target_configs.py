@@ -25,7 +25,7 @@ def create_target_configs(
                         "num_workers": 2,
                         "data_security_mode": "USER_ISOLATION",
                         "spark_env_vars": {
-                            "KEDRO_LOGGING_CONFIG": "/Workspace/\\${workspace.file_path}/conf/logging.yml"
+                            "KEDRO_LOGGING_CONFIG": "\\${workspace.file_path}/conf/logging.yml"
                         },
                     },
                 }

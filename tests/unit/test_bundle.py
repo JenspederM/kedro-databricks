@@ -39,7 +39,7 @@ def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = 
         "--nodes",
         task_key,
         "--conf-source",
-        "/Workspace/${workspace.file_path}/" + conf,  # type: ignore
+        "${workspace.file_path}/" + conf,  # type: ignore
         "--env",
         "fake_env",
     ]

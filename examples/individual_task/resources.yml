@@ -13,7 +13,7 @@ resources:
                     - --nodes
                     - make_predictions
                     - --conf-source
-                    - /Workspace/${workspace.file_path}/conf
+                    - ${workspace.file_path}/conf
                     - --env
                     - local
                 libraries:
@@ -29,20 +29,20 @@ resources:
                     - --nodes
                     - report_accuracy
                     - --conf-source
-                    - /Workspace/${workspace.file_path}/conf
+                    - ${workspace.file_path}/conf
                     - --env
                     - local
                 libraries:
                 -   whl: ../dist/*.whl
             -   task_key: split
-                python_wheel_task:
+                python_whee_task:
                     package_name: develop_eggs
                     entry_point: develop-eggs
                     parameters:
                     - --nodes
                     - split
                     - --conf-source
-                    - /Workspace/${workspace.file_path}/conf
+                    - ${workspace.file_path}/conf
                     - --env
                     - local
                 libraries:

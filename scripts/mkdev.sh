@@ -34,14 +34,4 @@ echo "java openjdk-21" >> "$CUR_PATH/$1/.tool-versions"
 cp "dist/$WHL" "$CUR_PATH/$1/$WHL"
 
 # Move to the project directory
-pushd "$CUR_PATH/$1"
-# Create a virtual environment
-python3 -m venv .venv
-# Activate the virtual environment
-source .venv/bin/activate
-# Install the project dependencies
-pip install --upgrade uv
-uv pip install -r requirements.txt
-uv pip install $WHL --force-reinstall
-code .
-popd
+code "$CUR_PATH/$1"
