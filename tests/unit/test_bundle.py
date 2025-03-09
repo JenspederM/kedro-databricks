@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import copy
-
 from kedro.pipeline import Pipeline, node
 
 from kedro_databricks.bundle import BundleController
-from kedro_databricks.utils import require_databricks_run_script
+from kedro_databricks.utils.common import require_databricks_run_script
 
 
 def identity(arg):
@@ -41,7 +39,7 @@ def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = 
         "--nodes",
         task_key,
         "--conf-source",
-        f"/dbfs/FileStore/fake_project/{conf}",
+        "${workspace.file_path}/" + conf,  # type: ignore
         "--env",
         "fake_env",
     ]
@@ -81,127 +79,10 @@ def generate_workflow(conf="conf"):
     return {
         "name": "workflow1",
         "tasks": tasks,
-        "format": "MULTI_TASK",
     }
 
 
 WORKFLOW = generate_workflow()
-
-OVERRIDES = {
-    "default": {
-        "job_clusters": [
-            {
-                "job_cluster_key": "default",
-                "new_cluster": {
-                    "spark_version": "7.3.x-scala2.12",
-                    "node_type_id": "Standard_DS3_v2",
-                    "num_workers": 2,
-                    "spark_env_vars": {
-                        "KEDRO_LOGGING_CONFIG": "dbfs:/path/to/logging.yml"
-                    },
-                },
-            }
-        ],
-        "tasks": [
-            {
-                "task_key": "default",
-                "job_cluster_key": "default",
-            }
-        ],
-    }
-}
-
-WORKFLOW_OVERRIDES = {
-    WORKFLOW["name"]: {
-        "job_clusters": [
-            {
-                "job_cluster_key": "default",
-                "new_cluster": {
-                    "spark_version": "7.3.x-scala2.12",
-                    "node_type_id": "Standard_DS3_v2",
-                    "num_workers": 2,
-                    "spark_env_vars": {
-                        "KEDRO_LOGGING_CONFIG": "dbfs:/path/to/logging.yml"
-                    },
-                },
-            }
-        ],
-        "tasks": [
-            {
-                "task_key": "default",
-                "job_cluster_key": "default",
-            }
-        ],
-    }
-}
-
-MIX_OVERRIDES = {
-    "default": {
-        "job_clusters": [
-            {
-                "job_cluster_key": "default",
-                "new_cluster": {
-                    "spark_version": "7.3.x-scala2.12",
-                    "node_type_id": "Standard_DS3_v2",
-                    "num_workers": 2,
-                    "spark_env_vars": {
-                        "KEDRO_LOGGING_CONFIG": "dbfs:/path/to/logging.yml"
-                    },
-                },
-            }
-        ]
-    },
-    WORKFLOW["name"]: {
-        "tasks": [
-            {
-                "task_key": "default",
-                "job_cluster_key": "default",
-            }
-        ],
-    },
-}
-
-
-def _generate_testdata():
-    result = copy.deepcopy(WORKFLOW)
-    result["job_clusters"] = [
-        {
-            "job_cluster_key": "default",
-            "new_cluster": {
-                "spark_version": "7.3.x-scala2.12",
-                "node_type_id": "Standard_DS3_v2",
-                "num_workers": 2,
-                "spark_env_vars": {"KEDRO_LOGGING_CONFIG": "dbfs:/path/to/logging.yml"},
-            },
-        }
-    ]
-    for task in result["tasks"]:
-        task["job_cluster_key"] = "default"
-
-    resources = {
-        WORKFLOW["name"]: {
-            "resources": {"jobs": {WORKFLOW["name"]: copy.deepcopy(WORKFLOW)}}
-        }
-    }
-
-    return resources, result
-
-
-def test_apply_resource_overrides(metadata):
-    resources, result = _generate_testdata()
-    controller = BundleController(metadata, "fake_env", "conf")
-    controller.conf = OVERRIDES
-    assert controller.apply_overrides(resources, "default") == {
-        "workflow1": {"resources": {"jobs": {"workflow1": result}}}
-    }, "Failed to apply default overrides"
-    controller.conf = WORKFLOW_OVERRIDES
-    assert controller.apply_overrides(resources, "default") == {
-        "workflow1": {"resources": {"jobs": {"workflow1": result}}}
-    }, "Failed to apply workflow overrides"
-    controller.conf = MIX_OVERRIDES
-    assert controller.apply_overrides(resources, "default") == {
-        "workflow1": {"resources": {"jobs": {"workflow1": result}}}
-    }, "Failed to apply mixed overrides"
 
 
 def test_generate_workflow(metadata):
@@ -212,12 +93,14 @@ def test_generate_workflow(metadata):
 def test_create_task(metadata):
     controller = BundleController(metadata, "fake_env", "conf")
     expected_task = _generate_task("task", ["a", "b"])
+    node_a = node(identity, ["input"], ["output"], name="a")
+    node_b = node(identity, ["input"], ["output"], name="b")
     assert (
         controller._create_task(
             "task",
             [
-                node(identity, ["input"], ["output"], name="b"),
-                node(identity, ["input"], ["output"], name="a"),
+                node_b,
+                node_a,
             ],
         )
         == expected_task
@@ -236,7 +119,6 @@ def test_generate_resources(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("node"),
@@ -259,7 +141,6 @@ def test_generate_resources_another_conf(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("node", conf="sub_conf"),
@@ -286,7 +167,6 @@ def test_generate_resources_in_a_sorted_manner(metadata):
             "resources": {
                 "jobs": {
                     "fake_project": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project",
                         "tasks": [
                             _generate_task("a_node"),
@@ -325,7 +205,6 @@ def test_generate_resources_for_a_single_pipeline(metadata):
             "resources": {
                 "jobs": {
                     "fake_project_b_pipeline": {
-                        "format": "MULTI_TASK",
                         "name": "fake_project_b_pipeline",
                         "tasks": [
                             _generate_task("b_node"),

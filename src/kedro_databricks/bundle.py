@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import copy
 import logging
+from collections.abc import Iterable, MutableMapping
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -9,25 +10,23 @@ from kedro.config import MissingConfigException
 from kedro.framework.project import pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
-from kedro.pipeline import Pipeline, node
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
 
-from kedro_databricks.utils import (
-    TASK_KEY_ORDER,
-    WORKFLOW_KEY_ORDER,
-    _remove_nulls_from_dict,
-    _sort_dict,
+from kedro_databricks.constants import TASK_KEY_ORDER, WORKFLOW_KEY_ORDER
+from kedro_databricks.utils.common import (
     get_entry_point,
     make_workflow_name,
+    remove_nulls,
     require_databricks_run_script,
-    update_list,
+    sort_dict,
 )
-
-DEFAULT = "default"
+from kedro_databricks.utils.override_resources import override_resources
 
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = None
+        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf"
     ) -> None:
         """Create a new instance of the BundleController.
 
@@ -37,17 +36,17 @@ class BundleController:
             config_dir (str, optional): The name of the configuration directory. Defaults to None.
         """
 
-        self.metadata = metadata
-        self.env = env
-        self._conf = config_dir
-        self.project_name = metadata.project_name
-        self.project_path = metadata.project_path
-        self.package_name = metadata.package_name
-        self.pipelines = pipelines
-        self.log = logging.getLogger(self.package_name)
-        self.remote_conf_dir = f"/dbfs/FileStore/{self.package_name}/{config_dir}"
-        self.local_conf_dir = self.metadata.project_path / config_dir / env
-        self.conf = self._load_env_config(MSG="Loading configuration")
+        self.metadata: ProjectMetadata = metadata
+        self.env: str = env
+        self._conf: str = config_dir
+        self.project_name: str = metadata.project_name
+        self.project_path: Path = metadata.project_path
+        self.package_name: str = metadata.package_name
+        self.pipelines: MutableMapping = pipelines
+        self.log: logging.Logger = logging.getLogger(self.package_name)
+        self.remote_conf_dir: str = "${workspace.file_path}/" + config_dir
+        self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
+        self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
 
     def _workflows_to_resources(
         self, workflows: dict[str, dict[str, Any]], MSG: str = ""
@@ -86,7 +85,7 @@ class BundleController:
         """
         workflows = {}
         pipeline = self.pipelines.get(pipeline_name)
-        if pipeline:
+        if pipeline_name and pipeline:
             self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
             name = make_workflow_name(self.package_name, pipeline_name)
             workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
@@ -103,37 +102,20 @@ class BundleController:
 
         return self._workflows_to_resources(workflows, MSG)
 
-    def apply_overrides(self, resources: dict[str, Any], default_key: str = DEFAULT):
+    def apply_overrides(self, resources: dict[str, Any], default_key):
         """Apply overrides to the Databricks resources.
 
         Args:
             resources (Dict[str, Any]): dictionary of Databricks resources
-            overrides (Dict[str, Any]): dictionary of overrides
             default_key (str, optional): default key to use for overrides
 
         Returns:
             Dict[str, Any]: dictionary of Databricks resources with overrides applied
         """
-        default_workflow = self.conf.pop(default_key, {})
-        default_tasks = default_workflow.get("tasks", [])
-        default_task = _get_value_by_key(default_tasks, "task_key", default_key)
-
+        result = {}
         for name, resource in resources.items():
-            workflow = resource["resources"]["jobs"][name]
-            workflow_overrides = copy.deepcopy(default_workflow)
-            workflow_overrides.update(self.conf.get(name, {}))
-            workflow_task_overrides = workflow_overrides.pop("tasks", [])
-            task_overrides = _get_value_by_key(
-                workflow_task_overrides, "task_key", default_key
-            )
-            if not task_overrides:
-                task_overrides = default_task
-
-            resources[name]["resources"]["jobs"][name] = _apply_overrides(
-                workflow, workflow_overrides, default_task=task_overrides
-            )
-
-        return resources
+            result[name] = override_resources(resource, self.conf, default_key)
+        return result
 
     def _load_env_config(self, MSG: str = "") -> dict[str, Any]:
         """Load the Databricks configuration for the given environment.
@@ -163,12 +145,12 @@ class BundleController:
                 )  # pragma: no cover
 
             # Set the default pattern for `databricks` if not provided in `settings.py`
-            if "databricks" not in config_loader.config_patterns.keys():
-                config_loader.config_patterns.update(  # pragma: no cover
+            if "databricks" not in config_loader.config_patterns.keys():  # type: ignore
+                config_loader.config_patterns.update(  # pragma: no cover # type: ignore
                     {"databricks": ["databricks*", "databricks/**"]}
                 )
 
-            assert "databricks" in config_loader.config_patterns.keys()
+            assert "databricks" in config_loader.config_patterns.keys()  # type: ignore
 
             # Load the config
             try:
@@ -196,15 +178,16 @@ class BundleController:
                 self._create_task(node.name, depends_on=deps)
                 for node, deps in sorted(pipeline.node_dependencies.items())
             ],
-            "format": "MULTI_TASK",
         }
-
-        return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
+        non_null = remove_nulls(sort_dict(workflow, WORKFLOW_KEY_ORDER))
+        if not isinstance(non_null, dict):  # pragma: no cover - this is a type check
+            raise RuntimeError("Expected a dict")
+        return non_null
 
     def _create_task(
         self,
         name: str,
-        depends_on: list[node],
+        depends_on: Iterable[Node],
     ) -> dict[str, Any]:
         """Create a Databricks task for a given node.
 
@@ -231,13 +214,12 @@ class BundleController:
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
-
-        depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
-                {"task_key": dep.name.replace(".", "_")} for dep in depends_on
+                {"task_key": dep.name.replace(".", "_")}
+                for dep in sorted(list(depends_on), key=lambda dep: dep.name)
             ],
             "python_wheel_task": {
                 "package_name": self.package_name,
@@ -246,7 +228,7 @@ class BundleController:
             },
         }
 
-        return _sort_dict(task, TASK_KEY_ORDER)
+        return sort_dict(task, TASK_KEY_ORDER)
 
     def save_bundled_resources(
         self, resources: dict[str, dict[str, Any]], overwrite: bool = False
@@ -259,7 +241,7 @@ class BundleController:
             overwrite (bool): Whether to overwrite existing resources
         """
         resources_dir = self.project_path / "resources"
-        resources_dir.mkdir(exist_ok=True)
+        resources_dir.mkdir(exist_ok=True, parents=True)
         for name, resource in resources.items():
             MSG = f"Writing resource '{name}'"
             p = resources_dir / f"{name}.yml"
@@ -276,91 +258,3 @@ class BundleController:
                 yaml.dump(
                     resource, f, default_flow_style=False, indent=4, sort_keys=False
                 )
-
-
-def _apply_overrides(
-    workflow: dict[str, Any],
-    overrides: dict[str, Any],
-    default_task: dict[str, Any] = {},
-):
-    from mergedeep import merge
-
-    workflow["description"] = workflow.get("description", overrides.get("description"))
-    workflow["edit_mode"] = workflow.get("edit_mode", overrides.get("edit_mode"))
-    workflow["max_concurrent_runs"] = workflow.get(
-        "max_concurrent_runs", overrides.get("max_concurrent_runs")
-    )
-    workflow["timeout_seconds"] = workflow.get(
-        "timeout_seconds", overrides.get("timeout_seconds")
-    )
-
-    workflow["health"] = merge(workflow.get("health", {}), overrides.get("health", {}))
-    workflow["email_notifications"] = merge(
-        workflow.get("email_notifications", {}),
-        overrides.get("email_notifications", {}),
-    )
-    workflow["webhook_notifications"] = merge(
-        workflow.get("webhook_notifications", {}),
-        overrides.get("webhook_notifications", {}),
-    )
-    workflow["notification_settings"] = merge(
-        workflow.get("notification_settings", {}),
-        overrides.get("notification_settings", {}),
-    )
-    workflow["schedule"] = merge(
-        workflow.get("schedule", {}), overrides.get("schedule", {})
-    )
-    workflow["trigger"] = merge(
-        workflow.get("trigger", {}), overrides.get("trigger", {})
-    )
-    workflow["continuous"] = merge(
-        workflow.get("continuous", {}), overrides.get("continuous", {})
-    )
-    workflow["git_source"] = merge(
-        workflow.get("git_source", {}), overrides.get("git_source", {})
-    )
-    workflow["tags"] = merge(workflow.get("tags", {}), overrides.get("tags", {}))
-    workflow["queue"] = merge(workflow.get("queue", {}), overrides.get("queue", {}))
-    workflow["run_as"] = merge(workflow.get("run_as", {}), overrides.get("run_as", {}))
-    workflow["deployment"] = merge(
-        workflow.get("deployment", {}), overrides.get("deployment", {})
-    )
-
-    workflow["access_control_list"] = merge(
-        workflow.get("access_control_list", {}),
-        overrides.get("access_control_list", {}),
-    )
-
-    workflow["tasks"] = update_list(
-        workflow.get("tasks", []), overrides.get("tasks", []), "task_key", default_task
-    )
-    workflow["job_clusters"] = update_list(
-        workflow.get("job_clusters", []),
-        overrides.get("job_clusters", []),
-        "job_cluster_key",
-    )
-    workflow["parameters"] = update_list(
-        workflow.get("parameters", []), overrides.get("parameters", []), "name"
-    )
-    workflow["environments"] = update_list(
-        workflow.get("environments", []),
-        overrides.get("environments", []),
-        "environment_key",
-    )
-
-    workflow["format"] = "MULTI_TASK"
-
-    return _remove_nulls_from_dict(_sort_dict(workflow, WORKFLOW_KEY_ORDER))
-
-
-def _get_value_by_key(
-    lst: list[dict[str, Any]], lookup: str, key: str
-) -> dict[str, Any]:
-    result = {}
-    for d in lst:
-        if d.get(lookup) == key:
-            result = copy.deepcopy(d)
-            break
-    if result.get(lookup):
-        result.pop(lookup)
-    return result

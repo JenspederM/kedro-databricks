@@ -4,34 +4,27 @@ import logging
 import os
 import tarfile
 from collections import namedtuple
+from collections.abc import MutableMapping
 from pathlib import Path
 
 from databricks.sdk import WorkspaceClient
-from kedro.framework.project import _ProjectPipelines
+from databricks.sdk.service.jobs import BaseJob
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.utils import Command, make_workflow_name
-
-_INVALID_CONFIG_MSG = """
-No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
-
-You can initialize the Databricks bundle by running:
-
-```
-kedro databricks init
-```
-"""
+from kedro_databricks.constants import DEFAULT_TARGET, INVALID_CONFIG_MSG
+from kedro_databricks.utils.common import Command, make_workflow_name
 
 JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 
 
 class DeployController:
-    def __init__(self, metadata: ProjectMetadata) -> None:
+    def __init__(self, metadata: ProjectMetadata, env: str = DEFAULT_TARGET) -> None:
         self._msg = "Deploying to Databricks"
-        self.package_name = metadata.package_name
-        self.project_path = metadata.project_path
-        self.log = logging.getLogger(metadata.package_name)
+        self.package_name: str = metadata.package_name
+        self.project_path: Path = metadata.project_path
+        self.log: logging.Logger = logging.getLogger(metadata.package_name)
+        self.env = env
 
     def go_to_project(self) -> Path:
         """Change the current working directory to the project path.
@@ -58,7 +51,7 @@ class DeployController:
             FileNotFoundError: If the Databricks configuration file does not exist.
         """
         if not (self.project_path / "databricks.yml").exists():
-            raise FileNotFoundError(_INVALID_CONFIG_MSG)
+            raise FileNotFoundError(INVALID_CONFIG_MSG)
         return True
 
     def create_dbfs_dir(self):  # pragma: no cover
@@ -109,7 +102,7 @@ class DeployController:
         with tarfile.open(conf_tar) as tar:
             file_names = tar.getnames()
             for _file in file_names:
-                if _file.startswith("."):
+                if _file.startswith("."):  # pragma: no cover - hidden files
                     continue
                 tar.extract(_file, dist_dir)
 
@@ -152,41 +145,50 @@ class DeployController:
         result = Command(build_cmd, msg=self._msg).run()
         return result
 
-    def deploy_project(self, target: str, debug: bool = False, var: list[str] = []):
+    def _check_result(self, messages) -> bool:
+        return messages and "Deployment complete!" in messages[-1]
+
+    def deploy_project(self, databricks_args: list[str]):  # pragma: no cover
         """Deploy the project to Databricks.
 
         Args:
-            target (str): Databricks target environment to deploy to.
-            debug (bool): Whether to enable debug mode.
-            variables (list[str]): List of variables to set.
+            databricks_args (list[str]): Databricks arguments.
+
+        Returns:
+            subprocess.CompletedProcess: The result of the deployment.
         """
-        self.log.info(
-            f"{self._msg}: Running `databricks bundle deploy --target {target}`"
-        )
-        _var = [_v for v in var for _v in ["--var", v]]
-        deploy_cmd = ["databricks", "bundle", "deploy", "--target", target, *_var]
-        if debug:
-            deploy_cmd.append("--debug")
+        deploy_cmd = ["databricks", "bundle", "deploy"] + databricks_args
+        target = self._get_target(databricks_args)
+        if target is None:
+            deploy_cmd += ["--target", self.env]
+        self.log.info(f"{self._msg}: Running `{' '.join(deploy_cmd)}`")
         result = Command(deploy_cmd, msg=self._msg, warn=True).run()
-        success_stdout: bool = (
-            result.stdout and "Deployment complete!" in result.stdout[-1]
-        )
-        success_stderr: bool = (
-            result.stderr and "Deployment complete!" in result.stderr[-1]
-        )
         # databricks bundle deploy logs to stderr for some reason.
-        if success_stdout or success_stderr:  # pragma: no cover
+        if self._check_result(result.stdout) or self._check_result(result.stderr):
             result.returncode = 0
         self.log.info(f"{self._msg}: Successfully Deployed Jobs")
         self.log_deployed_resources(only_dev=target in ["dev", "local"])
         return result
 
+    def _get_target(self, args: list[str]):
+        for i, arg in enumerate(args):
+            if arg == "--target":
+                return args[i + 1]
+
+    def _get_username(self, w: WorkspaceClient, _custom_username: str | None):
+        username = _custom_username or w.current_user.me().user_name
+        if username is None:  # pragma: no cover
+            raise ValueError("Could not get username from Databricks")
+        if "@" in username:
+            username = username.split("@")[0]
+        return username
+
     def log_deployed_resources(
         self,
-        pipelines: _ProjectPipelines = kedro_pipelines,
+        pipelines: MutableMapping = kedro_pipelines,
         only_dev: bool = False,
         _custom_username: str | None = None,
-    ) -> dict[str, set[str]]:
+    ) -> set[JobLink]:
         """Print deployed pipelines.
 
         Args:
@@ -209,19 +211,24 @@ class DeployController:
             config_file=os.getenv("DATABRICKS_CONFIG_FILE"),
         )
         job_host = f"{w.config.host}/jobs"
-        username = _custom_username or w.current_user.me().user_name.split("@")[0]
-        all_jobs = {job.settings.name: job for job in w.jobs.list()}
+        username = self._get_username(w, _custom_username)
+        self.log.info(f"{self._msg}: Getting jobs for {username}")
+        all_jobs = {
+            job.settings.name: job
+            for job in w.jobs.list()
+            if job.settings is not None and job.settings.name is not None
+        }
         jobs = self._gather_user_jobs(all_jobs, pipelines, username, job_host)
         for job in jobs:
-            if only_dev and not job.is_dev:
+            if only_dev and not job.is_dev:  # pragma: no cover
                 continue
             self.log.info(f"Run '{job.name}' at {job.url}")
         return jobs
 
     def _gather_user_jobs(
         self,
-        all_jobs: dict[str, str],
-        pipelines: _ProjectPipelines,
+        all_jobs: dict[str, BaseJob],
+        pipelines: MutableMapping,
         username,
         job_host,
     ) -> set[JobLink]:
@@ -238,7 +245,7 @@ class DeployController:
             jobs.add(link)
         return jobs
 
-    def _is_valid_job(self, pipelines: _ProjectPipelines, job_name: str) -> bool:
+    def _is_valid_job(self, pipelines: MutableMapping, job_name: str) -> bool:
         return any(
             make_workflow_name(self.package_name, pipeline_name) in job_name
             for pipeline_name in pipelines

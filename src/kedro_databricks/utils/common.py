@@ -3,37 +3,10 @@ from __future__ import annotations
 import copy
 import logging
 import re
-import shutil
 import subprocess
-from typing import IO, Any
+from typing import Any
 
-from kedro import __version__ as kedro_version
-
-KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
-TASK_KEY_ORDER = [
-    "task_key",
-    "job_cluster_key",
-    "new_cluster",
-    "depends_on",
-    "spark_python_task",
-    "python_wheel_task",
-]
-
-WORKFLOW_KEY_ORDER = [
-    "name",
-    "tags",
-    "access_control_list",
-    "email_notifications",
-    "schedule",
-    "max_concurrent_runs",
-    "job_clusters",
-    "tasks",
-]
-
-
-def has_databricks_cli() -> bool:
-    """Check if the Databricks CLI is installed."""
-    return shutil.which("databricks") is not None
+from kedro_databricks.constants import KEDRO_VERSION
 
 
 def get_entry_point(project_name: str) -> str:
@@ -68,8 +41,8 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
 
 
 class Command:
-    def __init__(self, command: list[str], warn: bool = False, msg: str = None):
-        if msg is None:
+    def __init__(self, command: list[str], warn: bool = False, msg: str = ""):
+        if msg is None:  # pragma: no cover
             msg = f'Executing ({" ".join(command)})'
         self.log = logging.getLogger(self.__class__.__name__)
         self.command = command
@@ -86,45 +59,48 @@ class Command:
         yield "program", self.command[0]
         yield "args", self.command[1:]
 
+    def _read_stdout(self, process: subprocess.Popen):
+        stdout = []
+        while True:
+            line = process.stdout.readline()  # type: ignore - we know it's there
+            if not line and process.poll() is not None:
+                break
+            print(line, end="")  # noqa: T201
+            stdout.append(line)
+        return stdout
+
+    def _run_command(self, command, **kwargs):
+        """Run a command while printing the live output"""
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            **kwargs,
+        )
+        stdout = self._read_stdout(process)
+        process.stdout.close()  # type: ignore - we know it's there
+        process.wait()
+        if process.returncode != 0 and "deploy" not in command:
+            self._handle_error()
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=process.returncode,
+            stdout=stdout or [""],
+            stderr=[],
+        )
+
     def run(self, *args):
         cmd = self.command + list(*args)
         self.log.info(f"Running command: {cmd}")
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        ) as popen:
-            stdout = self._read(popen.stdout, self.log.info)
-            stderr = self._read(popen.stderr, self.log.error)
-            return_code = popen.wait()
-            if return_code != 0:
-                self._handle_error(stdout, stderr)
+        return self._run_command(cmd)
 
-            return subprocess.CompletedProcess(
-                args=cmd,
-                returncode=return_code,
-                stdout=stdout,
-                stderr=stderr or "",
-            )
-
-    def _read(self, io: IO, log_func: Any) -> list[str]:
-        lines = []
-        while True:
-            line = io.readline().decode("utf-8", errors="replace").strip()
-            if not line:
-                break
-            log_func(f"{self.msg}: {line}")
-            lines.append(line)
-        return lines
-
-    def _handle_error(self, stdout: list[str], stderr: list[str]):
-        error_msg = "\n".join(stderr)
-        if not error_msg:  # pragma: no cover
-            error_msg = "\n".join(stdout)
+    def _handle_error(self):
+        error_msg = f"{self.msg}: Failed to run command - `{' '.join(self.command)}`"
         if self.warn:
-            self.log.warning(f"{self.msg} ({self.command}): {error_msg}")
+            self.log.warning(error_msg)
         else:
-            raise RuntimeError(f"{self.msg} ({self.command}): {error_msg}")
+            raise RuntimeError(error_msg)
 
 
 def make_workflow_name(package_name, pipeline_name: str) -> str:
@@ -141,45 +117,7 @@ def make_workflow_name(package_name, pipeline_name: str) -> str:
     return f"{package_name}_{pipeline_name}"
 
 
-def update_list(
-    old: list[dict[str, Any]],
-    new: list[dict[str, Any]],
-    lookup_key: str,
-    default: dict[str, Any] = {},
-):
-    """Update a list of dictionaries with another list of dictionaries.
-
-    Args:
-        old (List[Dict[str, Any]]): list of dictionaries to update
-        new (List[Dict[str, Any]]): list of dictionaries to update with
-        lookup_key (str): key to use for looking up dictionaries
-        default (Dict[str, Any], optional): default dictionary to use for updating
-
-    Returns:
-        List[Dict[str, Any]]: updated list of dictionaries
-    """
-    assert isinstance(
-        old, list
-    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
-    assert isinstance(
-        new, list
-    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
-    from mergedeep import merge
-
-    old_obj = {curr.pop(lookup_key): curr for curr in old}
-    new_obj = {update.pop(lookup_key): update for update in new}
-    keys = set(old_obj.keys()).union(set(new_obj.keys()))
-
-    for key in keys:
-        update = copy.deepcopy(default)
-        update.update(new_obj.get(key, {}))
-        new = merge(old_obj.get(key, {}), update)
-        old_obj[key] = new
-
-    return [{lookup_key: k, **v} for k, v in old_obj.items()]
-
-
-def _sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
+def sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     """Recursively sort the keys of a dictionary.
 
     Args:
@@ -207,16 +145,11 @@ def _is_null_or_empty(x: Any) -> bool:
     return x is None or (isinstance(x, (dict, list)) and len(x) == 0)
 
 
-def _remove_nulls_from_list(
-    lst: list[dict | float | int | str | bool],
-) -> list[dict | list]:
+def _remove_nulls_from_list(lst: list) -> list:
     """Remove None values from a list.
 
     Args:
         l (List[Dict[Any, Any]]): list to remove None values from
-
-    Returns:
-        List[Dict[Any, Any]]: list with None values removed
     """
     for i, item in enumerate(lst):
         value = remove_nulls(item)
@@ -224,11 +157,10 @@ def _remove_nulls_from_list(
             lst.remove(item)
         else:
             lst[i] = value
+    return lst
 
 
-def _remove_nulls_from_dict(
-    d: dict[str, Any],
-) -> dict[str, float | int | str | bool]:
+def _remove_nulls_from_dict(d: dict) -> dict:
     """Remove None values from a dictionary.
 
     Args:
@@ -246,7 +178,7 @@ def _remove_nulls_from_dict(
     return d
 
 
-def remove_nulls(value: dict | list) -> dict | list:
+def remove_nulls(value: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:
     """Remove None values from a dictionary or list.
 
     Args:

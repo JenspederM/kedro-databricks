@@ -1,25 +1,39 @@
 import yaml
 
+from kedro_databricks.constants import DEFAULT_TARGET
 from kedro_databricks.plugin import commands
+from kedro_databricks.utils.create_target_configs import (
+    _get_targets,
+    _read_databricks_config,
+)
 
 
 def test_databricks_bundle_fail(cli_runner, metadata):
-    bundle_fail = ["databricks", "bundle", "--default", "_deault"]
+    bundle_fail = ["databricks", "bundle", "--default-key", "_deault"]
     result = cli_runner.invoke(commands, bundle_fail, obj=metadata)
     assert result.exit_code == 1, (result.exit_code, result.stdout)
 
 
 def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-    assert override_path.exists(), "Override file not created"
+    assert metadata.project_path.exists(), "Project path not created"
+    assert metadata.project_path.is_dir(), "Project path is not a directory"
+    assert metadata.project_path / "databricks.yml", "Databricks config not created"
 
-    command = ["databricks", "bundle", "--env", "dev"]
+    databricks_config = _read_databricks_config(metadata.project_path)
+    targets = _get_targets(databricks_config)
+    for target in targets:
+        override_path = metadata.project_path / "conf" / target / "databricks.yml"
+        assert (
+            override_path.exists()
+        ), f"Resource Overrides at {override_path} does not exist"
+
+    command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
-    conf_dir = kedro_project / "conf" / "dev"
+    conf_dir = kedro_project / "conf" / DEFAULT_TARGET
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert resource_dir.exists(), "Resource directory not created"
     assert resource_dir.is_dir(), "Resource directory is not a directory"
@@ -63,19 +77,30 @@ def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
 def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = (
-        metadata.project_path / "conf" / "sub_pipeline" / "base" / "databricks.yml"
+        metadata.project_path
+        / "conf"
+        / "sub_pipeline"
+        / DEFAULT_TARGET
+        / "databricks.yml"
     )
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     override_path.unlink(missing_ok=True)
     assert not override_path.exists(), "Override file not created"
 
-    command = ["databricks", "bundle", "--env", "dev", "--conf", "conf/sub_pipeline"]
+    command = [
+        "databricks",
+        "bundle",
+        "--env",
+        DEFAULT_TARGET,
+        "--conf",
+        "conf/sub_pipeline",
+    ]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
-    conf_dir = kedro_project / "conf" / "sub_pipeline" / "dev"
+    conf_dir = kedro_project / "conf" / "sub_pipeline" / DEFAULT_TARGET
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert resource_dir.exists(), "Resource directory not created"
     assert resource_dir.is_dir(), "Resource directory is not a directory"
@@ -118,12 +143,20 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
 def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
 
-    init_cmd = ["databricks", "init"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    override_path = metadata.project_path / "conf" / "base" / "databricks.yml"
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-    override_path.unlink(missing_ok=True)
-    assert not override_path.exists(), "Override file not created"
+    assert metadata.project_path.exists(), "Project path not created"
+    assert metadata.project_path.is_dir(), "Project path is not a directory"
+    assert metadata.project_path / "databricks.yml", "Databricks config not created"
+
+    databricks_config = _read_databricks_config(metadata.project_path)
+    targets = _get_targets(databricks_config)
+    for target in targets:
+        override_path = metadata.project_path / "conf" / target / "databricks.yml"
+        assert (
+            override_path.exists()
+        ), f"Resource Overrides at {override_path} does not exist"
 
     command = ["databricks", "bundle", "--env", "dev"]
     result = cli_runner.invoke(commands, command, obj=metadata)

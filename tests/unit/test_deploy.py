@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import cast
 
 import pytest
 
-from kedro_databricks.deploy import DeployController
+from kedro_databricks.deploy import DeployController, ProjectMetadata
 
 
 class MetadataMock:
@@ -28,8 +29,11 @@ def test_deploy_go_to_project(metadata):
     assert os.getcwd() == str(project_path), "Failed to change to project directory"
     with pytest.raises(FileNotFoundError):
         controller = DeployController(
-            MetadataMock(
-                "/tmp/non_existent_path" + str(os.getpid()), "non_existent_project"
+            cast(
+                ProjectMetadata,
+                MetadataMock(
+                    "/tmp/non_existent_path" + str(os.getpid()), "non_existent_project"
+                ),
             )
         )
         controller.go_to_project()
