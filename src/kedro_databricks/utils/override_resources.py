@@ -131,6 +131,16 @@ def _get_old_value(result: Any, key: Any, value: Any):
     return result.get(key, default)
 
 
+def _get_workflow_overrides(overrides, workflow, default_key):
+    default_overrides = overrides.copy().pop(default_key, {})
+    workflow_overrides = overrides.copy().pop(workflow.get("name"), {})
+    all_overrides = {**default_overrides, **workflow_overrides}
+    default_task = _get_defaults(
+        all_overrides.get("tasks", []), "task_key", default_key
+    )
+    return all_overrides, default_task
+
+
 def _override_workflow(workflow: dict, overrides: dict, default_key: str = "default"):
     """Override a Databricks workflow with the given overrides.
 
@@ -146,11 +156,11 @@ def _override_workflow(workflow: dict, overrides: dict, default_key: str = "defa
     if not isinstance(overrides, dict):
         raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
     result = {**workflow}
-    default_overrides = overrides.copy().pop(default_key, {})
-    workflow_overrides = overrides.copy().pop(workflow.get("name"), {})
-    _overrides = {**default_overrides, **workflow_overrides}
-    default_task = _get_defaults(_overrides.get("tasks", []), "task_key", default_key)
-    for key, value in _overrides.items():
+    workflow_overrides, task_overrides = _get_workflow_overrides(
+        overrides, workflow, default_key
+    )
+
+    for key, value in workflow_overrides.items():
         old_value = _get_old_value(result, key, value)
         if isinstance(value, dict) and isinstance(old_value, dict):
             result[key] = _override_dict(old_value, value)
@@ -159,9 +169,9 @@ def _override_workflow(workflow: dict, overrides: dict, default_key: str = "defa
                 old=old_value,
                 new=value,
                 lookup_key=_get_lookup_key(key),
-                default=default_task if key == "tasks" else {},
+                default=task_overrides if key == "tasks" else {},
                 default_key=default_key,
             )
         else:
-            result[key] = _overrides[key]
+            result[key] = workflow_overrides[key]
     return result
