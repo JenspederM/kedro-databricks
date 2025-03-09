@@ -37,6 +37,7 @@ DEFAULT_PROVIDER = "azure"
 OVERRIDE_KEY_MAP = {
     "job_clusters": "job_cluster_key",
     "tasks": "task_key",
+    "environments": "environment_key",
 }
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
