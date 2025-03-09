@@ -20,6 +20,7 @@ from kedro_databricks.utils.common import (
 from kedro_databricks.utils.create_target_configs import _substitute_file_path
 from kedro_databricks.utils.has_databricks import has_databricks_cli
 from kedro_databricks.utils.override_resources import (
+    _get_lookup_key,
     _override_dict,
     _override_workflow,
     _update_list_by_key,
@@ -40,6 +41,11 @@ def test_fail_with_python_databricks_cli():
         os.environ["DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION"] = "1"
         has_databricks_cli()
     subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
+
+
+def test_unknown_lookup_key():
+    with pytest.raises(ValueError):
+        _get_lookup_key("unknown")
 
 
 def test_substitute_file_path():

@@ -12,6 +12,26 @@ from kedro_databricks.utils.create_target_configs import (
 )
 
 
+def test_update_gitignore(metadata):
+    controller = InitController(metadata)
+    controller.update_gitignore()
+    gitignore_path = metadata.project_path / ".gitignore"
+    assert gitignore_path.exists(), "Gitignore not written"
+    with open(gitignore_path) as f:
+        assert ".databricks" in f.read(), "Databricks not in gitignore"
+
+
+def test_update_gitignore_does_not_exist(metadata):
+    if (metadata.project_path / ".gitignore").exists():
+        (metadata.project_path / ".gitignore").unlink()
+    controller = InitController(metadata)
+    controller.update_gitignore()
+    gitignore_path = metadata.project_path / ".gitignore"
+    assert gitignore_path.exists(), "Gitignore not written"
+    with open(gitignore_path) as f:
+        assert ".databricks" in f.read(), "Databricks not in gitignore"
+
+
 def test_read_databricks_config_does_not_exist(metadata):
     if (metadata.project_path / "databricks.yml").exists():
         (metadata.project_path / "databricks.yml").unlink()
