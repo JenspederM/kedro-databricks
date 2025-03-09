@@ -6,10 +6,56 @@ import yaml
 from kedro_databricks.init import InitController
 from kedro_databricks.plugin import commands
 from kedro_databricks.utils.create_target_configs import (
+    _get_bundle_name,
     _get_targets,
     _read_databricks_config,
+    create_target_configs,
 )
 from tests.utils import reset_init
+
+
+def test_read_databricks_config(metadata):
+    reset_init(metadata)
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    files = [f.name for f in metadata.project_path.iterdir()]
+    assert (
+        "databricks.yml" in files
+    ), f"Databricks config not created - found files: {files}"
+    assert databricks_config is not None, "Databricks config not read"
+
+
+def test_read_bundle_name(metadata):
+    reset_init(metadata)
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    bundle_name = _get_bundle_name(databricks_config)
+    assert bundle_name == metadata.package_name, "Bundle name not read"
+
+
+def test_get_targets(metadata):
+    reset_init(metadata)
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    databricks_config = _read_databricks_config(metadata.project_path)
+    targets = _get_targets(databricks_config)
+    assert targets is not None, "Targets not read"
+
+
+def test_create_target_configs(metadata):
+    reset_init(metadata)
+    controller = InitController(metadata)
+    controller.bundle_init([])
+    create_target_configs(metadata, "test", "test")
+    databricks_config = _read_databricks_config(metadata.project_path)
+
+    targets = _get_targets(databricks_config)
+    for target in targets:
+        target_path = metadata.project_path / "conf" / target
+        assert target_path.exists(), f"Target config not created: {target_path}"
+        assert target_path.is_dir(), f"Target config is not a directory: {target_path}"
 
 
 def test_unknown_provider(cli_runner, metadata):
