@@ -55,7 +55,9 @@ def init(
         raise ValueError(f"Invalid provider: {provider}")
     controller = InitController(metadata)
     controller.bundle_init(list(databricks_args))
-    controller.create_override_configs(default_key, node_type_id)
+    controller.create_override_configs(
+        node_type_id=node_type_id, default_key=default_key
+    )
     controller.update_gitignore()
     if require_databricks_run_script():  # pragma: no cover
         log = logging.getLogger(metadata.package_name)
