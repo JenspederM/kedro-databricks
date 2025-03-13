@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import logging
 from collections.abc import Iterable, MutableMapping
 from pathlib import Path
@@ -26,7 +27,7 @@ from kedro_databricks.utils.override_resources import override_resources
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf"
+        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf", runtime_params: str | None = None
     ) -> None:
         """Create a new instance of the BundleController.
 
@@ -47,6 +48,11 @@ class BundleController:
         self.remote_conf_dir: str = "${workspace.file_path}/" + config_dir
         self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
         self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
+        if runtime_params is not None:
+            self.runtime_params = runtime_params.split(" ")
+            assert len(self.runtime_params) % 2 == 0, f"There should be an even number of runtime_params, got {self.runtime_params}"
+        else:
+            self.runtime_params = None
 
     def _workflows_to_resources(
         self, workflows: dict[str, dict[str, Any]], MSG: str = ""
@@ -214,6 +220,12 @@ class BundleController:
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
+
+        if self.runtime_params:
+            # We need to pass something like `["--params", "key1=value1,key2=value2"]`
+            params = params + ["--params", _join_runtime_parameters(self.runtime_params)]
+
+        depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
@@ -258,3 +270,17 @@ class BundleController:
                 yaml.dump(
                     resource, f, default_flow_style=False, indent=4, sort_keys=False
                 )
+
+
+def _join_runtime_parameters(runtime_params: list[str]):
+    return ",".join(["=" .join(pair) for pair in _batched(runtime_params, 2)])
+
+
+def _batched(iterable, n):
+    "Batch data into tuples of length n. The last batch may be shorter."
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while batch := tuple(itertools.islice(it, n)):
+        yield batch

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import pytest
 from kedro.pipeline import Pipeline, node
 
-from kedro_databricks.bundle import BundleController
+from kedro_databricks.bundle import BundleController, _batched, _join_runtime_parameters
 from kedro_databricks.utils.common import require_databricks_run_script
 
 
@@ -33,7 +34,7 @@ pipeline = Pipeline(
 )
 
 
-def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = "conf"):
+def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = "conf", runtime_params: str = None):
     entry_point = "fake-project"
     params = [
         "--nodes",
@@ -47,6 +48,9 @@ def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = 
     if require_databricks_run_script():
         entry_point = "databricks_run"
         params = params + ["--package-name", "fake_project"]
+
+    if runtime_params:
+        params = params + ["--params", runtime_params]
 
     task = {
         "task_key": task_key,
@@ -85,6 +89,11 @@ def generate_workflow(conf="conf"):
 WORKFLOW = generate_workflow()
 
 
+def test_bundle_controller_with_runtime_params_raise(metadata):
+    with pytest.raises(AssertionError):
+        BundleController(metadata, "fake_env", "conf", runtime_params="key1 value1 key2 value2 param3")
+
+
 def test_generate_workflow(metadata):
     controller = BundleController(metadata, "fake_env", "conf")
     assert controller._create_workflow("workflow1", pipeline) == WORKFLOW
@@ -93,6 +102,23 @@ def test_generate_workflow(metadata):
 def test_create_task(metadata):
     controller = BundleController(metadata, "fake_env", "conf")
     expected_task = _generate_task("task", ["a", "b"])
+    node_a = node(identity, ["input"], ["output"], name="a")
+    node_b = node(identity, ["input"], ["output"], name="b")
+    assert (
+        controller._create_task(
+            "task",
+            [
+                node_b,
+                node_a,
+            ],
+        )
+        == expected_task
+    )
+
+
+def test_create_task_with_runtime_params(metadata):
+    controller = BundleController(metadata, "fake_env", "conf", runtime_params="key1 value1 key2 value2")
+    expected_task = _generate_task("task", ["a", "b"], runtime_params="key1=value1,key2=value2")
     node_a = node(identity, ["input"], ["output"], name="a")
     node_b = node(identity, ["input"], ["output"], name="b")
     assert (
@@ -231,3 +257,12 @@ def test_save_resoureces(metadata):
     assert (
         project_resources.exists()
     ), f"Failed to save project resources, {project_files}"
+
+
+def test_join_runtime_parameters():
+    assert _join_runtime_parameters(["key1", "value1", "key2", "value2", "param3"]) == "key1=value1,key2=value2,param3"
+
+
+def test_batched():
+    assert list(_batched([1, 2, 3, 4], 2)) == [(1, 2), (3, 4)]
+    assert list(_batched([1, 2, 3, 4, 5], 3)) == [(1, 2, 3), (4, 5)]
