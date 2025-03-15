@@ -51,6 +51,8 @@ class BundleController:
         if runtime_params is not None:
             self.runtime_params = runtime_params.split(" ")
             assert len(self.runtime_params) % 2 == 0, f"There should be an even number of runtime_params, got {self.runtime_params}"
+            # We need to pass to kedro in argument like `["--params", "key1=value1,key2=value2"]`
+            self.runtime_params = _join_runtime_parameters(self.runtime_params)
         else:
             self.runtime_params = None
 
@@ -222,8 +224,7 @@ class BundleController:
             params = params + ["--package-name", self.package_name]
 
         if self.runtime_params:
-            # We need to pass something like `["--params", "key1=value1,key2=value2"]`
-            params = params + ["--params", _join_runtime_parameters(self.runtime_params)]
+            params = params + ["--params", self.runtime_params]
 
         task = {
             "task_key": name.replace(".", "_"),
