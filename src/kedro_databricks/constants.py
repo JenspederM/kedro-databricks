@@ -44,6 +44,7 @@ OVERRIDE_KEY_MAP = {
     "on_duration_warning_threshold_exceeded": "id",
     "on_duration_failure_threshold_exceeded": "id",
     "rules": "metric",
+    "parameters": "name",
 }
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
