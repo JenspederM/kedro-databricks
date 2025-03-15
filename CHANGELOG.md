@@ -1,3 +1,9 @@
+## 0.8.1 (2025-03-15)
+
+### Fix
+
+- webhook overrides are keyed
+
 ## 0.8.0 (2025-03-09)
 
 ### Feat
