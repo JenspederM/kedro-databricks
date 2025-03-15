@@ -38,6 +38,11 @@ OVERRIDE_KEY_MAP = {
     "job_clusters": "job_cluster_key",
     "tasks": "task_key",
     "environments": "environment_key",
+    "on_start": "id",
+    "on_success": "id",
+    "on_failure": "id",
+    "on_duration_warning_threshold_exceeded": "id",
+    "on_duration_failure_threshold_exceeded": "id",
 }
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",

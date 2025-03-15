@@ -1,0 +1,71 @@
+resources:
+    jobs:
+        develop_eggs:
+            name: develop_eggs
+            webhook_notifications:
+                on_start:
+                    - id: on_start
+                on_success:
+                    - id: on_success
+                on_failure:
+                    - id: on_failure
+                on_duration_warning_threshold_exceeded:
+                    - id: on_duration_warning_threshold_exceeded
+                on_duration_failure_threshold_exceeded:
+                    - id: on_duration_failure_threshold_exceeded
+            job_clusters:
+              - job_cluster_key: default
+                new_cluster:
+                  spark_version: 7.3.x-scala2.12
+                  node_type_id: Standard_DS3_v2
+                  num_workers: 2
+                  spark_env_vars:
+                      KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            tasks:
+            -   task_key: make_predictions
+                job_cluster_key: default
+                depends_on:
+                -   task_key: split
+                python_wheel_task:
+                    package_name: develop_eggs
+                    entry_point: develop-eggs
+                    parameters:
+                    - --nodes
+                    - make_predictions
+                    - --conf-source
+                    - ${workspace.file_path}/conf
+                    - --env
+                    - local
+                libraries:
+                -   whl: ../dist/*.whl
+            -   task_key: report_accuracy
+                job_cluster_key: default
+                depends_on:
+                -   task_key: make_predictions
+                -   task_key: split
+                python_wheel_task:
+                    package_name: develop_eggs
+                    entry_point: develop-eggs
+                    parameters:
+                    - --nodes
+                    - report_accuracy
+                    - --conf-source
+                    - ${workspace.file_path}/conf
+                    - --env
+                    - local
+                libraries:
+                -   whl: ../dist/*.whl
+            -   task_key: split
+                job_cluster_key: default
+                python_wheel_task:
+                    package_name: develop_eggs
+                    entry_point: develop-eggs
+                    parameters:
+                    - --nodes
+                    - split
+                    - --conf-source
+                    - ${workspace.file_path}/conf
+                    - --env
+                    - local
+                libraries:
+                -   whl: ../dist/*.whl

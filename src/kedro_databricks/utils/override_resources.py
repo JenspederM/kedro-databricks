@@ -16,8 +16,18 @@ def override_resources(bundle: dict, overrides: dict, default_key):
     """
     result = {"resources": {"jobs": {}}}
     for name, workflow in bundle.get("resources", {}).get("jobs", {}).items():
+        if not isinstance(workflow, dict):
+            raise ValueError(f"workflow must be a dictionary not {type(workflow)}")
+        if not isinstance(overrides, dict):
+            raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
+        workflow_overrides, task_overrides = _get_workflow_overrides(
+            overrides, workflow, default_key
+        )
         result["resources"]["jobs"][name] = _override_workflow(
-            workflow, copy.deepcopy(overrides), default_key
+            workflow=workflow,
+            workflow_overrides=workflow_overrides,
+            task_overrides=task_overrides,
+            default_key=default_key,
         )
     return result
 
@@ -27,40 +37,6 @@ def _get_lookup_key(key: str):
     if lookup is None:
         raise ValueError(f"Key {key} not found in OVERRIDE_KEY_MAP")
     return lookup
-
-
-def _override_dict(dct: dict, overrides: dict, default_key: str = "default"):
-    """Override a dictionary with another dictionary.
-
-    Args:
-        dct (Dict): The dictionary to be overridden
-        overrides (Dict): The dictionary with the overrides
-
-    Returns:
-        Dict: The dictionary with the overrides applied
-    """
-    if not isinstance(dct, dict):
-        raise ValueError(f"dct must be a dictionary not {type(dct)}")
-    if not isinstance(overrides, dict):
-        raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
-    result = {**dct}
-    for key, value in overrides.items():
-        if isinstance(value, dict):
-            result[key] = _override_dict({}, value)
-        elif isinstance(value, list):
-            lookup_key = _get_lookup_key(key)
-            default_task = _get_defaults(
-                lst=overrides.get(key, []),
-                lookup_key=lookup_key,
-                default_key=default_key,
-            )
-            old = result.get(key, [])
-            result[key] = _update_list_by_key(
-                old, value, lookup_key, default_task if key == "tasks" else {}
-            )
-        else:
-            result[key] = value
-    return result
 
 
 def _get_defaults(lst: list, lookup_key: str, default_key):
@@ -103,9 +79,15 @@ def _update_list_by_key(
     assert isinstance(
         new, list
     ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
+    assert all(
+        lookup_key in o for o in old
+    ), f"lookup_key {lookup_key} not found in current: {old}"
+    assert all(
+        lookup_key in n for n in new
+    ), f"lookup_key {lookup_key} not found in updates: {new}"
 
-    old_obj = {curr.pop(lookup_key): curr for curr in old}
-    new_obj = {update.pop(lookup_key): update for update in new}
+    old_obj = {curr.pop(lookup_key): curr for curr in copy.deepcopy(old)}
+    new_obj = {update.pop(lookup_key): update for update in copy.deepcopy(new)}
     keys = set(old_obj.keys()).union(set(new_obj.keys()))
 
     for key in keys:
@@ -114,7 +96,7 @@ def _update_list_by_key(
         update = copy.deepcopy(default)
         update.pop(lookup_key, None)
         update.update(new_obj.get(key, {}))
-        new = _override_dict(old_obj.get(key, {}), update)  # type: ignore
+        new = _override_workflow(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
         old_obj[key] = new  # type: ignore
 
     return sorted(
@@ -141,7 +123,12 @@ def _get_workflow_overrides(overrides, workflow, default_key):
     return all_overrides, default_task
 
 
-def _override_workflow(workflow: dict, overrides: dict, default_key: str = "default"):
+def _override_workflow(
+    workflow: dict,
+    workflow_overrides: dict,
+    task_overrides: dict = {},
+    default_key: str = "default",
+):
     """Override a Databricks workflow with the given overrides.
 
     Args:
@@ -151,27 +138,29 @@ def _override_workflow(workflow: dict, overrides: dict, default_key: str = "defa
     Returns:
         Dict: the Databricks workflow with the overrides applied
     """
-    if not isinstance(workflow, dict):
-        raise ValueError(f"workflow must be a dictionary not {type(workflow)}")
-    if not isinstance(overrides, dict):
-        raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
     result = {**workflow}
-    workflow_overrides, task_overrides = _get_workflow_overrides(
-        overrides, workflow, default_key
-    )
 
     for key, value in workflow_overrides.items():
         old_value = _get_old_value(result, key, value)
         if isinstance(value, dict) and isinstance(old_value, dict):
-            result[key] = _override_dict(old_value, value)
-        elif isinstance(value, list) and isinstance(old_value, list):
-            result[key] = _update_list_by_key(
-                old=old_value,
-                new=value,
-                lookup_key=_get_lookup_key(key),
-                default=task_overrides if key == "tasks" else {},
+            result[key] = _override_workflow(
+                workflow=old_value,
+                workflow_overrides=value,
+                task_overrides={},
                 default_key=default_key,
             )
+        elif isinstance(value, list) and isinstance(old_value, list):
+            lookup_key = _get_lookup_key(key)
+            if lookup_key:
+                result[key] = _update_list_by_key(
+                    old=old_value,
+                    new=value,
+                    lookup_key=_get_lookup_key(key),
+                    default=task_overrides if key == "tasks" else {},
+                    default_key=default_key,
+                )
+            else:  # pragma: no cover
+                result[key] = value
         else:
-            result[key] = workflow_overrides[key]
+            result[key] = workflow_overrides.get(key, old_value)
     return result

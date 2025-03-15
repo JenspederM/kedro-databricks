@@ -21,9 +21,9 @@ from kedro_databricks.utils.create_target_configs import _substitute_file_path
 from kedro_databricks.utils.has_databricks import has_databricks_cli
 from kedro_databricks.utils.override_resources import (
     _get_lookup_key,
-    _override_dict,
     _override_workflow,
     _update_list_by_key,
+    override_resources,
 )
 
 
@@ -46,6 +46,22 @@ def test_fail_with_python_databricks_cli():
 def test_unknown_lookup_key():
     with pytest.raises(ValueError):
         _get_lookup_key("unknown")
+
+
+def test_workflow_not_dict():
+    with pytest.raises(ValueError):
+        override_resources(
+            {"resources": {"jobs": {"workflow": "not_dict"}}}, {}, "default"
+        )
+
+
+def test_overrides_not_dict():
+    with pytest.raises(ValueError):
+        override_resources(
+            {"resources": {"jobs": {"workflow": {}}}},
+            [],  # type: ignore
+            "default",
+        )
 
 
 def test_substitute_file_path():
@@ -272,68 +288,26 @@ def test_is_null_or_empty():
             {"a": 3, "job_clusters": [{"job_cluster_key": "cluster1"}]},
             {"a": 3, "b": 2, "job_clusters": [{"job_cluster_key": "cluster1"}]},
         ),
-    ],
-)
-def test_override_dict(dct, overrides, expected):
-    result = _override_dict(dct, overrides)
-    assert result == expected, result
-
-
-def test_override_dict_fail():
-    with pytest.raises(ValueError):
-        _override_dict(None, {})  # type: ignore
-    with pytest.raises(ValueError):
-        _override_dict({}, None)  # type: ignore
-
-
-@pytest.mark.parametrize(
-    ["dct", "overrides", "expected"],
-    [
-        (
-            {"a": 1, "b": 2},
-            {"default": {"a": 3}},
-            {"a": 3, "b": 2},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"default": {"c": 3}},
-            {"a": 1, "b": 2, "c": 3},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"default": {"a": 3, "b": 4}},
-            {"a": 3, "b": 4},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"default": {"a": 3, "b": {"c": 4}}},
-            {"a": 3, "b": {"c": 4}},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"default": {"a": 3, "job_clusters": [{"job_cluster_key": "cluster1"}]}},
-            {"a": 3, "b": 2, "job_clusters": [{"job_cluster_key": "cluster1"}]},
-        ),
         (
             {"a": 1, "b": {"c": 2}},
             {
-                "default": {
-                    "a": 3,
-                    "b": {"c": 3},
-                    "job_clusters": [{"job_cluster_key": "cluster1"}],
-                }
+                "a": 3,
+                "b": {"c": 3},
+                "job_clusters": [{"job_cluster_key": "cluster1"}],
             },
             {"a": 3, "b": {"c": 3}, "job_clusters": [{"job_cluster_key": "cluster1"}]},
         ),
     ],
 )
 def test_override_workflow(dct, overrides, expected):
-    result = _override_workflow(dct, overrides)
+    result = _override_workflow(dct, overrides, {}, "default")
     assert result == expected, result
 
 
 def test_override_workflow_fail():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _override_workflow(None, {})  # type: ignore
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         _override_workflow({}, None)  # type: ignore
+    with pytest.raises(AttributeError):
+        _override_workflow({}, None, None)  # type: ignore
