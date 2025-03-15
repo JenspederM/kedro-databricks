@@ -225,13 +225,12 @@ class BundleController:
             # We need to pass something like `["--params", "key1=value1,key2=value2"]`
             params = params + ["--params", _join_runtime_parameters(self.runtime_params)]
 
-        depends_on = sorted(list(depends_on), key=lambda dep: dep.name)
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
                 {"task_key": dep.name.replace(".", "_")}
-                for dep in sorted(list(depends_on), key=lambda dep: dep.name)
+                for dep in sorted(depends_on, key=lambda dep: dep.name)
             ],
             "python_wheel_task": {
                 "package_name": self.package_name,
