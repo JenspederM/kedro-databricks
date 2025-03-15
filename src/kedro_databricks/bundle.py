@@ -272,7 +272,7 @@ class BundleController:
 
 
 def _join_runtime_parameters(runtime_params: list[str]):
-    return ",".join(["=" .join(pair) for pair in _batched(runtime_params, 2)])
+    return ",".join(["=".join(pair) for pair in _batched(runtime_params, 2)])
 
 
 def _batched(iterable, n):
