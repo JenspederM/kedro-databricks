@@ -261,4 +261,5 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
             for j, param in enumerate(params):
                 if param == "--params":
                     assert params[j + 1] == "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}"
+                    break
 
