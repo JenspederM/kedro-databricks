@@ -10,10 +10,8 @@ import pytest
 from kedro_databricks.utils.common import (
     KEDRO_VERSION,
     Command,
-    _is_null_or_empty,
     get_entry_point,
     make_workflow_name,
-    remove_nulls,
     require_databricks_run_script,
     sort_dict,
 )
@@ -25,6 +23,7 @@ from kedro_databricks.utils.override_resources import (
     _update_list_by_key,
     override_resources,
 )
+from kedro_databricks.utils.remove_nulls import _is_null_or_empty, remove_nulls
 
 
 @pytest.mark.skipif(
@@ -64,8 +63,9 @@ def test_overrides_not_dict():
         )
 
 
-def test_substitute_file_path():
-    tests = [
+@pytest.mark.parametrize(
+    ["actual", "expected"],
+    [
         (
             "file_path: /dbfs/FileStore/develop_eggs/data/01_raw/file.csv",
             "file_path: file://${_file_path}/data/01_raw/file.csv",
@@ -91,10 +91,11 @@ def test_substitute_file_path():
             "file_path: file://${_file_path}/data/01_raw/file.csv",
         ),
         ("data/01_raw/file.csv", "data/01_raw/file.csv"),
-    ]
-    for file_path, expected in tests:
-        result = _substitute_file_path(file_path)
-        assert result == expected, f"\n{result}\n{expected}"
+    ],
+)
+def test_substitute_file_path(actual, expected):
+    result = _substitute_file_path(actual)
+    assert result == expected, f"\n{result}\n{expected}"
 
 
 def test_command_fail_default():
