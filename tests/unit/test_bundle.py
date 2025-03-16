@@ -257,12 +257,3 @@ def test_save_resoureces(metadata):
     assert (
         project_resources.exists()
     ), f"Failed to save project resources, {project_files}"
-
-
-def test_join_runtime_parameters():
-    assert _join_runtime_parameters(["key1", "value1", "key2", "value2", "param3"]) == "key1=value1,key2=value2,param3"
-
-
-def test_batched():
-    assert list(_batched([1, 2, 3, 4], 2)) == [(1, 2), (3, 4)]
-    assert list(_batched([1, 2, 3, 4, 5], 3)) == [(1, 2, 3), (4, 5)]

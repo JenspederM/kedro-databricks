@@ -74,7 +74,7 @@ def init(
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("-r", "--runtime-params", default=None, help="Kedro run time params")
+@click.option("-r", "--runtime-params", default=None, help="Kedro run time params in `key1=value1,key2=value2` format")
 @click.option(
     "--overwrite",
     default=False,
@@ -115,7 +115,7 @@ def bundle(
 )
 @click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
 @click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("-r", "--runtime-params", default=None, help="Kedro run time params")
+@click.option("-r", "--runtime-params", default=None, help="Kedro run time params in `key1=value1,key2=value2` format")
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def deploy(
