@@ -4,15 +4,16 @@ import logging
 import shutil
 
 import click
+from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.bundle import BundleController
 from kedro_databricks.constants import (
-    CONF_HELP,
     DEFAULT_CONF_FOLDER,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
+    DEFAULT_PROVIDER,
     DEFAULT_TARGET,
     NODE_TYPE_MAP,
     PROVIDER_PROMPT,
@@ -33,11 +34,11 @@ def databricks_commands():
     pass
 
 
-@databricks_commands.command()
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
 @click.option(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
-@click.option("--provider", prompt=PROVIDER_PROMPT, default="azure")
+@click.option("--provider", prompt=PROVIDER_PROMPT, default=DEFAULT_PROVIDER)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def init(
@@ -72,8 +73,8 @@ def init(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
-@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
-@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
+@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
+@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
 @click.option(
     "--overwrite",
     default=False,
@@ -103,7 +104,7 @@ def bundle(
     controller.save_bundled_resources(bundle_resources, overwrite)
 
 
-@databricks_commands.command()
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.option(
     "-b",
@@ -111,8 +112,8 @@ def bundle(
     default=False,
     help="Bundle the project before deploying",
 )
-@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
-@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
+@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
+@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def deploy(
