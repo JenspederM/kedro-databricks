@@ -219,7 +219,7 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
             override_path.exists()
         ), f"Resource Overrides at {override_path} does not exist"
 
-    command = ["databricks", "bundle", "--env", "dev", "--runtime-params", "run_date {{job.parameters.run_date}} run_id {{job.parameters.run_id}}"]
+    command = ["databricks", "bundle", "--env", "dev", "--runtime-params", "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}"]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
     conf_dir = kedro_project / "conf" / "dev"

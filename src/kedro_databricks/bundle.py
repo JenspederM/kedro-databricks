@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import logging
 from collections.abc import Iterable, MutableMapping
 from pathlib import Path
