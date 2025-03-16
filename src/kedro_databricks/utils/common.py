@@ -1,42 +1,7 @@
 from __future__ import annotations
 
 import logging
-import re
 import subprocess
-from typing import Any
-
-from kedro_databricks.constants import KEDRO_VERSION
-
-
-def get_entry_point(project_name: str) -> str:
-    """Get the entry point for a project.
-
-    Args:
-        project_name (str): name of the project
-
-    Returns:
-        str: entry point for the project
-    """
-    entrypoint = project_name.strip().lower()
-    entrypoint = re.sub(r" +", " ", entrypoint)
-    entrypoint = re.sub(r"[^a-zA-Z]", "-", entrypoint)
-    entrypoint = re.sub(r"(-+)$", "", entrypoint)
-    entrypoint = re.sub(r"^(-+)", "", entrypoint)
-    return entrypoint
-
-
-def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
-    """Check if the current Kedro version is less than 0.19.8.
-
-    Kedro 0.19.8 introduced a new `run_script` method that is required for
-    running tasks on Databricks. This method is not available in earlier
-    versions of Kedro. This function checks if the current Kedro version is
-    less than 0.19.8.
-
-    Returns:
-        bool: whether the current Kedro version is less than 0.19.8
-    """
-    return _version < [0, 19, 8]
 
 
 class Command:
@@ -114,19 +79,3 @@ def make_workflow_name(package_name, pipeline_name: str) -> str:
     if pipeline_name == "__default__":
         return package_name
     return f"{package_name}_{pipeline_name}"
-
-
-def sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
-    """Recursively sort the keys of a dictionary.
-
-    Args:
-        d (Dict[Any, Any]): dictionary to sort
-        key_order (List[str]): list of keys to sort by
-
-    Returns:
-        Dict[Any, Any]: dictionary with ordered values
-    """
-    other_keys = [k for k in d.keys() if k not in key_order]
-    order = key_order + other_keys
-
-    return dict(sorted(d.items(), key=lambda x: order.index(x[0])))

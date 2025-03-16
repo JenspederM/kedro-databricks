@@ -3,7 +3,7 @@ from __future__ import annotations
 from kedro.pipeline import Pipeline, node
 
 from kedro_databricks.bundle import BundleController
-from kedro_databricks.utils.common import require_databricks_run_script
+from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
 
 
 def identity(arg):

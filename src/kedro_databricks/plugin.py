@@ -20,7 +20,7 @@ from kedro_databricks.constants import (
 )
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import InitController
-from kedro_databricks.utils.common import require_databricks_run_script
+from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
 
 
 @click.group(name="Kedro-Databricks")
