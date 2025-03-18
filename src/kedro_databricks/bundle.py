@@ -26,7 +26,11 @@ from kedro_databricks.utils.override_resources import override_resources
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf", runtime_params: str | None = None
+        self,
+        metadata: ProjectMetadata,
+        env: str,
+        config_dir: str = "conf",
+        runtime_params: str | None = None,
     ) -> None:
         """Create a new instance of the BundleController.
 
