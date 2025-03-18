@@ -26,7 +26,7 @@ from kedro_databricks.utils.override_resources import override_resources
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf"
+        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf", runtime_params: str | None = None
     ) -> None:
         """Create a new instance of the BundleController.
 
@@ -47,6 +47,7 @@ class BundleController:
         self.remote_conf_dir: str = "${workspace.file_path}/" + config_dir
         self.local_conf_dir: Path = self.metadata.project_path / config_dir / env
         self.conf: dict[str, Any] = self._load_env_config(MSG="Loading configuration")
+        self.runtime_params = runtime_params
 
     def _workflows_to_resources(
         self, workflows: dict[str, dict[str, Any]], MSG: str = ""
@@ -214,12 +215,16 @@ class BundleController:
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
             params = params + ["--package-name", self.package_name]
+
+        if self.runtime_params:
+            params = params + ["--params", self.runtime_params]
+
         task = {
             "task_key": name.replace(".", "_"),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
                 {"task_key": dep.name.replace(".", "_")}
-                for dep in sorted(list(depends_on), key=lambda dep: dep.name)
+                for dep in sorted(depends_on, key=lambda dep: dep.name)
             ],
             "python_wheel_task": {
                 "package_name": self.package_name,
