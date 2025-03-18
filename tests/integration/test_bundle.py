@@ -226,6 +226,7 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
         "dev",
         "--runtime-params",
         "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}",
+        "--overwrite",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
