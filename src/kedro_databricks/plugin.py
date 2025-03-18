@@ -76,6 +76,12 @@ def init(
 @click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
 @click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
 @click.option(
+    "-r",
+    "--runtime-params",
+    default=None,
+    help="Kedro run time params in `key1=value1,key2=value2` format",
+)
+@click.option(
     "--overwrite",
     default=False,
     is_flag=True,
@@ -89,6 +95,7 @@ def bundle(
     env: str,
     conf: str,
     pipeline: str | None,
+    runtime_params: str | None,
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
@@ -98,7 +105,7 @@ def bundle(
         )
 
     MSG = "Create Asset Bundle Resources"
-    controller = BundleController(metadata, env, conf)
+    controller = BundleController(metadata, env, conf, runtime_params)
     resources = controller.generate_resources(pipeline, MSG)
     bundle_resources = controller.apply_overrides(resources, default_key)
     controller.save_bundled_resources(bundle_resources, overwrite)
@@ -114,6 +121,12 @@ def bundle(
 )
 @click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
 @click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
+@click.option(
+    "-r",
+    "--runtime-params",
+    default=None,
+    help="Kedro run time params in `key1=value1,key2=value2` format",
+)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def deploy(
@@ -122,6 +135,7 @@ def deploy(
     bundle: bool,
     conf: str,
     pipeline: str,
+    runtime_params: str | None,
     databricks_args: list[str],
 ):
     """Deploy the asset bundle to Databricks
@@ -135,7 +149,7 @@ def deploy(
     controller.validate_databricks_config()
     controller.build_project()
     if bundle is True:
-        bundle_controller = BundleController(metadata, env, conf)
+        bundle_controller = BundleController(metadata, env, conf, runtime_params)
         workflows = bundle_controller.generate_resources(pipeline)
         bundle_resources = bundle_controller.apply_overrides(
             workflows, DEFAULT_CONFIG_KEY

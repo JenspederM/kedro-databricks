@@ -33,7 +33,12 @@ pipeline = Pipeline(
 )
 
 
-def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = "conf"):
+def _generate_task(
+    task_key: int | str,
+    depends_on: list[str] = [],
+    conf: str = "conf",
+    runtime_params: str = None,
+):
     entry_point = "fake-project"
     params = [
         "--nodes",
@@ -47,6 +52,9 @@ def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = 
     if require_databricks_run_script():
         entry_point = "databricks_run"
         params = params + ["--package-name", "fake_project"]
+
+    if runtime_params:
+        params = params + ["--params", runtime_params]
 
     task = {
         "task_key": task_key,
@@ -93,6 +101,27 @@ def test_generate_workflow(metadata):
 def test_create_task(metadata):
     controller = BundleController(metadata, "fake_env", "conf")
     expected_task = _generate_task("task", ["a", "b"])
+    node_a = node(identity, ["input"], ["output"], name="a")
+    node_b = node(identity, ["input"], ["output"], name="b")
+    assert (
+        controller._create_task(
+            "task",
+            [
+                node_b,
+                node_a,
+            ],
+        )
+        == expected_task
+    )
+
+
+def test_create_task_with_runtime_params(metadata):
+    controller = BundleController(
+        metadata, "fake_env", "conf", runtime_params="key1=value1,key2=value2"
+    )
+    expected_task = _generate_task(
+        "task", ["a", "b"], runtime_params="key1=value1,key2=value2"
+    )
     node_a = node(identity, ["input"], ["output"], name="a")
     node_b = node(identity, ["input"], ["output"], name="b")
     assert (
