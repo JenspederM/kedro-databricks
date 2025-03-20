@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    my_pipeline:
+      name: my_pipeline
+      webhook_notifications:
+        on_failure:
+          - id: NOTIFICATION_SOURCE_ID
+      tasks:
+        - task_key: taskA
+          package_name: my_package
+          existing_cluster_id: CLUSTER_ID
+          libraries: # whls are sorted alphabetically
+            - whl: ../dist/*.whl
+            - whl: /Workspace/packages/internal-package-0.1.1-py3-none-any.whl
+        - task_key: taskB
+          package_name: my_package
+          existing_cluster_id: CLUSTER_ID
+          libraries: # whls are sorted alphabetically
+            - whl: ../dist/*.whl
+            - whl: /Workspace/packages/internal-package-0.1.1-py3-none-any.whl

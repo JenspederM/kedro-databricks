@@ -1,0 +1,9 @@
+resources:
+  jobs:
+    my_pipeline:
+      name: my_pipeline
+      tasks:
+        - task_key: taskA
+          package_name: my_package
+        - task_key: taskB
+          package_name: my_package
