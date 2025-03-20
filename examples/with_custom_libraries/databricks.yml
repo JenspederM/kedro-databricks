@@ -1,0 +1,10 @@
+default:
+  webhook_notifications:
+    on_failure:
+      - id: NOTIFICATION_SOURCE_ID
+  tasks:
+    - task_key: default # will be applied to all tasks in the specified workflow
+      existing_cluster_id: CLUSTER_ID
+      libraries:
+        - whl: /Workspace/packages/internal-package-0.1.1-py3-none-any.whl
+        - whl: ../dist/*.whl

@@ -82,7 +82,9 @@ class InitController:
         shutil.rmtree(assets_dir)
         return result
 
-    def create_override_configs(self, node_type_id: str, default_key: str):
+    def create_override_configs(
+        self, node_type_id: str, default_key: str
+    ):  # pragma: no cover - this is tested separately
         """Create override configurations for Databricks targets."
 
         Args:

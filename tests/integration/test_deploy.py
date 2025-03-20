@@ -148,7 +148,7 @@ def test_deploy_with_conf(cli_runner, metadata):
         "databricks",
         "deploy",
         "--bundle",
-        f"--conf={CONF_KEY}",
+        f"--conf-source={CONF_KEY}",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)

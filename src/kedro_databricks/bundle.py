@@ -14,19 +14,23 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
 from kedro_databricks.constants import TASK_KEY_ORDER, WORKFLOW_KEY_ORDER
-from kedro_databricks.utils.common import (
+from kedro_databricks.utils.bundle_helpers import (
     get_entry_point,
-    make_workflow_name,
     remove_nulls,
     require_databricks_run_script,
     sort_dict,
 )
+from kedro_databricks.utils.common import make_workflow_name
 from kedro_databricks.utils.override_resources import override_resources
 
 
 class BundleController:
     def __init__(
-        self, metadata: ProjectMetadata, env: str, config_dir: str = "conf", runtime_params: str | None = None
+        self,
+        metadata: ProjectMetadata,
+        env: str,
+        config_dir: str = "conf",
+        runtime_params: str | None = None,
     ) -> None:
         """Create a new instance of the BundleController.
 

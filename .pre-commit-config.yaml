@@ -1,3 +1,4 @@
+---
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.30.0
@@ -12,9 +13,13 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: mixed-line-ending
+        args:
+          - --fix=lf
   - repo: local
     hooks:
       - id: lint-code
@@ -27,3 +32,8 @@ repos:
     hooks:
       # Run the formatter.
       - id: ruff-format
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.21.0
+    hooks:
+      - id: yamllint
+        args: [--format, parsable]

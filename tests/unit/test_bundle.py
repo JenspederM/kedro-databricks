@@ -3,7 +3,7 @@ from __future__ import annotations
 from kedro.pipeline import Pipeline, node
 
 from kedro_databricks.bundle import BundleController
-from kedro_databricks.utils.common import require_databricks_run_script
+from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
 
 
 def identity(arg):
@@ -33,7 +33,12 @@ pipeline = Pipeline(
 )
 
 
-def _generate_task(task_key: int | str, depends_on: list[str] = [], conf: str = "conf", runtime_params: str = None):
+def _generate_task(
+    task_key: int | str,
+    depends_on: list[str] = [],
+    conf: str = "conf",
+    runtime_params: str = "",
+):
     entry_point = "fake-project"
     params = [
         "--nodes",
@@ -111,8 +116,12 @@ def test_create_task(metadata):
 
 
 def test_create_task_with_runtime_params(metadata):
-    controller = BundleController(metadata, "fake_env", "conf", runtime_params="key1=value1,key2=value2")
-    expected_task = _generate_task("task", ["a", "b"], runtime_params="key1=value1,key2=value2")
+    controller = BundleController(
+        metadata, "fake_env", "conf", runtime_params="key1=value1,key2=value2"
+    )
+    expected_task = _generate_task(
+        "task", ["a", "b"], runtime_params="key1=value1,key2=value2"
+    )
     node_a = node(identity, ["input"], ["output"], name="a")
     node_b = node(identity, ["input"], ["output"], name="b")
     assert (

@@ -1,10 +1,7 @@
 from importlib import resources
-from pathlib import Path
 
 from kedro import __version__ as kedro_version
 
-PACKAGE_ROOT = Path(__file__).parent.parent.parent
-EXAMPLE_ROOT = PACKAGE_ROOT / "examples"
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
 
 KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
@@ -43,6 +40,9 @@ OVERRIDE_KEY_MAP = {
     "on_failure": "id",
     "on_duration_warning_threshold_exceeded": "id",
     "on_duration_failure_threshold_exceeded": "id",
+    "rules": "metric",
+    "parameters": "name",
+    "libraries": "whl",
 }
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
@@ -50,7 +50,6 @@ NODE_TYPE_MAP = {
     "gcp": "n1-standard-4",
 }
 
-CONF_HELP = "Set the conf folder. Default to `conf`."
 PROVIDER_PROMPT = """
 Please select your cloud provider:
 - azure
@@ -71,4 +70,4 @@ GITIGNORE = f"""
 .databricks
 conf/{DEFAULT_TARGET}/**
 !conf/{DEFAULT_TARGET}/.gitkeep
-"""
+""".strip()

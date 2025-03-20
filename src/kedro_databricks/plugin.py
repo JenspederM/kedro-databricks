@@ -4,22 +4,23 @@ import logging
 import shutil
 
 import click
+from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.bundle import BundleController
 from kedro_databricks.constants import (
-    CONF_HELP,
     DEFAULT_CONF_FOLDER,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
+    DEFAULT_PROVIDER,
     DEFAULT_TARGET,
     NODE_TYPE_MAP,
     PROVIDER_PROMPT,
 )
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import InitController
-from kedro_databricks.utils.common import require_databricks_run_script
+from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
 
 
 @click.group(name="Kedro-Databricks")
@@ -33,11 +34,11 @@ def databricks_commands():
     pass
 
 
-@databricks_commands.command()
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
 @click.option(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
-@click.option("--provider", prompt=PROVIDER_PROMPT, default="azure")
+@click.option("--provider", prompt=PROVIDER_PROMPT, default=DEFAULT_PROVIDER)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def init(
@@ -72,9 +73,14 @@ def init(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
-@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
-@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("-r", "--runtime-params", default=None, help="Kedro run time params in `key1=value1,key2=value2` format")
+@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
+@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
+@click.option(
+    "-r",
+    "--params",
+    default=None,
+    help="Kedro run time params in `key1=value1,key2=value2` format",
+)
 @click.option(
     "--overwrite",
     default=False,
@@ -87,9 +93,9 @@ def bundle(
     metadata: ProjectMetadata,
     default_key: str,
     env: str,
-    conf: str,
+    conf_source: str,
     pipeline: str | None,
-    runtime_params: str | None,
+    params: str | None,
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
@@ -99,13 +105,13 @@ def bundle(
         )
 
     MSG = "Create Asset Bundle Resources"
-    controller = BundleController(metadata, env, conf, runtime_params)
+    controller = BundleController(metadata, env, conf_source, params)
     resources = controller.generate_resources(pipeline, MSG)
     bundle_resources = controller.apply_overrides(resources, default_key)
     controller.save_bundled_resources(bundle_resources, overwrite)
 
 
-@databricks_commands.command()
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.option(
     "-b",
@@ -113,16 +119,21 @@ def bundle(
     default=False,
     help="Bundle the project before deploying",
 )
-@click.option("-c", "--conf", default=DEFAULT_CONF_FOLDER, help=CONF_HELP)
-@click.option("-p", "--pipeline", default=None, help="Bundle a single pipeline")
-@click.option("-r", "--runtime-params", default=None, help="Kedro run time params in `key1=value1,key2=value2` format")
+@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
+@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
+@click.option(
+    "-r",
+    "--runtime-params",
+    default=None,
+    help="Kedro run time params in `key1=value1,key2=value2` format",
+)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def deploy(
     metadata: ProjectMetadata,
     env: str,
     bundle: bool,
-    conf: str,
+    conf_source: str,
     pipeline: str,
     runtime_params: str | None,
     databricks_args: list[str],
@@ -138,7 +149,7 @@ def deploy(
     controller.validate_databricks_config()
     controller.build_project()
     if bundle is True:
-        bundle_controller = BundleController(metadata, env, conf, runtime_params)
+        bundle_controller = BundleController(metadata, env, conf_source, runtime_params)
         workflows = bundle_controller.generate_resources(pipeline)
         bundle_resources = bundle_controller.apply_overrides(
             workflows, DEFAULT_CONFIG_KEY

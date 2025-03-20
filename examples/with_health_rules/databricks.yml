@@ -7,6 +7,11 @@ default: # will be applied to all workflows
         num_workers: 2
         spark_env_vars:
           KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+  health:
+    rules:
+      - metric: RUN_DURATION_SECONDS
+        op: GREATER_THAN
+        value: 10
   tasks: # will be applied to all tasks in each workflow
     - task_key: default
       job_cluster_key: default

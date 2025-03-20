@@ -95,7 +95,7 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
         "bundle",
         "--env",
         DEFAULT_TARGET,
-        "--conf",
+        "--conf-source",
         "conf/sub_pipeline",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
@@ -201,9 +201,8 @@ def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata
                     assert params[j + 1] == "dev"
 
 
-def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metadata):
+def test_databricks_bundle_with_params(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
-
     init_cmd = ["databricks", "init", "--provider", "aws"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -219,7 +218,15 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
             override_path.exists()
         ), f"Resource Overrides at {override_path} does not exist"
 
-    command = ["databricks", "bundle", "--env", "dev", "--runtime-params", "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}"]
+    command = [
+        "databricks",
+        "bundle",
+        "--env",
+        "dev",
+        "--params",
+        "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}",
+        "--overwrite",
+    ]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
     conf_dir = kedro_project / "conf" / "dev"
@@ -260,6 +267,8 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
             assert "--params" in params
             for j, param in enumerate(params):
                 if param == "--params":
-                    assert params[j + 1] == "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}"
+                    assert (
+                        params[j + 1]
+                        == "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}"
+                    )
                     break
-
