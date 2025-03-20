@@ -95,7 +95,7 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
         "bundle",
         "--env",
         DEFAULT_TARGET,
-        "--conf",
+        "--conf-source",
         "conf/sub_pipeline",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
@@ -201,7 +201,7 @@ def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata
                     assert params[j + 1] == "dev"
 
 
-def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metadata):
+def test_databricks_bundle_with_params(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
     init_cmd = ["databricks", "init", "--provider", "aws"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
@@ -223,8 +223,9 @@ def test_databricks_bundle_with_runtime_params(kedro_project, cli_runner, metada
         "bundle",
         "--env",
         "dev",
-        "--runtime-params",
+        "--params",
         "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}",
+        "--overwrite",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"

@@ -77,7 +77,7 @@ def init(
 @click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
 @click.option(
     "-r",
-    "--runtime-params",
+    "--params",
     default=None,
     help="Kedro run time params in `key1=value1,key2=value2` format",
 )
@@ -93,9 +93,9 @@ def bundle(
     metadata: ProjectMetadata,
     default_key: str,
     env: str,
-    conf: str,
+    conf_source: str,
     pipeline: str | None,
-    runtime_params: str | None,
+    params: str | None,
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
@@ -105,7 +105,7 @@ def bundle(
         )
 
     MSG = "Create Asset Bundle Resources"
-    controller = BundleController(metadata, env, conf, runtime_params)
+    controller = BundleController(metadata, env, conf_source, params)
     resources = controller.generate_resources(pipeline, MSG)
     bundle_resources = controller.apply_overrides(resources, default_key)
     controller.save_bundled_resources(bundle_resources, overwrite)
@@ -133,7 +133,7 @@ def deploy(
     metadata: ProjectMetadata,
     env: str,
     bundle: bool,
-    conf: str,
+    conf_source: str,
     pipeline: str,
     runtime_params: str | None,
     databricks_args: list[str],
@@ -149,7 +149,7 @@ def deploy(
     controller.validate_databricks_config()
     controller.build_project()
     if bundle is True:
-        bundle_controller = BundleController(metadata, env, conf, runtime_params)
+        bundle_controller = BundleController(metadata, env, conf_source, runtime_params)
         workflows = bundle_controller.generate_resources(pipeline)
         bundle_resources = bundle_controller.apply_overrides(
             workflows, DEFAULT_CONFIG_KEY
