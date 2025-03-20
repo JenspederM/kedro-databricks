@@ -37,7 +37,7 @@ def _generate_task(
     task_key: int | str,
     depends_on: list[str] = [],
     conf: str = "conf",
-    runtime_params: str = None,
+    runtime_params: str = "",
 ):
     entry_point = "fake-project"
     params = [
