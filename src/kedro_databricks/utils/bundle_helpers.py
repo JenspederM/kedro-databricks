@@ -24,18 +24,6 @@ def remove_nulls(value: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any
     return non_null
 
 
-def _is_null_or_empty(x: Any) -> bool:
-    """Check if a value is None or an empty dictionary.
-
-    Args:
-        x (Any): value to check
-
-    Returns:
-        bool: whether the value is None or an empty dictionary
-    """
-    return x is None or (isinstance(x, (dict, list)) and len(x) == 0)
-
-
 def _remove_nulls_from_list(lst: list) -> list:
     """Remove None values from a list.
 
@@ -44,8 +32,8 @@ def _remove_nulls_from_list(lst: list) -> list:
     """
     for i, item in enumerate(lst):
         value = remove_nulls(item)
-        if _is_null_or_empty(value):
-            lst.remove(item)
+        if not value:
+            del lst[i]
         else:
             lst[i] = value
     return lst
@@ -62,7 +50,7 @@ def _remove_nulls_from_dict(d: dict) -> dict:
     """
     for k, v in list(d.items()):
         value = remove_nulls(v)
-        if _is_null_or_empty(value):
+        if not value:
             del d[k]
         else:
             d[k] = value

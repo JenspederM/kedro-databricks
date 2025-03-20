@@ -9,7 +9,6 @@ import pytest
 
 from kedro_databricks.constants import OVERRIDE_KEY_MAP
 from kedro_databricks.utils.bundle_helpers import (
-    _is_null_or_empty,
     get_entry_point,
     remove_nulls,
     require_databricks_run_script,
@@ -275,22 +274,6 @@ def test_make_workflow_name(package_name, pipeline_name, expected):
 )
 def test_remove_nulls_from_dict(value, expected):
     assert remove_nulls(value) == expected
-
-
-@pytest.mark.parametrize(
-    ["value", "expected"],
-    [
-        (None, True),
-        ({}, True),
-        ([], True),
-        (1, False),
-        ("a", False),
-        ({1: 1}, False),
-        ([1], False),
-    ],
-)
-def test_is_null_or_empty(value, expected):
-    assert _is_null_or_empty(value) == expected, value
 
 
 @pytest.mark.parametrize(
