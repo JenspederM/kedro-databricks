@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import platform
 import shutil
 import subprocess
 
@@ -110,14 +111,23 @@ def test_substitute_file_path(actual, expected):
     assert result == expected, f"\n{result}\n{expected}"
 
 
+OS = platform.uname().system.lower()
+
+
 @pytest.mark.parametrize(
     ["cmd", "result_code", "msg", "warn", "raises"],
     [
         (["ls", "."], 0, "", False, False),
         (["ls", "non_existent_file"], 2, "Custom message", False, True),
-        (["ls", "non_existent_file"], 1, "Custom message", True, False),
+        (
+            ["ls", "non_existent_file"],
+            1 if OS == "darwin" else 2,
+            "Custom message",
+            True,
+            False,
+        ),
         (["ls", "non_existent_file"], 2, "", False, True),
-        (["ls", "non_existent_file"], 1, "", True, False),
+        (["ls", "non_existent_file"], 1 if OS == "darwin" else 2, "", True, False),
     ],
 )
 def test_command(cmd, result_code, warn, msg, raises):
