@@ -1,10 +1,10 @@
 resources:
-    jobs:
-        my_pipeline:
-            name: my_pipeline
-            tasks:
-            -   task_key: taskA
-                package_name: my_package
-            -   task_key: taskB
-                package_name: my_package
-                run_if: AT_LEAST_ONE_SUCCESS
+  jobs:
+    my_pipeline:
+      name: my_pipeline
+      tasks:
+        - task_key: taskA
+          package_name: my_package
+        - task_key: taskB
+          package_name: my_package
+          run_if: AT_LEAST_ONE_SUCCESS

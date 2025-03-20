@@ -6,4 +6,4 @@ my_workflow:
         node_type_id: Standard_DS3_v2
         num_workers: 2
         spark_env_vars:
-            KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml

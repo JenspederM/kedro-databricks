@@ -1,15 +1,15 @@
 default: # will be applied to all workflows
-    job_clusters:
-        - job_cluster_key: default
-          new_cluster:
-            spark_version: 7.3.x-scala2.12
-            node_type_id: Standard_DS3_v2
-            num_workers: 2
-            spark_env_vars:
-                KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-    parameters:
-      - name: my_param
-        default: some value
-    tasks: # will be applied to all tasks in each workflow
-        - task_key: default
-          job_cluster_key: default
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        spark_version: 7.3.x-scala2.12
+        node_type_id: Standard_DS3_v2
+        num_workers: 2
+        spark_env_vars:
+          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+  parameters:
+    - name: my_param
+      default: some value
+  tasks: # will be applied to all tasks in each workflow
+    - task_key: default
+      job_cluster_key: default
