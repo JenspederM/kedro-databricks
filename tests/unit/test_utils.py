@@ -116,9 +116,9 @@ def test_substitute_file_path(actual, expected):
     [
         (["ls", "."], 0, "", False, False),
         (["ls", "non_existent_file"], 2, "Custom message", False, True),
-        (["ls", "non_existent_file"], 2, "Custom message", True, False),
+        (["ls", "non_existent_file"], 1, "Custom message", True, False),
         (["ls", "non_existent_file"], 2, "", False, True),
-        (["ls", "non_existent_file"], 2, "", True, False),
+        (["ls", "non_existent_file"], 1, "", True, False),
     ],
 )
 def test_command(cmd, result_code, warn, msg, raises):
