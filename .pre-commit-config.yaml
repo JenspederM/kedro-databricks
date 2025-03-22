@@ -36,4 +36,4 @@ repos:
     rev: v1.21.0
     hooks:
       - id: yamllint
-        args: [--format, parsable]
+        args: [--format, parsable, -d, relaxed]

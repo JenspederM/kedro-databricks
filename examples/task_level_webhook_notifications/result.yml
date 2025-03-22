@@ -22,8 +22,8 @@ resources:
               - id: on_failure
             on_duration_warning_threshold_exceeded:
               - id: on_duration_warning_threshold_exceeded
-            on_duration_failure_threshold_exceeded:
-              - id: on_duration_failure_threshold_exceeded
+            on_streaming_backlog_exceeded:
+              - id: on_streaming_backlog_exceeded
           depends_on:
             - task_key: split
           python_wheel_task:
@@ -49,8 +49,8 @@ resources:
               - id: on_failure
             on_duration_warning_threshold_exceeded:
               - id: on_duration_warning_threshold_exceeded
-            on_duration_failure_threshold_exceeded:
-              - id: on_duration_failure_threshold_exceeded
+            on_streaming_backlog_exceeded:
+              - id: on_streaming_backlog_exceeded
           depends_on:
             - task_key: make_predictions
             - task_key: split
@@ -77,8 +77,8 @@ resources:
               - id: on_failure
             on_duration_warning_threshold_exceeded:
               - id: on_duration_warning_threshold_exceeded
-            on_duration_failure_threshold_exceeded:
-              - id: on_duration_failure_threshold_exceeded
+            on_streaming_backlog_exceeded:
+              - id: on_streaming_backlog_exceeded
           python_wheel_task:
             package_name: develop_eggs
             entry_point: develop-eggs
