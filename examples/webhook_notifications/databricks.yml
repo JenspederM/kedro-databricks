@@ -16,8 +16,8 @@ default: # will be applied to all workflows
       - id: on_failure
     on_duration_warning_threshold_exceeded:
       - id: on_duration_warning_threshold_exceeded
-    on_duration_failure_threshold_exceeded:
-      - id: on_duration_failure_threshold_exceeded
+    on_streaming_backlog_exceeded:
+      - id: on_streaming_backlog_exceeded
   tasks: # will be applied to all tasks in each workflow
     - task_key: default
       job_cluster_key: default
