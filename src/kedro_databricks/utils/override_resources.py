@@ -150,16 +150,17 @@ def _override_workflow(
                 default_key=default_key,
             )
         elif isinstance(value, list) and isinstance(old_value, list):
-            lookup_key = _get_lookup_key(key)
-            if lookup_key:
-                result[key] = _update_list_by_key(
-                    old=old_value,
-                    new=value,
-                    lookup_key=_get_lookup_key(key),
-                    default=task_overrides if key == "tasks" else {},
-                    default_key=default_key,
-                )
-            else:  # pragma: no cover
+            if isinstance(value[0], dict):
+                lookup_key = _get_lookup_key(key)
+                if lookup_key:
+                    result[key] = _update_list_by_key(
+                        old=old_value,
+                        new=value,
+                        lookup_key=_get_lookup_key(key),
+                        default=task_overrides if key == "tasks" else {},
+                        default_key=default_key,
+                    )
+            else:
                 result[key] = value
         else:
             result[key] = workflow_overrides.get(key, old_value)
