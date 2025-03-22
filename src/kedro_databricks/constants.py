@@ -34,16 +34,19 @@ DEFAULT_PROVIDER = "azure"
 OVERRIDE_KEY_MAP = {
     "job_clusters": "job_cluster_key",
     "tasks": "task_key",
+    "depends_on": "task_key",
     "environments": "environment_key",
     "on_start": "id",
     "on_success": "id",
     "on_failure": "id",
     "on_duration_warning_threshold_exceeded": "id",
-    "on_duration_failure_threshold_exceeded": "id",
+    "on_streaming_backlog_exceeded": "id",
     "rules": "metric",
     "parameters": "name",
     "libraries": "whl",
+    "subscriptions": "user_name",
 }
+IGNORED_OVERRIDE_KEYS = ["init_scripts"]
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
     "azure": "Standard_DS3_v2",
