@@ -46,7 +46,7 @@ OVERRIDE_KEY_MAP = {
     "libraries": "whl",
     "subscriptions": "user_name",
 }
-IGNORED_OVERRIDE_KEYS = ["init_scripts"]
+IGNORED_OVERRIDE_KEYS = ["init_scripts", "access_control_list"]
 NODE_TYPE_MAP = {
     "aws": "m5.xlarge",
     "azure": "Standard_DS3_v2",
