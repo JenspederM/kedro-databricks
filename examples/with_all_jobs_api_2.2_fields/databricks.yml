@@ -11,6 +11,7 @@ default: # will be applied to all workflows
       - on_duration_warning_threshold_exceeded@email_notifications.com
     on_streaming_backlog_exceeded:
       - on_streaming_backlog_exceeded@email_notifications.com
+    no_alert_for_skipped_runs: true
   webhook_notifications:
     on_start:
       - id: on_start@webhook_notifications.com
@@ -188,6 +189,7 @@ default: # will be applied to all workflows
           - on_duration_warning_threshold_exceeded@email_notifications.com
         on_streaming_backlog_exceeded:
           - on_streaming_backlog_exceeded@email_notifications.com
+        no_alert_for_skipped_runs: true
       webhook_notifications:
         on_start:
           - id: on_start@webhook_notifications.com
