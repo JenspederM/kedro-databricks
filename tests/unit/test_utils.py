@@ -81,27 +81,27 @@ def test_override_resources(jobs, overrides, expected, error):
     [
         (
             "file_path: /dbfs/FileStore/develop_eggs/data/01_raw/file.csv",
-            "file_path: file://${_file_path}/data/01_raw/file.csv",
+            "file_path: ${_file_path}/data/01_raw/file.csv",
         ),
         (
             "file_path: /dbfs/develop_eggs/data/01_raw/file.csv",
-            "file_path: file://${_file_path}/data/01_raw/file.csv",
+            "file_path: ${_file_path}/data/01_raw/file.csv",
         ),
         (
             "file_path: /dbfs/FileStore/develop_eggs/data/01_raw/file.csv",
-            "file_path: file://${_file_path}/data/01_raw/file.csv",
+            "file_path: ${_file_path}/data/01_raw/file.csv",
         ),
         (
             "file_path: data/0_raw/file.csv",
-            "file_path: file://${_file_path}/data/0_raw/file.csv",
+            "file_path: ${_file_path}/data/0_raw/file.csv",
         ),
         (
             "file_path: data/012_raw/file.csv",
-            "file_path: file://${_file_path}/data/012_raw/file.csv",
+            "file_path: ${_file_path}/data/012_raw/file.csv",
         ),
         (
             "file_path: /custom/path/data/01_raw/file.csv",
-            "file_path: file://${_file_path}/data/01_raw/file.csv",
+            "file_path: ${_file_path}/data/01_raw/file.csv",
         ),
         ("data/01_raw/file.csv", "data/01_raw/file.csv"),
     ],
