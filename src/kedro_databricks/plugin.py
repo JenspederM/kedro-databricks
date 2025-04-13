@@ -148,6 +148,9 @@ def deploy(
     controller.go_to_project()
     controller.validate_databricks_config()
     controller.build_project()
+    result = controller.upload_project_data()
+    if result and result.returncode != 0:
+        raise RuntimeError("Failed to upload project data to DBFS")
     if bundle is True:
         bundle_controller = BundleController(metadata, env, conf_source, runtime_params)
         workflows = bundle_controller.generate_resources(pipeline)

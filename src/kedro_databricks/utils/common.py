@@ -54,10 +54,10 @@ class Command:
             stderr=[],
         )
 
-    def run(self, *args):
+    def run(self, *args, **kwargs):
         cmd = self.command + list(*args)
         self.log.info(f"Running command: {cmd}")
-        return self._run_command(cmd)
+        return self._run_command(cmd, **kwargs)
 
     def _handle_error(self):
         error_msg = f"{self.msg}: Failed to run command - `{' '.join(self.command)}`"

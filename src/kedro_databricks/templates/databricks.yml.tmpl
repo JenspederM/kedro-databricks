@@ -14,8 +14,6 @@ sync:
     - conf/logging.yml
     - conf/base/*.yml
     - conf/base/*.gitkeep
-    - data/**/*.csv
-    - data/**/*.gitkeep
   exclude:
     - conf/local/**/*
 
@@ -34,11 +32,6 @@ targets:
         - conf/dev/*.yml
         - conf/dev/**/*.yml
         - conf/dev/*.gitkeep
-      exclude:
-        # Databricks does not support spark conf overrides at runtime
-        # To apply spark conf overrides, you need to create a new cluster
-        # with the desired configuration.
-        - conf/**/spark.yml
     # We use 'mode: development' to make sure everything deployed to this target gets a prefix
     # like '[dev my_user_name]'. Setting this mode also disables any schedules and
     # automatic triggers for jobs and enables the 'development' mode for Delta Live Tables pipelines.
@@ -54,11 +47,6 @@ targets:
         - conf/prod/*.yml
         - conf/prod/**/*.yml
         - conf/prod/*.gitkeep
-      exclude:
-        # Databricks does not support spark conf overrides at runtime
-        # To apply spark conf overrides, you need to create a new cluster
-        # with the desired configuration.
-        - conf/**/spark.yml
     # For production deployments, we only have a single copy, so we override the
     # workspace.root_path default of
     # /Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}

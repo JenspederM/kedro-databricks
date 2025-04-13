@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import tarfile
 from collections import namedtuple
 from collections.abc import MutableMapping
 from pathlib import Path
@@ -56,7 +55,12 @@ class DeployController:
 
     def create_dbfs_dir(self):  # pragma: no cover
         """Create a directory in DBFS."""
-        cmd = ["databricks", "fs", "mkdirs", f"dbfs:/FileStore/{self.package_name}"]
+        cmd = [
+            "databricks",
+            "fs",
+            "mkdirs",
+            f"dbfs:/FileStore/{self.package_name}/{self.env}",
+        ]
         Command(cmd, msg=self._msg, warn=True).run()
 
     def upload_project_data(self):  # pragma: no cover
@@ -66,8 +70,10 @@ class DeployController:
             metadata (ProjectMetadata): Project metadata.
             MSG (str): Message to display.
         """
-        target_path = f"dbfs:/FileStore/{self.package_name}/data"
+        # dbfs:/FileStore/develop_eggs/dev/data
+        # dbfs:/FileStore/develop_eggs/dev/
         source_path = self.project_path / "data"
+        target_path = f"dbfs:/FileStore/{self.package_name}/{self.env}/data"
         if not source_path.exists():
             self.log.warning(f"Data path {source_path} does not exist")
             return
@@ -86,55 +92,6 @@ class DeployController:
         ]
         result = Command(cmd, msg=self._msg).run()
         self.log.info(f"{self._msg}: Data uploaded to {target_path}")
-        return result
-
-    def _untar_conf(self, conf: str):
-        dist_dir = self.project_path / "dist"
-        conf_tar = dist_dir / f"conf-{self.package_name}.tar.gz"
-
-        if not conf_tar.exists():  # pragma: no cover
-            self.log.error("No files found")
-            dist_files = list(dist_dir.rglob("*"))
-            raise FileNotFoundError(
-                f"Configuration tar file {conf_tar} does not exist - {dist_files}"
-            )
-
-        with tarfile.open(conf_tar) as tar:
-            file_names = tar.getnames()
-            for _file in file_names:
-                if _file.startswith("."):  # pragma: no cover - hidden files
-                    continue
-                tar.extract(_file, dist_dir)
-
-        source_dir = dist_dir / conf
-        if not source_dir.exists():  # pragma: no cover
-            dist_files = list(dist_dir.rglob("*"))
-            raise FileNotFoundError(
-                f"Configuration path {source_dir} does not exist - {dist_files}"
-            )
-
-        return source_dir
-
-    def upload_project_config(self, conf: str):  # pragma: no cover
-        """Upload the project configuration to DBFS.
-
-        Args:
-            conf (str): The conf folder.
-        """
-        target_path = f"dbfs:/FileStore/{self.package_name}/{conf}"
-        source_path = self._untar_conf(conf)
-        self.log.info(f"{self._msg}: Uploading configuration to {target_path}")
-        cmd = [
-            "databricks",
-            "fs",
-            "cp",
-            "-r",
-            "--overwrite",
-            source_path.as_posix(),
-            target_path,
-        ]
-        result = Command(cmd, msg=self._msg).run()
-        self.log.info(f"{self._msg}: Configuration uploaded to {target_path}")
         return result
 
     def build_project(self):  # pragma: no cover
