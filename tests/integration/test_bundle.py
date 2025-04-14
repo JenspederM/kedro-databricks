@@ -10,7 +10,7 @@ from kedro_databricks.utils.create_target_configs import (
 from tests.utils import reset_init
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def init_kedro_project(kedro_project, cli_runner, metadata):
     reset_init(metadata)
     init_cmd = ["databricks", "init", "--provider", "azure"]
