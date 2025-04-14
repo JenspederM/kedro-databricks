@@ -15,6 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        kedro_version: ["0.19.7", "0.19.8"]
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@main
@@ -24,6 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Sync kedro-databricks
         run: |
+          uv add "kedro==${{ matrix.kedro_version }}"
           uv sync --no-group test
       - name: Lint kedro-databricks
         run: uv run ruff check
