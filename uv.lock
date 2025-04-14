@@ -1607,18 +1607,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ipylab"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ipywidgets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/e5/7ad5e0aa2c5809c92f32d3eb418c0cde118d15311035de8c21087e8ee923/ipylab-1.0.0.tar.gz", hash = "sha256:c4f0744b1f96d6c4605b986aa59ebccd64451bf71c9483a019ab7a52c5656170", size = 1272517 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/22/55420199db1a2eb4ed86bdd5218d15d037582e2c6ab6dc108a4298f696d0/ipylab-1.0.0-py3-none-any.whl", hash = "sha256:86b3de8bc74925b8169b79bf56981df9a654556549a659698bc0ed24dfa6141d", size = 100215 },
-]
-
-[[package]]
 name = "ipython"
 version = "8.18.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1705,24 +1693,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ef/4c/5dd1d8af08107f88c7f741ead7a40854b8ac24ddf9ae850afbcf698aa552/ipython_pygments_lexers-1.1.1.tar.gz", hash = "sha256:09c0138009e56b6854f9535736f4171d855c8c08a563a0dcd8022f78355c7e81", size = 8393 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/33/1f075bf72b0b747cb3288d011319aaf64083cf2efef8354174e3ed4540e2/ipython_pygments_lexers-1.1.1-py3-none-any.whl", hash = "sha256:a9462224a505ade19a605f71f8fa63c2048833ce50abc86768a0d81d876dc81c", size = 8074 },
-]
-
-[[package]]
-name = "ipywidgets"
-version = "8.1.6"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "comm" },
-    { name = "ipython", version = "8.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "ipython", version = "8.35.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "ipython", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "jupyterlab-widgets" },
-    { name = "traitlets" },
-    { name = "widgetsnbextension" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/98/4074d9cb7e89f7ee387b41e9a4b74c8e0d6196e90b910af1cc674e1cdd3d/ipywidgets-8.1.6.tar.gz", hash = "sha256:d8ace49c66f14419fc66071371b99d01bed230bbc15d8a60233b18bfbd782851", size = 116764 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/b8/62952729573d983d9433faacf62a52ee2e8cf46504418061ad1739967abe/ipywidgets-8.1.6-py3-none-any.whl", hash = "sha256:446e7630a1d025bdc7635e1169fcc06f2ce33b5bd41c2003edeb4a47c8d4bbb1", size = 139808 },
 ]
 
 [[package]]
@@ -1988,15 +1958,6 @@ wheels = [
 ]
 
 [[package]]
-name = "jupyterlab-widgets"
-version = "3.0.14"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a1/94/766b8199e8a902a4c5ee12a9407a348bbabe9fa22400758576b153d17d8e/jupyterlab_widgets-3.0.14.tar.gz", hash = "sha256:bad03e59546869f026e537e0d170e454259e6dc7048e14041707ca31e523c8a1", size = 203815 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/7a/f2479ba401e02f7fcbd3fc6af201eac888eaa188574b8e9df19452ab4972/jupyterlab_widgets-3.0.14-py3-none-any.whl", hash = "sha256:54c33e3306b7fca139d165d6190dc6c0627aafa5d14adfc974a4e9a3d26cb703", size = 213999 },
-]
-
-[[package]]
 name = "kedro"
 version = "0.19.10"
 source = { registry = "https://pypi.org/simple" }
@@ -2028,12 +1989,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/6b/f859ebfa5c6c5a6bcb663cec4c3993b376de61be8826b61d4cbeee7917d2/kedro-0.19.10-py3-none-any.whl", hash = "sha256:7ba3165f2c953ef036a833cd1eab036ae9407ad273f8811c9fcbfd87f517dd34", size = 188105 },
 ]
 
-[package.optional-dependencies]
-jupyter = [
-    { name = "ipylab" },
-    { name = "notebook" },
-]
-
 [[package]]
 name = "kedro-databricks"
 version = "0.9.1"
@@ -2059,7 +2014,6 @@ test = [
     { name = "ipython", version = "8.35.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "ipython", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "jupyterlab" },
-    { name = "kedro", extra = ["jupyter"] },
     { name = "kedro-datasets", version = "4.1.0", source = { registry = "https://pypi.org/simple" }, extra = ["pandas", "pandas-parquetdataset", "spark", "spark-sparkdataset"], marker = "python_full_version < '3.10'" },
     { name = "kedro-datasets", version = "6.0.0", source = { registry = "https://pypi.org/simple" }, extra = ["pandas", "pandas-parquetdataset", "spark", "spark-sparkdataset"], marker = "python_full_version >= '3.10'" },
     { name = "notebook" },
@@ -2086,7 +2040,6 @@ dev = [
 test = [
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },
-    { name = "kedro", extras = ["jupyter"], specifier = "~=0.19.10" },
     { name = "kedro-datasets", extras = ["spark", "pandas", "spark-sparkdataset", "pandas-parquetdataset"], specifier = ">=3.0" },
     { name = "notebook" },
     { name = "numpy", specifier = "~=1.21" },
@@ -4580,15 +4533,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e6/30/fba0d96b4b5fbf5948ed3f4681f7da2f9f64512e1d303f94b4cc174c24a5/websocket_client-1.8.0.tar.gz", hash = "sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da", size = 54648 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/84/44687a29792a70e111c5c477230a72c4b957d88d16141199bf9acb7537a3/websocket_client-1.8.0-py3-none-any.whl", hash = "sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526", size = 58826 },
-]
-
-[[package]]
-name = "widgetsnbextension"
-version = "4.0.14"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/53/2e0253c5efd69c9656b1843892052a31c36d37ad42812b5da45c62191f7e/widgetsnbextension-4.0.14.tar.gz", hash = "sha256:a3629b04e3edb893212df862038c7232f62973373869db5084aed739b437b5af", size = 1097428 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/51/5447876806d1088a0f8f71e16542bf350918128d0a69437df26047c8e46f/widgetsnbextension-4.0.14-py3-none-any.whl", hash = "sha256:4875a9eaf72fbf5079dc372a51a9f268fc38d46f767cbf85c43a36da5cb9b575", size = 2196503 },
 ]
 
 [[package]]
