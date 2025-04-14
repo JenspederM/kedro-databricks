@@ -5,7 +5,6 @@ import os
 import shutil
 from pathlib import Path
 
-from click.testing import CliRunner
 from dotenv import load_dotenv
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
@@ -31,11 +30,11 @@ def custom_username():
 PROJECT_NAME = "databricks-iris"
 
 
-@fixture(name="cli_runner", scope="session")
-def cli_runner():
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        yield runner
+# @fixture(name="cli_runner", scope="session")
+# def cli_runner():
+#     runner = CliRunner()
+#     with runner.isolated_filesystem():
+#         yield runner
 
 
 @fixture
