@@ -81,7 +81,7 @@ def test_databricks_bundle_with_overrides(init_kedro_project):
             params = task.get("python_wheel_task").get("parameters")
             for j, param in enumerate(params):
                 if param == "--env":
-                    assert params[j + 1] == "dev"
+                    assert params[j + 1] == DEFAULT_TARGET
 
 
 def test_databricks_bundle_with_conf(init_kedro_project):
@@ -135,14 +135,14 @@ def test_databricks_bundle_with_conf(init_kedro_project):
             params = task.get("python_wheel_task").get("parameters")
             for j, param in enumerate(params):
                 if param == "--env":
-                    assert params[j + 1] == "dev"
+                    assert params[j + 1] == DEFAULT_TARGET
 
 
 def test_databricks_bundle_without_overrides(init_kedro_project):
     """Test the `bundle` command"""
     kedro_project, metadata, cli_runner = init_kedro_project
 
-    command = ["databricks", "bundle", "--env", "dev"]
+    command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
     result = cli_runner.invoke(commands, command, obj=metadata)
     resource_dir = kedro_project / "resources"
     conf_dir = kedro_project / "conf" / "dev"
@@ -182,7 +182,7 @@ def test_databricks_bundle_without_overrides(init_kedro_project):
             params = task.get("python_wheel_task").get("parameters")
             for j, param in enumerate(params):
                 if param == "--env":
-                    assert params[j + 1] == "dev"
+                    assert params[j + 1] == DEFAULT_TARGET
 
 
 def test_databricks_bundle_with_params(init_kedro_project):
@@ -193,7 +193,7 @@ def test_databricks_bundle_with_params(init_kedro_project):
         "databricks",
         "bundle",
         "--env",
-        "dev",
+        DEFAULT_TARGET,
         "--params",
         "run_date={{job.parameters.run_date}},run_id={{job.parameters.run_id}}",
         "--overwrite",
