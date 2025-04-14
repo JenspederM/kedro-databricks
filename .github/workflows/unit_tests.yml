@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Sync kedro-databricks
         run: |
-          uv sync --all-groups
+          uv sync --all-groups --frozen
           uv add "kedro==${{ matrix.kedro_version }}"
       - name: Lint kedro-databricks
         run: uv run ruff check
