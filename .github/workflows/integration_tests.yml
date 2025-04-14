@@ -50,7 +50,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   test_databricks_iris:
-    name: Run tests
+    name: Test databricks-iris starter
     if: ${{ !startsWith(github.event.head_commit.message, 'bump:') && github.repository_owner_id == github.actor_id }}
     runs-on: ubuntu-latest
     steps:
