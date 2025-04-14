@@ -6,6 +6,7 @@ from kedro_databricks.utils.create_target_configs import (
     _get_targets,
     _read_databricks_config,
 )
+from tests.utils import reset_init
 
 
 def test_databricks_bundle_fail(cli_runner, metadata):
@@ -15,6 +16,7 @@ def test_databricks_bundle_fail(cli_runner, metadata):
 
 
 def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
+    reset_init(metadata)
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -76,7 +78,7 @@ def test_databricks_bundle_with_overrides(kedro_project, cli_runner, metadata):
 
 def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
-
+    reset_init(metadata)
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     override_path = (
@@ -142,7 +144,7 @@ def test_databricks_bundle_with_conf(kedro_project, cli_runner, metadata):
 
 def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
-
+    reset_init(metadata)
     init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
@@ -203,6 +205,7 @@ def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata
 
 def test_databricks_bundle_with_params(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
+    reset_init(metadata)
     init_cmd = ["databricks", "init", "--provider", "aws"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
