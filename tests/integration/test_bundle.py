@@ -206,7 +206,7 @@ def test_databricks_bundle_without_overrides(kedro_project, cli_runner, metadata
 def test_databricks_bundle_with_params(kedro_project, cli_runner, metadata):
     """Test the `bundle` command"""
     reset_init(metadata)
-    init_cmd = ["databricks", "init", "--provider", "aws"]
+    init_cmd = ["databricks", "init", "--provider", "azure"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     assert metadata.project_path.exists(), "Project path not created"
