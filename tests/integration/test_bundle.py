@@ -28,6 +28,7 @@ def init_kedro_project(kedro_project, cli_runner, metadata):
             override_path.exists()
         ), f"Resource Overrides at {override_path} does not exist"
     yield kedro_project, metadata, cli_runner
+    reset_init(metadata)
 
 
 def test_databricks_bundle_fail(cli_runner, metadata):
