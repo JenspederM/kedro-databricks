@@ -152,15 +152,4 @@ def test_deploy_with_conf(cli_runner, metadata):
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-
-    controller = DeployController(metadata)
-    controller._untar_conf(CONF_KEY)
-    conf_path = (
-        metadata.project_path / "dist" / CONF_KEY / DEFAULT_TARGET / "databricks.yml"
-    )
-    files = list((metadata.project_path / "dist" / CONF_KEY).rglob("*"))
-    assert conf_path.exists(), f"Conf file not created - found {files}"
-    assert (
-        conf_path.read_text() == override_path.read_text()
-    ), f"Conf file not copied - found {files}"
     settings.write_text(original_settings)

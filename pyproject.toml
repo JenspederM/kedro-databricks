@@ -19,6 +19,15 @@ dev = [
     "pre-commit>=4.0.1",
     "ruff>=0.7.2",
     "commitizen>=3.30.0",
+    "pytest-xdist>=3.6.1",
+]
+test = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro[jupyter]~=0.19.10",
+    "kedro-datasets[spark, pandas, spark.SparkDataset, pandas.ParquetDataset]>=3.0",
+    "numpy~=1.21",
 ]
 
 [project.urls]

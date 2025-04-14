@@ -21,6 +21,7 @@ from kedro_databricks.constants import (
 from kedro_databricks.deploy import DeployController
 from kedro_databricks.init import InitController
 from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
+from kedro_databricks.utils.common import Command
 
 
 @click.group(name="Kedro-Databricks")
@@ -149,7 +150,7 @@ def deploy(
     controller.validate_databricks_config()
     controller.build_project()
     result = controller.upload_project_data()
-    if result and result.returncode != 0:
+    if result and result.returncode != 0:  # pragma: no cover
         raise RuntimeError("Failed to upload project data to DBFS")
     if bundle is True:
         bundle_controller = BundleController(metadata, env, conf_source, runtime_params)
@@ -159,3 +160,69 @@ def deploy(
         )
         bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
     controller.deploy_project(list(databricks_args))
+
+
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("pipeline")
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
+@click.pass_obj
+def run(metadata: ProjectMetadata, pipeline, databricks_args: list[str]):
+    """Run the project on Databricks
+
+    This is a wrapper for the `databricks bundle run` command.
+    To see available options, run `databricks bundle run --help`.
+
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
+    if shutil.which("databricks") is None:  # pragma: no cover
+        raise Exception("databricks CLI is not installed")
+    cmd = ["databricks", "bundle", "run", pipeline] + list(databricks_args)
+    click.echo(
+        f"Running `{' '.join(cmd)}` in {metadata.project_path} with Databricks CLI"
+    )
+    result = Command(cmd, msg="Run Databricks job", warn=True).run(
+        cwd=metadata.project_path
+    )
+    if result.returncode != 0:
+        raise RuntimeError("Failed to run Databricks job\n" + "\n".join(result.stdout))
+
+
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
+@click.pass_obj
+def destroy(metadata: ProjectMetadata, env, databricks_args: list[str]):
+    """Destroy the Databricks asset bundle
+
+    This is a wrapper for the `databricks bundle destroy` command.
+    To see available options, run `databricks bundle destroy --help`.
+
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
+    if shutil.which("databricks") is None:  # pragma: no cover
+        raise Exception("databricks CLI is not installed")
+    cmd = ["databricks", "bundle", "destroy"] + list(databricks_args)
+    click.echo(
+        f"Running `{' '.join(cmd)}` in {metadata.project_path} with Databricks CLI"
+    )
+    result = Command(cmd, msg="Destroy Databricks bundle", warn=True).run(
+        cwd=metadata.project_path
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Failed to destroy Databricks bundle\n" + "\n".join(result.stdout)
+        )
+    result = Command(
+        [
+            "databricks",
+            "fs",
+            "rm",
+            "-r",
+            f"dbfs:/FileStore/{metadata.project_name.replace('-', '_')}/{env}",
+        ],
+        msg="Remove Databricks bundle",
+    ).run()
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Failed to remove Databricks bundle\n" + "\n".join(result.stdout)
+        )
