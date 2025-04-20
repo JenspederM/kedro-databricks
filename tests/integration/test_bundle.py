@@ -3,10 +3,7 @@ import yaml
 
 from kedro_databricks.constants import DEFAULT_TARGET
 from kedro_databricks.plugin import commands
-from kedro_databricks.utils.create_target_configs import (
-    _get_targets,
-    _read_databricks_config,
-)
+from kedro_databricks.utils import get_targets, read_databricks_config
 from tests.utils import reset_init
 
 
@@ -20,8 +17,8 @@ def init_kedro_project(kedro_project, cli_runner, metadata):
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert metadata.project_path / "databricks.yml", "Databricks config not created"
 
-    databricks_config = _read_databricks_config(metadata.project_path)
-    targets = _get_targets(databricks_config)
+    databricks_config = read_databricks_config(metadata.project_path)
+    targets = get_targets(databricks_config)
     for target in targets:
         override_path = metadata.project_path / "conf" / target / "databricks.yml"
         assert (

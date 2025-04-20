@@ -30,13 +30,6 @@ def custom_username():
 PROJECT_NAME = "databricks-iris"
 
 
-# @fixture(name="cli_runner", scope="session")
-# def cli_runner():
-#     runner = CliRunner()
-#     with runner.isolated_filesystem():
-#         yield runner
-
-
 @fixture
 def databricks_iris_starter(cli_runner):
     project_path = Path().cwd() / PROJECT_NAME

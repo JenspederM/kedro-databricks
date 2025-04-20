@@ -5,6 +5,7 @@ from kedro import __version__ as kedro_version
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
 
 KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
+MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
 TASK_KEY_ORDER = [
     "task_key",
     "job_cluster_key",

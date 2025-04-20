@@ -2,7 +2,7 @@ import argparse
 import logging
 from importlib.metadata import version
 
-from kedro_databricks.utils.common import Command
+from kedro_databricks.utils import Command
 
 
 def new_project(name):

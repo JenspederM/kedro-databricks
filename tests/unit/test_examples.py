@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from kedro_databricks.utils.override_resources import override_resources
+from kedro_databricks.cli.bundle.override_resources import override_resources
 
 EXAMPLE_ROOT = Path(__file__).parent.parent.parent / "examples"
 EXAMPLES = [p.name for p in EXAMPLE_ROOT.iterdir() if p.is_dir()]

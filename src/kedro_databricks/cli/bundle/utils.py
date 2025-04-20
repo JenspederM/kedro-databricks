@@ -4,8 +4,6 @@ import copy
 import re
 from typing import Any
 
-from kedro_databricks.constants import KEDRO_VERSION
-
 
 def remove_nulls(value: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:
     """Remove None values from a dictionary or list.
@@ -72,20 +70,6 @@ def get_entry_point(project_name: str) -> str:
     entrypoint = re.sub(r"(-+)$", "", entrypoint)
     entrypoint = re.sub(r"^(-+)", "", entrypoint)
     return entrypoint
-
-
-def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
-    """Check if the current Kedro version is less than 0.19.8.
-
-    Kedro 0.19.8 introduced a new `run_script` method that is required for
-    running tasks on Databricks. This method is not available in earlier
-    versions of Kedro. This function checks if the current Kedro version is
-    less than 0.19.8.
-
-    Returns:
-        bool: whether the current Kedro version is less than 0.19.8
-    """
-    return _version < [0, 19, 8]
 
 
 def sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:

@@ -2,10 +2,10 @@ import pytest
 
 from kedro_databricks.constants import NODE_TYPE_MAP
 from kedro_databricks.plugin import commands
-from kedro_databricks.utils.create_target_configs import (
-    _get_bundle_name,
-    _get_targets,
-    _read_databricks_config,
+from kedro_databricks.utils import (
+    get_bundle_name,
+    get_targets,
+    read_databricks_config,
 )
 from tests.utils import reset_init
 
@@ -25,12 +25,12 @@ def test_init_arg(cli_runner, metadata, provider):
         config_path = metadata.project_path / "databricks.yml"
         assert config_path.exists(), f"Configuration at {config_path} does not exist"
 
-        databricks_config = _read_databricks_config(metadata.project_path)
+        databricks_config = read_databricks_config(metadata.project_path)
         assert databricks_config is not None, "Databricks config not read"
-        name = _get_bundle_name(databricks_config)
+        name = get_bundle_name(databricks_config)
         assert name == metadata.package_name, f"Bundle name not set: {name}"
 
-        targets = _get_targets(databricks_config)
+        targets = get_targets(databricks_config)
         for target in targets:
             override_path = metadata.project_path / "conf" / target / "databricks.yml"
             assert (

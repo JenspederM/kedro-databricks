@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node
 
+from kedro_databricks.cli.deploy.get_deployed_resources import get_deployed_resources
 from kedro_databricks.constants import DEFAULT_TARGET
-from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
@@ -58,9 +58,8 @@ def test_deploy(cli_runner, metadata, custom_username):
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
-    controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(
-        pipelines, only_dev=True, _custom_username=custom_username
+    resources = get_deployed_resources(
+        metadata, pipelines, only_dev=True, _custom_username=custom_username
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
@@ -96,9 +95,8 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
-    controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(
-        pipelines, _custom_username=custom_username
+    resources = get_deployed_resources(
+        metadata, pipelines, _custom_username=custom_username
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(

@@ -1,5 +1,4 @@
 import json
-import logging
 import re
 from pathlib import Path
 
@@ -8,34 +7,15 @@ from databricks.sdk import WorkspaceClient
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.constants import DEFAULT_TARGET
-from kedro_databricks.utils.common import Command
+from kedro_databricks.logger import get_logger
+from kedro_databricks.utils import (
+    Command,
+    get_bundle_name,
+    get_targets,
+    read_databricks_config,
+)
 
-log = logging.getLogger(__name__)
-
-
-def create_target_configs(
-    metadata: ProjectMetadata, node_type_id: str, default_key: str
-):
-    conf_dir = metadata.project_path / "conf"
-    databricks_config = _read_databricks_config(metadata.project_path)
-    bundle_name = _get_bundle_name(databricks_config)
-    targets = _get_targets(databricks_config)
-    for target_name, target_conf in targets.items():
-        target = DatabricksTarget(bundle_name, target_name, target_conf)
-        target_conf_dir = conf_dir / target.name
-        target_conf_dir.mkdir(exist_ok=True)
-        _save_gitkeep_file(target_conf_dir)
-        target_config = _create_target_config(
-            default_key,
-            node_type_id,
-            single_user=target.name == DEFAULT_TARGET,
-        )
-        _save_target_config(target_config, target_conf_dir)
-        target_file_path = f"/Volumes/<your-volume-name>/{bundle_name}/{target_name}"
-        if target.name == DEFAULT_TARGET:
-            target_file_path = f"/dbfs/FileStore/{bundle_name}/{target_name}"
-        _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
-    log.info("Databricks targets created.")
+log = get_logger("init")
 
 
 class DatabricksTarget:
@@ -70,7 +50,34 @@ class DatabricksTarget:
         return json.loads(json_output)
 
 
-def _create_target_config(default_key, node_type_id, single_user):
+def create_target_configs(
+    metadata: ProjectMetadata, node_type_id: str, default_key: str
+):
+    conf_dir = metadata.project_path / "conf"
+    databricks_config = read_databricks_config(metadata.project_path)
+    bundle_name = get_bundle_name(databricks_config)
+    targets = get_targets(databricks_config)
+    for target_name, target_conf in targets.items():
+        target = DatabricksTarget(bundle_name, target_name, target_conf)
+        target_conf_dir = conf_dir / target.name
+        target_conf_dir.mkdir(exist_ok=True)
+        _save_gitkeep_file(target_conf_dir)
+        target_config = _create_target_config(
+            default_key,
+            node_type_id,
+            single_user=target.name == DEFAULT_TARGET,
+        )
+        _save_target_config(target_config, target_conf_dir)
+        target_file_path = f"/Volumes/<your-volume-name>/{bundle_name}/{target_name}"
+        if target.name == DEFAULT_TARGET:
+            target_file_path = f"/dbfs/FileStore/{bundle_name}/{target_name}"
+        _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
+        log.info(f"Created target config for {target.name} at {target_conf_dir}")
+
+
+def _create_target_config(
+    default_key: str, node_type_id: str, single_user: bool = False
+):
     new_cluster = {
         "spark_version": "15.4.x-scala2.12",
         "node_type_id": node_type_id,
@@ -110,26 +117,6 @@ def _substitute_file_path(string: str) -> str:
     return match
 
 
-def _read_databricks_config(project_path: Path) -> dict:
-    with open(project_path / "databricks.yml") as f:
-        conf = yaml.safe_load(f)
-    return conf
-
-
-def _get_bundle_name(config: dict) -> str:
-    bundle_name = config.get("bundle", {}).get("name")
-    if bundle_name is None:
-        raise ValueError("No bundle name found in databricks.yml")
-    return bundle_name
-
-
-def _get_targets(config: dict) -> dict:
-    targets = config.get("targets")
-    if targets is None:
-        raise ValueError("No targets found in databricks.yml")
-    return targets
-
-
 def _save_target_catalog(
     conf_dir: Path, target_conf_dir: Path, target_file_path: str
 ):  # pragma: no cover
@@ -140,12 +127,12 @@ def _save_target_catalog(
         f.write("_file_path: " + target_file_path + "\n" + target_catalog)
 
 
-def _save_target_config(target_config, target_conf_dir):  # pragma: no cover
+def _save_target_config(target_config: dict, target_conf_dir: Path):  # pragma: no cover
     with open(target_conf_dir / "databricks.yml", "w") as f:
         yaml.dump(target_config, f)
 
 
-def _save_gitkeep_file(target_conf_dir):
+def _save_gitkeep_file(target_conf_dir: Path):
     if not (target_conf_dir / ".gitkeep").exists():
         with open(target_conf_dir / ".gitkeep", "w") as f:
             f.write("")
