@@ -41,7 +41,7 @@ jobs:
       - name: Lint kedro-databricks
         run: uv run ruff check
       - name: Test kedro-databricks
-        run: uv run pytest tests -n=1
+        run: uv run pytest tests
         env:
           CUSTOM_USERNAME: "github"
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
