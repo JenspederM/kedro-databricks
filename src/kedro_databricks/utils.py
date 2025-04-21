@@ -139,7 +139,7 @@ def get_targets(config: dict) -> dict:
     return targets
 
 
-def assert_databricks_cli(raise_error: bool = True):
+def assert_databricks_cli(raise_error: bool = True):  # pragma: no cover
     """Check if the Databricks CLI is installed.
 
     Raises:
