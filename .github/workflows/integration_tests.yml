@@ -1,6 +1,10 @@
 name: Integration Tests
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/integration_tests.yml"
+      - "tests/integration/**"
   push:
     paths:
       - ".github/workflows/integration_tests.yml"
