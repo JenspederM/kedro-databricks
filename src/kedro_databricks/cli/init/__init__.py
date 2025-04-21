@@ -38,12 +38,11 @@ def init(metadata: ProjectMetadata, provider: str, default_key: str, *databricks
     assert_databricks_cli()
     log.info("Initializing Databricks Asset Bundle...")
     config_path, node_type_id = _validate_inputs(metadata, provider)
-    if not config_path or not node_type_id:
-        return
     _databricks_init(metadata, *databricks_args)
+    log.info(f"Created {config_path.relative_to(metadata.project_path)}")
     create_target_configs(metadata, node_type_id=node_type_id, default_key=default_key)
     _update_gitignore(metadata)
-    if require_databricks_run_script():
+    if require_databricks_run_script():  # pragma: no cover - Might be removed in future
         log.warning(
             "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "
         )
@@ -78,8 +77,8 @@ def _databricks_init(metadata: ProjectMetadata, *databricks_args):
         "--output-dir",
         metadata.project_path.as_posix(),
     ] + list(databricks_args)
-    result = Command(init_cmd, warn=True).run()
-    if result.returncode != 0:
+    result = Command(init_cmd, log=log, warn=True).run()
+    if result.returncode != 0:  # pragma: no cover
         err = "\n".join(result.stdout)
         raise RuntimeError(f"Failed to initialize Databricks Asset Bundle\n{err}")
     shutil.rmtree(assets_dir)

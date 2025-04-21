@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable, MutableMapping
 from typing import Any
 
@@ -33,9 +32,8 @@ class ResourceGenerator:
     ) -> None:
         self.metadata = metadata
         self.env = env
-        self.log = logging.getLogger(metadata.package_name)
         self.pipelines: MutableMapping = pipelines
-        self.remote_conf_dir = f"${{workspace.file_path}}/{conf_source}/{env}"
+        self.remote_conf_dir = f"${{workspace.file_path}}/{conf_source}"
         self.params = params
 
     def generate_resources(
@@ -58,18 +56,22 @@ class ResourceGenerator:
         workflows = {}
         pipeline = self.pipelines.get(pipeline_name)
         if pipeline_name and pipeline:
-            self.log.info(f"Generating resources for pipeline '{pipeline_name}'")
+            log.info(f"Generating resources for pipeline '{pipeline_name}'")
             name = make_workflow_name(self.metadata.package_name, pipeline_name)
             workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
             return self._workflows_to_resources(workflows)
+        if pipeline_name:
+            raise KeyError(
+                f"Pipeline '{pipeline_name}' not found. Available pipelines: {list(self.pipelines.keys())}"
+            )
 
         for pipe_name, pipeline in self.pipelines.items():
             if len(pipeline.nodes) == 0:
                 continue
             name = make_workflow_name(self.metadata.package_name, pipe_name)
             workflow = self._create_workflow(name=name, pipeline=pipeline)
-            self.log.debug(f"Workflow '{name}' successfully created.")
-            self.log.debug(workflow)
+            log.debug(f"Workflow '{name}' successfully created.")
+            log.debug(workflow)
             workflows[name] = workflow
 
         return self._workflows_to_resources(workflows)
@@ -88,8 +90,8 @@ class ResourceGenerator:
         resources = {
             name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
         }
-        self.log.debug(resources)
-        self.log.info("Databricks resources successfully generated.")
+        log.debug(resources)
+        log.info("Databricks resources successfully generated.")
         return resources
 
     def _create_workflow(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
@@ -141,7 +143,7 @@ class ResourceGenerator:
             "--conf-source",
             self.remote_conf_dir,
             "--env",
-            self.env,
+            "${var.environment}",
         ]
 
         if require_databricks_run_script():  # pragma: no cover

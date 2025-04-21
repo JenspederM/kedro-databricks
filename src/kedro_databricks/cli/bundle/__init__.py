@@ -94,16 +94,13 @@ def _save_bundled_resources(
     resources_dir = metadata.project_path / "resources"
     resources_dir.mkdir(exist_ok=True, parents=True)
     for name, resource in resources.items():
-        MSG = f"Writing resource '{name}'"
         p = resources_dir / f"{name}.yml"
+        relative_path = p.relative_to(metadata.project_path)
 
         if p.exists() and not overwrite:  # pragma: no cover
-            log.warning(
-                f"{MSG}: {p.relative_to(metadata.project_path)} already exists."
-                " Use --overwrite to replace."
-            )
+            log.warning(f"{relative_path} already exists. Use --overwrite to replace.")
             continue
 
         with open(p, "w") as f:
-            log.info(f"{MSG}: Wrote {p.relative_to(metadata.project_path)}")
             yaml.dump(resource, f, default_flow_style=False, indent=4, sort_keys=False)
+            log.info(f"Wrote {relative_path}")

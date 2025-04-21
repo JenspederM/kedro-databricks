@@ -39,6 +39,7 @@ class DatabricksTarget:
                 "--output",
                 "json",
             ],
+            log=log,
             warn=True,
         ).run()
         json_start = [

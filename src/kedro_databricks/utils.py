@@ -12,18 +12,15 @@ from kedro_databricks.constants import KEDRO_VERSION, MINIMUM_DATABRICKS_VERSION
 
 
 class Command:
-    def __init__(self, command: list[str], warn: bool = False, msg: str = ""):
-        if msg is None:  # pragma: no cover
-            msg = f'Executing ({" ".join(command)})'
-        self.log = logging.getLogger(self.__class__.__name__)
+    def __init__(self, command: list[str], log: logging.Logger, warn: bool = False):
+        self.log = log.getChild("command")
         self.command = command
         self.warn = warn
-        self.msg = msg
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return f"Command({self.command})"
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return self.__str__()
 
     def __rich_repr__(self):  # pragma: no cover
@@ -51,23 +48,24 @@ class Command:
         )
         stdout = self._read_stdout(process)
         process.stdout.close()  # type: ignore - we know it's there
-        process.wait()
-        if process.returncode != 0 and "deploy" not in command:
-            self._handle_error()
-        return subprocess.CompletedProcess(
+        result = subprocess.CompletedProcess(
             args=command,
             returncode=process.returncode,
             stdout=stdout or [""],
             stderr=[],
         )
+        if result.returncode != 0 and "deploy" not in command:
+            self._handle_error(result)
+        return result
 
     def run(self, *args, **kwargs):
         cmd = self.command + list(*args)
         self.log.info(f"Running command: {cmd}")
         return self._run_command(cmd, **kwargs)
 
-    def _handle_error(self):
-        error_msg = f"{self.msg}: Failed to run command - `{' '.join(self.command)}`"
+    def _handle_error(self, result: subprocess.CompletedProcess):
+        stdout = "\n".join(result.stdout)
+        error_msg = f"Failed to run command `{' '.join(self.command)}`:\n\n{stdout}"
         if self.warn:
             self.log.warning(error_msg)
         else:

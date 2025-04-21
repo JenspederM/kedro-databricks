@@ -65,6 +65,9 @@ def test_deploy(cli_runner, metadata, custom_username):
     assert all(
         metadata.package_name in p.name for p in resources
     ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    destroy_cmd = ["databricks", "destroy", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
 def test_deploy_prod(cli_runner, metadata, custom_username):
@@ -88,7 +91,6 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
         "--env",
         "prod",
         "--bundle",
-        "--",
         "--target",
         "prod",
     ]
@@ -102,6 +104,9 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
     assert all(
         metadata.package_name in p.name for p in resources
     ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    destroy_cmd = ["databricks", "destroy", "--target", "prod", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
 def test_deploy_with_conf(cli_runner, metadata):
@@ -142,12 +147,10 @@ def test_deploy_with_conf(cli_runner, metadata):
     with open(settings, "a"):
         settings.write_text(f"CONF_SOURCE = '{CONF_KEY}'")
 
-    deploy_cmd = [
-        "databricks",
-        "deploy",
-        "--bundle",
-        f"--conf-source={CONF_KEY}",
-    ]
+    deploy_cmd = ["databricks", "deploy", "--bundle", f"--conf-source={CONF_KEY}"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     settings.write_text(original_settings)
+    destroy_cmd = ["databricks", "destroy", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)

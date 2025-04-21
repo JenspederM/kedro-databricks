@@ -51,7 +51,7 @@ def _validate_project(metadata: ProjectMetadata):
 
 def _build_project(metadata: ProjectMetadata):
     """Build the project."""
-    result = Command(["kedro", "package"]).run(cwd=metadata.project_path)
+    result = Command(["kedro", "package"], log=log).run(cwd=metadata.project_path)
     return result
 
 
@@ -76,7 +76,7 @@ def _upload_project_data(metadata: ProjectMetadata, env: str):  # pragma: no cov
         source_path.as_posix(),
         target_path,
     ]
-    result = Command(cmd).run(cwd=metadata.project_path)
+    result = Command(cmd, log=log).run(cwd=metadata.project_path)
     log.info(f"Data uploaded to {target_path}")
     return result
 
@@ -97,8 +97,7 @@ def _deploy_project(
     target = _get_arg_value(databricks_args, "--target")
     if target is None:
         deploy_cmd += ["--target", env]
-    log.info(f"Running `{' '.join(deploy_cmd)}`")
-    result = Command(deploy_cmd, warn=True).run(cwd=metadata.project_path)
+    result = Command(deploy_cmd, log=log, warn=True).run(cwd=metadata.project_path)
     # databricks bundle deploy logs to stderr for some reason.
     if _check_deployment_complete(result):
         result.returncode = 0

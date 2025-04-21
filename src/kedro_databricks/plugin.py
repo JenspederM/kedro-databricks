@@ -130,11 +130,7 @@ def deploy(
             params=runtime_params,
             overwrite=True,
         )
-    cli.deploy(
-        metadata=metadata,
-        env=env,
-        *databricks_args,
-    )
+    cli.deploy(metadata, env, *databricks_args)
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
@@ -149,11 +145,7 @@ def run(metadata: ProjectMetadata, pipeline, databricks_args: list[str]):
 
     `databricks_args` are additional arguments to be passed to the `databricks` CLI.
     """
-    cli.run(
-        metadata=metadata,
-        pipeline=pipeline,
-        *databricks_args,
-    )
+    cli.run(metadata, pipeline, *databricks_args)
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
@@ -168,4 +160,4 @@ def destroy(metadata: ProjectMetadata, env, databricks_args: list[str]):
 
     `databricks_args` are additional arguments to be passed to the `databricks` CLI.
     """
-    cli.destroy(metadata=metadata, env=env, *databricks_args)
+    cli.destroy(metadata, env, *databricks_args)

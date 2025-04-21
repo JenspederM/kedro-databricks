@@ -9,11 +9,7 @@ log = get_logger("run")
 def run(metadata: ProjectMetadata, pipeline: str, *databricks_args):
     assert_databricks_cli()
     cmd = ["databricks", "bundle", "run", pipeline] + list(databricks_args)
-    log.info(
-        f"Running `{' '.join(cmd)}` in {metadata.project_path} with Databricks CLI"
-    )
-    result = Command(cmd, msg="Run Databricks job", warn=True).run(
-        cwd=metadata.project_path
-    )
+    log.info(f"Running `{' '.join(cmd)}` in {metadata.project_path}")
+    result = Command(cmd, log=log, warn=True).run(cwd=metadata.project_path)
     if result.returncode != 0:
         raise RuntimeError("Failed to run Databricks job\n" + "\n".join(result.stdout))

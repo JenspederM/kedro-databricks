@@ -71,7 +71,7 @@ def test_run(cli_runner, iris_meta):
     deploy_cmd = ["databricks", "deploy", "--bundle"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=iris_meta)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-    command = ["databricks", "run", PROJECT_NAME.replace("-", "_")]
+    command = ["databricks", "run", iris_meta.package_name]
     result = cli_runner.invoke(commands, command, obj=iris_meta)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
     command = ["databricks", "destroy", "--auto-approve"]

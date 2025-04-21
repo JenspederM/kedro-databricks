@@ -53,9 +53,9 @@ def _generate_task(
         "--nodes",
         task_key,
         "--conf-source",
-        "${workspace.file_path}/" + conf + "/" + env,  # type: ignore
+        "${workspace.file_path}/" + conf,  # type: ignore
         "--env",
-        "fake_env",
+        "${var.environment}",
     ]
 
     if require_databricks_run_script():
@@ -83,7 +83,7 @@ def _generate_task(
     return task
 
 
-def generate_workflow(conf="conf", env="fake_env"):
+def generate_workflow(conf="conf"):
     tasks = []
 
     for i in range(5):

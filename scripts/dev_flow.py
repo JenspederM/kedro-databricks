@@ -4,20 +4,24 @@ from importlib.metadata import version
 
 from kedro_databricks.utils import Command
 
+log = logging.getLogger("kedro_databricks")
+
 
 def new_project(name):
     """Create a new Kedro project using the Databricks starter."""
-    Command(["kedro", "new", "--starter", "databricks-iris", "--name", name]).run()
+    Command(
+        ["kedro", "new", "--starter", "databricks-iris", "--name", name], log=log
+    ).run()
 
 
 def run_kedro_databricks_flow(name, destroy=False):
     ver = version("kedro_databricks")
     whl = f"kedro_databricks-{ver}-py3-none-any.whl"
     logging.basicConfig(level=logging.INFO)
-    Command(["uv", "build"]).run()
-    Command(["mv", f"dist/{whl}", name]).run()
-    Command(["uv", "venv"]).run(cwd=f"./{name}")
-    Command(["uv", "pip", "install", whl]).run(cwd=f"./{name}")
+    Command(["uv", "build"], log=log).run()
+    Command(["mv", f"dist/{whl}", name], log=log).run()
+    Command(["uv", "venv"], log=log).run(cwd=f"./{name}")
+    Command(["uv", "pip", "install", whl], log=log).run(cwd=f"./{name}")
     Command(
         [
             "uv",
@@ -27,7 +31,8 @@ def run_kedro_databricks_flow(name, destroy=False):
             "init",
             "--provider",
             "azure",
-        ]
+        ],
+        log=log,
     ).run(cwd=f"./{name}")
     Command(
         [
@@ -37,7 +42,8 @@ def run_kedro_databricks_flow(name, destroy=False):
             "databricks",
             "bundle",
             "--overwrite",
-        ]
+        ],
+        log=log,
     ).run(cwd=f"./{name}")
     Command(
         [
@@ -46,7 +52,8 @@ def run_kedro_databricks_flow(name, destroy=False):
             "kedro",
             "databricks",
             "deploy",
-        ]
+        ],
+        log=log,
     ).run(cwd=f"./{name}")
     Command(
         [
@@ -54,7 +61,8 @@ def run_kedro_databricks_flow(name, destroy=False):
             "bundle",
             "run",
             name.replace("-", "_"),
-        ]
+        ],
+        log=log,
     ).run(cwd=f"./{name}")
     if destroy:
         Command(
@@ -64,9 +72,10 @@ def run_kedro_databricks_flow(name, destroy=False):
                 "rm",
                 "-r",
                 f"dbfs:/FileStore/dev/{name.replace('-', '_')}/",
-            ]
+            ],
+            log=log,
         ).run(cwd=f"./{name}")
-        Command(["databricks", "bundle", "destroy", "--auto-approve"]).run(
+        Command(["databricks", "bundle", "destroy", "--auto-approve"], log=log).run(
             cwd=f"./{name}"
         )
 

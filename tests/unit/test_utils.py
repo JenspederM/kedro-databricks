@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import platform
 import subprocess
@@ -15,6 +16,8 @@ from kedro_databricks.utils import (
     make_workflow_name,
     read_databricks_config,
 )
+
+log = logging.getLogger("test")
 
 
 @pytest.mark.skipif(
@@ -83,33 +86,23 @@ OS = platform.uname().system.lower()
 
 
 @pytest.mark.parametrize(
-    ["cmd", "result_code", "msg", "warn", "raises"],
+    ["cmd", "result_code", "warn", "raises"],
     [
-        (["ls", "."], 0, "", False, False),
-        (["ls", "non_existent_file"], 2, "Custom message", False, True),
-        (
-            ["ls", "non_existent_file"],
-            1 if OS == "darwin" else 2,
-            "Custom message",
-            True,
-            False,
-        ),
-        (["ls", "non_existent_file"], 2, "", False, True),
-        (["ls", "non_existent_file"], 1 if OS == "darwin" else 2, "", True, False),
+        (["ls", "."], 0, False, False),
+        (["ls", "non_existent_file"], 2, False, True),
+        (["ls", "non_existent_file"], 1 if OS == "darwin" else 2, True, False),
+        (["ls", "non_existent_file"], 2, False, True),
+        (["ls", "non_existent_file"], 1 if OS == "darwin" else 2, True, False),
     ],
 )
-def test_command(cmd, result_code, warn, msg, raises):
+def test_command(cmd, result_code, warn, raises):
     if raises and not warn:
-        with pytest.raises(Exception) as e:
-            if msg:
-                result = Command(cmd, msg=msg).run()
-                assert msg in str(e.value)
-            else:
-                result = Command(cmd).run()
+        with pytest.raises(Exception):
+            result = Command(cmd, log=log).run()
             assert isinstance(result, subprocess.CompletedProcess)
             assert result.returncode == result_code, result
     else:
-        command = Command(cmd, warn=warn)
+        command = Command(cmd, log=log, warn=warn)
         assert repr(command) == f"Command({cmd})", repr(command)
         result = command.run()
         assert isinstance(result, subprocess.CompletedProcess)
