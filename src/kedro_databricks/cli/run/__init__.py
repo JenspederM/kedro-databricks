@@ -11,5 +11,5 @@ def run(metadata: ProjectMetadata, pipeline: str, *databricks_args):
     cmd = ["databricks", "bundle", "run", pipeline] + list(databricks_args)
     log.info(f"Running `{' '.join(cmd)}` in {metadata.project_path}")
     result = Command(cmd, log=log, warn=True).run(cwd=metadata.project_path)
-    if result.returncode != 0:
+    if result.returncode != 0:  # pragma: no cover
         raise RuntimeError("Failed to run Databricks job\n" + "\n".join(result.stdout))

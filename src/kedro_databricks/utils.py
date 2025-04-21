@@ -189,4 +189,6 @@ def _get_databricks_cli_version() -> list[int]:
 
 
 def _version_to_str(version: list[int]) -> str:
+    if len(version) != 3:  # noqa: PLR2004 - Semantic versioning requires 3 parts
+        raise ValueError(f"Invalid version: {version}")
     return ".".join(str(x) for x in version)

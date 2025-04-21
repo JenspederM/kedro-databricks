@@ -6,8 +6,10 @@ import subprocess
 
 import pytest
 
+from kedro_databricks.constants import MINIMUM_DATABRICKS_VERSION
 from kedro_databricks.utils import (
     Command,
+    _version_to_str,
     assert_databricks_cli,
     get_bundle_name,
     get_targets,
@@ -61,23 +63,41 @@ def test_get_targets_does_not_exist():
         get_targets({})
 
 
-# def test_fail_with_python_databricks_cli(monkeypatch):
-#     subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
-#     monkeypatch.setenv("DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION", "1")
-#     with pytest.raises(
-#         RuntimeError,
-#         match=f"this script requires at least {'.'.join(map(str, MINIMUM_DATABRICKS_VERSION))}",
-#     ):
-#         assert_databricks_cli()
-#     subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
+@pytest.mark.parametrize(
+    ["version", "expected", "raises"],
+    [
+        ([1, 2, 3], "1.2.3", False),
+        ([1, 2], "1.2", True),
+        ([1], "1", True),
+        ([1, 2, 3, 4], "1.2.3.4", True),
+    ],
+)
+def test_version_to_str(version, expected, raises):
+    if raises is True:
+        with pytest.raises(ValueError):
+            _version_to_str(version)
+    else:
+        result = _version_to_str(version)
+        assert result == expected, f"Expected {expected}, but got {result}"
 
 
-# def test_fail_with_python_databricks_cli_soft(monkeypatch):
-#     subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
-#     monkeypatch.setenv("DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION", "1")
-#     err = assert_databricks_cli(False)
-#     assert err is not None
-#     subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
+def test_fail_with_python_databricks_cli(monkeypatch):
+    subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
+    monkeypatch.setenv("DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION", "1")
+    with pytest.raises(
+        RuntimeError,
+        match=f"this script requires at least {'.'.join(map(str, MINIMUM_DATABRICKS_VERSION))}",
+    ):
+        assert_databricks_cli()
+    subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
+
+
+def test_fail_with_python_databricks_cli_soft(monkeypatch):
+    subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
+    monkeypatch.setenv("DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION", "1")
+    err = assert_databricks_cli(False)
+    assert err is not None
+    subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
 
 
 OS = platform.uname().system.lower()
