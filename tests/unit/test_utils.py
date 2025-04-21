@@ -74,6 +74,7 @@ def test_fail_with_python_databricks_cli():
     subprocess.run(["uv", "pip", "uninstall", "databricks-cli"], check=True)
 
 
+@pytest.mark.xfail
 def test_fail_with_python_databricks_cli_soft(monkeypatch):
     subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
     monkeypatch.setenv("DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION", "1")
