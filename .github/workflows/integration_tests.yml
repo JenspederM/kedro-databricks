@@ -37,31 +37,7 @@ jobs:
       - name: Lint kedro-databricks
         run: uv run ruff check
       - name: Test kedro-databricks
-        run: uv run pytest tests --ignore-glob="**test_databricks_iris.py"
-        env:
-          CUSTOM_USERNAME: "github"
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-  test_databricks_iris:
-    name: Test databricks-iris starter
-    if: ${{ !startsWith(github.event.head_commit.message, 'bump:') && github.repository_owner_id == github.actor_id }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: databricks/setup-cli@main
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-      - name: Sync kedro-databricks
-        run: uv sync --all-groups
-      - name: Lint kedro-databricks
-        run: uv run ruff check
-      - name: Test kedro-databricks
-        run: uv run pytest tests/integration/test_databricks_iris.py
+        run: uv run pytest tests
         env:
           CUSTOM_USERNAME: "github"
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
