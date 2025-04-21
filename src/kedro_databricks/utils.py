@@ -9,6 +9,9 @@ from pathlib import Path
 import yaml
 
 from kedro_databricks.constants import KEDRO_VERSION, MINIMUM_DATABRICKS_VERSION
+from kedro_databricks.logger import get_logger
+
+log = get_logger("utils")
 
 
 class Command:
@@ -179,12 +182,9 @@ def _check_version(raise_error: bool = True):
 
 
 def _get_databricks_cli_version() -> list[int]:
-    result = subprocess.run(
-        ["databricks", "--version"], check=True, capture_output=True
-    )
-    version_str = re.sub(
-        r".*(\d+\.\d+\.\d+)", r"\1", result.stdout.decode("utf-8").strip()
-    )
+    result = Command(["databricks", "--version"], log, warn=True).run()
+    stdout = "\n".join(result.stdout).strip()
+    version_str = re.sub(r".*(\d+\.\d+\.\d+)", r"\1", stdout)
     return list(map(int, version_str.split(".")))
 
 
