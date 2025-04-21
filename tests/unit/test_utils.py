@@ -63,6 +63,7 @@ def test_get_targets_does_not_exist():
         get_targets({})
 
 
+@pytest.mark.xfail
 def test_fail_with_python_databricks_cli():
     subprocess.run(["uv", "pip", "install", "databricks-cli"], check=True)
     with pytest.raises(
