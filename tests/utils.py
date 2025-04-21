@@ -53,7 +53,7 @@ def _generate_task(
         "--nodes",
         task_key,
         "--conf-source",
-        "${workspace.file_path}/" + conf,  # type: ignore
+        "${workspace.file_path}/" + conf,
         "--env",
         "${var.environment}",
     ]

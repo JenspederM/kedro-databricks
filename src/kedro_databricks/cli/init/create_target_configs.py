@@ -52,7 +52,10 @@ class DatabricksTarget:
 
 
 def create_target_configs(
-    metadata: ProjectMetadata, node_type_id: str, default_key: str
+    metadata: ProjectMetadata,
+    node_type_id: str,
+    default_key: str,
+    single_user_default: bool = True,
 ):
     conf_dir = metadata.project_path / "conf"
     databricks_config = read_databricks_config(metadata.project_path)
@@ -63,10 +66,12 @@ def create_target_configs(
         target_conf_dir = conf_dir / target.name
         target_conf_dir.mkdir(exist_ok=True)
         _save_gitkeep_file(target_conf_dir)
+        if single_user_default is True:  # pragma: no cover
+            single_user = target.name == DEFAULT_TARGET
         target_config = _create_target_config(
             default_key,
             node_type_id,
-            single_user=target.name == DEFAULT_TARGET,
+            single_user=single_user,
         )
         _save_target_config(target_config, target_conf_dir)
         target_file_path = f"/Volumes/<your-volume-name>/{bundle_name}/{target_name}"
