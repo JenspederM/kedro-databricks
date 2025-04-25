@@ -1,3 +1,19 @@
+## 0.10.0 (2025-04-25)
+
+### Feat
+
+- adds run and destroy wrappers
+
+### Fix
+
+- get everything working again
+- make default deployment work for databricks-iris starter
+- databricks does not support spark config overrides at runtime
+
+### Refactor
+
+- switch from classes to functions
+
 ## 0.9.1 (2025-03-22)
 
 ### Fix
