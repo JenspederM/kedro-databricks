@@ -7,6 +7,7 @@ https://docs.pytest.org/en/latest/fixture.html
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -17,6 +18,10 @@ from kedro.framework.startup import bootstrap_project
 from pytest import fixture
 
 load_dotenv()
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 @fixture(scope="session")

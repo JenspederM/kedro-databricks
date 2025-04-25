@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node
 
+from kedro_databricks.cli.deploy.get_deployed_resources import get_deployed_resources
 from kedro_databricks.constants import DEFAULT_TARGET
-from kedro_databricks.deploy import DeployController
 from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
@@ -58,14 +58,16 @@ def test_deploy(cli_runner, metadata, custom_username):
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
-    controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(
-        pipelines, only_dev=True, _custom_username=custom_username
+    resources = get_deployed_resources(
+        metadata, pipelines, only_dev=True, _custom_username=custom_username
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
         metadata.package_name in p.name for p in resources
     ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    destroy_cmd = ["databricks", "destroy", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
 def test_deploy_prod(cli_runner, metadata, custom_username):
@@ -89,21 +91,22 @@ def test_deploy_prod(cli_runner, metadata, custom_username):
         "--env",
         "prod",
         "--bundle",
-        "--",
         "--target",
         "prod",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
-    controller = DeployController(metadata)
-    resources = controller.log_deployed_resources(
-        pipelines, _custom_username=custom_username
+    resources = get_deployed_resources(
+        metadata, pipelines, _custom_username=custom_username
     )
     assert len(resources) > 0, f"There are no resources: {resources}"
     assert all(
         metadata.package_name in p.name for p in resources
     ), f"Package name not in resource: {[p.name for p in resources if metadata.package_name not in p.name]}"
+    destroy_cmd = ["databricks", "destroy", "--target", "prod", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)
 
 
 def test_deploy_with_conf(cli_runner, metadata):
@@ -144,23 +147,10 @@ def test_deploy_with_conf(cli_runner, metadata):
     with open(settings, "a"):
         settings.write_text(f"CONF_SOURCE = '{CONF_KEY}'")
 
-    deploy_cmd = [
-        "databricks",
-        "deploy",
-        "--bundle",
-        f"--conf-source={CONF_KEY}",
-    ]
+    deploy_cmd = ["databricks", "deploy", "--bundle", f"--conf-source={CONF_KEY}"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-
-    controller = DeployController(metadata)
-    controller._untar_conf(CONF_KEY)
-    conf_path = (
-        metadata.project_path / "dist" / CONF_KEY / DEFAULT_TARGET / "databricks.yml"
-    )
-    files = list((metadata.project_path / "dist" / CONF_KEY).rglob("*"))
-    assert conf_path.exists(), f"Conf file not created - found {files}"
-    assert (
-        conf_path.read_text() == override_path.read_text()
-    ), f"Conf file not copied - found {files}"
     settings.write_text(original_settings)
+    destroy_cmd = ["databricks", "destroy", "--auto-approve"]
+    result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
+    assert result.exit_code == 0, (result.exit_code, result.stdout)

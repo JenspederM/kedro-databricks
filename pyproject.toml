@@ -20,6 +20,13 @@ dev = [
     "ruff>=0.7.2",
     "commitizen>=3.30.0",
 ]
+test = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro-datasets[spark, pandas, spark.SparkDataset, pandas.ParquetDataset]>=3.0",
+    "numpy~=1.21",
+]
 
 [project.urls]
 Homepage = "https://github.com/jenspederm/kedro-databricks"
@@ -39,17 +46,18 @@ allow-direct-references = true
 packages = ["src/kedro_databricks"]
 
 [tool.pytest.ini_options]
-addopts = """
-    --log-format="%(asctime)s %(levelname)s %(message)s"
-    --log-date-format="%Y-%m-%d %H:%M:%S"
-    --cov-report=xml:coverage.xml
-    --cov-report=term-missing
-    --cov=kedro_databricks
-    --no-cov-on-fail
-    --cov-fail-under=70
-    --ignore-glob="develop-eggs/*"
-    -ra
-    -vv"""
+addopts = [
+    '--log-format="%(asctime)s %(levelname)s %(message)s"',
+    '--log-date-format="%Y-%m-%d %H:%M:%S"',
+    '--cov-report=xml:coverage.xml',
+    '--cov-report=term-missing',
+    '--cov=kedro_databricks',
+    '--no-cov-on-fail',
+    '--cov-fail-under=70',
+    '--ignore-glob="develop-eggs/*"',
+    '-ra',
+    '-vv',
+]
 
 
 [tool.black]

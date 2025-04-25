@@ -3,6 +3,12 @@
 bundle:
   name: {{ .project_slug }}
 
+variables:
+  environment:
+    description: The environment to deploy to.
+    type: string
+    default: dev
+
 artifacts:
   default:
     type: whl
@@ -14,8 +20,6 @@ sync:
     - conf/logging.yml
     - conf/base/*.yml
     - conf/base/*.gitkeep
-    - data/**/*.csv
-    - data/**/*.gitkeep
   exclude:
     - conf/local/**/*
 
@@ -32,6 +36,7 @@ targets:
     sync:
       include:
         - conf/dev/*.yml
+        - conf/dev/**/*.yml
         - conf/dev/*.gitkeep
     # We use 'mode: development' to make sure everything deployed to this target gets a prefix
     # like '[dev my_user_name]'. Setting this mode also disables any schedules and
@@ -40,12 +45,15 @@ targets:
     default: true
     workspace:
       host: {{workspace_host}}
+    variables:
+      environment: dev
 
   # The 'prod' target, used for production deployment.
   prod:
     sync:
       include:
         - conf/prod/*.yml
+        - conf/prod/**/*.yml
         - conf/prod/*.gitkeep
     # For production deployments, we only have a single copy, so we override the
     # workspace.root_path default of
@@ -58,6 +66,8 @@ targets:
     workspace:
       host: {{workspace_host}}
       root_path: /Shared/.bundle/prod/${bundle.name}
+    variables:
+      environment: prod
     {{- if not is_service_principal}}
     run_as:
       # This runs as {{user_name}} in production. Alternatively,

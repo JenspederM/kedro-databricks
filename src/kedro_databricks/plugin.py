@@ -1,26 +1,19 @@
 from __future__ import annotations
 
-import logging
-import shutil
-
 import click
 from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.bundle import BundleController
+from kedro_databricks import cli
 from kedro_databricks.constants import (
     DEFAULT_CONF_FOLDER,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
     DEFAULT_PROVIDER,
     DEFAULT_TARGET,
-    NODE_TYPE_MAP,
     PROVIDER_PROMPT,
 )
-from kedro_databricks.deploy import DeployController
-from kedro_databricks.init import InitController
-from kedro_databricks.utils.bundle_helpers import require_databricks_run_script
 
 
 @click.group(name="Kedro-Databricks")
@@ -51,21 +44,7 @@ def init(
 
     `databricks_args` are additional arguments to be passed to the `databricks` CLI.
     """
-    node_type_id = NODE_TYPE_MAP.get(provider)
-    if node_type_id is None:
-        raise ValueError(f"Invalid provider: {provider}")
-    controller = InitController(metadata)
-    controller.bundle_init(list(databricks_args))
-    controller.create_override_configs(
-        node_type_id=node_type_id, default_key=default_key
-    )
-    controller.update_gitignore()
-    if require_databricks_run_script():  # pragma: no cover
-        log = logging.getLogger(metadata.package_name)
-        log.warning(
-            "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "
-        )
-        controller.write_databricks_run_script()
+    cli.init(metadata, provider, default_key, *databricks_args)
 
 
 @databricks_commands.command()
@@ -99,16 +78,15 @@ def bundle(
     overwrite: bool,
 ):
     """Convert kedro pipelines into Databricks asset bundle resources"""
-    if default_key.startswith("_"):  # pragma: no cover
-        raise ValueError(
-            "Default key cannot start with `_` as this is not recognized by OmegaConf."
-        )
-
-    MSG = "Create Asset Bundle Resources"
-    controller = BundleController(metadata, env, conf_source, params)
-    resources = controller.generate_resources(pipeline, MSG)
-    bundle_resources = controller.apply_overrides(resources, default_key)
-    controller.save_bundled_resources(bundle_resources, overwrite)
+    cli.bundle(
+        metadata=metadata,
+        env=env,
+        conf_source=conf_source,
+        pipeline_name=pipeline,
+        default_key=default_key,
+        params=params,
+        overwrite=overwrite,
+    )
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
@@ -142,17 +120,44 @@ def deploy(
 
     `databricks_args` are additional arguments to be passed to the `databricks` CLI.
     """
-    if shutil.which("databricks") is None:  # pragma: no cover
-        raise Exception("databricks CLI is not installed")
-    controller = DeployController(metadata, env)
-    controller.go_to_project()
-    controller.validate_databricks_config()
-    controller.build_project()
-    if bundle is True:
-        bundle_controller = BundleController(metadata, env, conf_source, runtime_params)
-        workflows = bundle_controller.generate_resources(pipeline)
-        bundle_resources = bundle_controller.apply_overrides(
-            workflows, DEFAULT_CONFIG_KEY
+    if bundle:
+        cli.bundle(
+            metadata=metadata,
+            env=env,
+            pipeline_name=pipeline,
+            conf_source=conf_source,
+            default_key=DEFAULT_CONFIG_KEY,
+            params=runtime_params,
+            overwrite=True,
         )
-        bundle_controller.save_bundled_resources(bundle_resources, overwrite=True)
-    controller.deploy_project(list(databricks_args))
+    cli.deploy(metadata, env, *databricks_args)
+
+
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("pipeline")
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
+@click.pass_obj
+def run(metadata: ProjectMetadata, pipeline, databricks_args: list[str]):
+    """Run the project on Databricks
+
+    This is a wrapper for the `databricks bundle run` command.
+    To see available options, run `databricks bundle run --help`.
+
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
+    cli.run(metadata, pipeline, *databricks_args)
+
+
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
+@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
+@click.pass_obj
+def destroy(metadata: ProjectMetadata, env, databricks_args: list[str]):
+    """Destroy the Databricks asset bundle
+
+    This is a wrapper for the `databricks bundle destroy` command.
+    To see available options, run `databricks bundle destroy --help`.
+
+    `databricks_args` are additional arguments to be passed to the `databricks` CLI.
+    """
+    cli.destroy(metadata, env, *databricks_args)

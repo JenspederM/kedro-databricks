@@ -2,6 +2,9 @@ import copy
 from typing import Any
 
 from kedro_databricks.constants import IGNORED_OVERRIDE_KEYS, OVERRIDE_KEY_MAP
+from kedro_databricks.logger import get_logger
+
+log = get_logger("bundle").getChild(__name__)
 
 
 def override_resources(bundle: dict, overrides: dict, default_key):

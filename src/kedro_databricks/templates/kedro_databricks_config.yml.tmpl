@@ -4,15 +4,15 @@
 # documentation at https://docs.databricks.com/api/workspace/jobs/create
 
 {default_key}:
-    job_clusters:
-        - job_cluster_key: {default_key}
-          new_cluster:
-              spark_version: 15.4.x-scala2.12
-              node_type_id: {node_type_id}
-              num_workers: 1
-              data_security_mode: USER_ISOLATION
-              spark_env_vars:
-                  KEDRO_LOGGING_CONFIG: /Workspace/\${{workspace.file_path}}/conf/logging.yml
-    tasks:
-        - task_key: {default_key}
-          job_cluster_key: {default_key}
+  job_clusters:
+    - job_cluster_key: {default_key}
+      new_cluster:
+        data_security_mode: USER_ISOLATION
+        node_type_id: Standard_DS3_v2
+        num_workers: 1
+        spark_env_vars:
+          KEDRO_LOGGING_CONFIG: \${workspace.file_path}/conf/logging.yml
+        spark_version: 15.4.x-scala2.12
+  tasks:
+    - job_cluster_key: default
+      task_key: default

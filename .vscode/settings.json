@@ -1,19 +1,17 @@
 {
   // Editor settings
   "editor.formatOnSave": true,
-  "editor.tabSize": 2,
-  "editor.rulers": [
-    88
-  ],
+  "editor.tabSize": 4,
+  "editor.rulers": [88],
   "search.exclude": {
     "**/.git": true,
     "**/.cache": true,
     "**/.venv": true
   },
-  "git.openRepositoryInParentFolders": "always", // Open the repository in the parent folder
   "files.eol": "\n", // Use LF line endings
-  "files.autoSave": "onFocusChange", // Automatically save files when focus changes
-  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.enable": {
+    "inlineSuggest": true // Enable inline suggestions
+  },
   // Ruff Settings
   "ruff.lineLength": 88,
   "ruff.organizeImports": true,
@@ -26,7 +24,7 @@
     }
   },
   // Python settings
-  "python.languageServer": "Pylance", // Use Pylance as the language server        
+  "python.languageServer": "Pylance", // Use Pylance as the language server
   "python.testing.pytestEnabled": true,
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.languageServerMode": "full", // Use the full language server mode
