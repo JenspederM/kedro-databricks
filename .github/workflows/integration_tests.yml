@@ -5,10 +5,6 @@ on:
     paths:
       - ".github/workflows/integration_tests.yml"
       - "tests/integration/**"
-  push:
-    paths:
-      - ".github/workflows/integration_tests.yml"
-      - "tests/integration/**"
   workflow_call:
     secrets:
       DATABRICKS_HOST:
