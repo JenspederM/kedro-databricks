@@ -11,7 +11,7 @@
         node_type_id: Standard_DS3_v2
         num_workers: 1
         spark_env_vars:
-          KEDRO_LOGGING_CONFIG: \${workspace.file_path}/conf/logging.yml
+          KEDRO_LOGGING_CONFIG: /Workspace/\${workspace.file_path}/conf/logging.yml
         spark_version: 15.4.x-scala2.12
   tasks:
     - job_cluster_key: default
