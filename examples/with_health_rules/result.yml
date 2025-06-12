@@ -27,7 +27,7 @@ resources:
               - --nodes
               - make_predictions
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           libraries:
@@ -44,7 +44,7 @@ resources:
               - --nodes
               - report_accuracy
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           libraries:
@@ -58,7 +58,7 @@ resources:
               - --nodes
               - split
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           libraries:
