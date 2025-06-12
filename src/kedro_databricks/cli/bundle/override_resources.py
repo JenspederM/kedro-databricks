@@ -141,7 +141,7 @@ def _override_workflow(
     Returns:
         Dict: the Databricks workflow with the overrides applied
     """
-    result = {**workflow}
+    result = copy.deepcopy(workflow)
 
     for key, value in workflow_overrides.items():
         old_value = _get_old_value(result, key, value)
@@ -159,10 +159,14 @@ def _override_workflow(
                     result[key] = _update_list_by_key(
                         old=old_value,
                         new=value,
-                        lookup_key=_get_lookup_key(key),
+                        lookup_key=lookup_key,
                         default=task_overrides if key == "tasks" else {},
                         default_key=default_key,
                     )
+            elif key == "parameters":
+                # Special case for parameters, which can be a list of strings
+                log.debug(f"Overriding parameters for key {key} with value {value}")
+                result[key] = old_value + value
             else:
                 result[key] = value
         else:
