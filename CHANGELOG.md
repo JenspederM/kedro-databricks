@@ -1,3 +1,9 @@
+## 0.10.1 (2025-06-12)
+
+### Fix
+
+- ${workspace.file_path} is not resolved correctly regardless of what Databricks says
+
 ## 0.10.0 (2025-04-25)
 
 ### Feat
