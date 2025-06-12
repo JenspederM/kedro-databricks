@@ -88,16 +88,14 @@ def _create_target_config(
         "node_type_id": node_type_id,
         "num_workers": 2,
         "spark_env_vars": {
-            "KEDRO_LOGGING_CONFIG": "\\${workspace.file_path}/conf/logging.yml"
+            "KEDRO_LOGGING_CONFIG": "/Workspace/\\${workspace.file_path}/conf/logging.yml"
         },
     }
 
     if single_user:
         wc = WorkspaceClient()
         single_user_opts = {
-            "kind": "CLASSIC_PREVIEW",
             "data_security_mode": "SINGLE_USER",
-            "is_single_node": "true",
             "single_user_name": wc.current_user.me().user_name,
         }
         new_cluster.update(single_user_opts)

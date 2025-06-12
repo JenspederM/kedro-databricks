@@ -62,7 +62,7 @@ resources:
             notebook_path: /Users/username/notebooks/make_predictions
             base_parameters:
               nodes: make_predictions
-              conf-source: ${workspace.file_path}/conf
+              conf-source: /Workspace/${workspace.file_path}/conf
               env: local
             source: WORKSPACE
             warehouse_id: ab12cd34efgh567i
@@ -72,7 +72,7 @@ resources:
               - --nodes
               - make_predictions
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           spark_python_task:
@@ -81,7 +81,7 @@ resources:
               - --nodes
               - make_predictions
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
             source: GIT
@@ -154,7 +154,7 @@ resources:
                 notebook_path: /Users/username/notebooks/make_predictions
                 base_parameters:
                   nodes: make_predictions
-                  conf-source: ${workspace.file_path}/conf
+                  conf-source: /Workspace/${workspace.file_path}/conf
                   env: local
                 source: WORKSPACE
                 warehouse_id: ab12cd34efgh567i
@@ -217,7 +217,7 @@ resources:
               - --nodes
               - report_accuracy
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           libraries:
@@ -231,7 +231,7 @@ resources:
               - --nodes
               - split
               - --conf-source
-              - ${workspace.file_path}/conf
+              - /Workspace/${workspace.file_path}/conf
               - --env
               - local
           libraries:
