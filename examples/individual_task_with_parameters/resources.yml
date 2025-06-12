@@ -1,0 +1,49 @@
+resources:
+  jobs:
+    develop_eggs:
+      name: develop_eggs
+      tasks:
+        - task_key: make_predictions
+          depends_on:
+            - task_key: split
+          python_wheel_task:
+            package_name: develop_eggs
+            entry_point: develop-eggs
+            parameters:
+              - --nodes
+              - make_predictions
+              - --conf-source
+              - /Workspace/${workspace.file_path}/conf
+              - --env
+              - local
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: report_accuracy
+          depends_on:
+            - task_key: make_predictions
+            - task_key: split
+          python_wheel_task:
+            package_name: develop_eggs
+            entry_point: develop-eggs
+            parameters:
+              - --nodes
+              - report_accuracy
+              - --conf-source
+              - /Workspace/${workspace.file_path}/conf
+              - --env
+              - local
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: split
+          python_wheel_task:
+            package_name: develop_eggs
+            entry_point: develop-eggs
+            parameters:
+              - --nodes
+              - split
+              - --conf-source
+              - /Workspace/${workspace.file_path}/conf
+              - --env
+              - local
+          libraries:
+            - whl: ../dist/*.whl

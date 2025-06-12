@@ -141,7 +141,7 @@ def _override_workflow(
     Returns:
         Dict: the Databricks workflow with the overrides applied
     """
-    result = copy.deepcopy(workflow)
+    result = {**workflow}
 
     for key, value in workflow_overrides.items():
         old_value = _get_old_value(result, key, value)
