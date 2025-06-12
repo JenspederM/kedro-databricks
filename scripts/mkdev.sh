@@ -21,7 +21,7 @@ if test -d "$CUR_PATH/$1"; then
 fi
 
 # Build package
-rye build
+uv build
 
 # Create a new project
 kedro new --starter="databricks-iris" --name="$1"
