@@ -1,3 +1,9 @@
+## 0.11.0 (2025-06-13)
+
+### Feat
+
+- extend parameters instead of overriding
+
 ## 0.10.1 (2025-06-12)
 
 ### Fix
