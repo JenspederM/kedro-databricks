@@ -7,7 +7,7 @@ from kedro_databricks.logger import get_logger
 log = get_logger("bundle").getChild(__name__)
 
 
-def override_resources(bundle: dict, overrides: dict, default_key):
+def override_resources(bundle: dict, overrides: dict, default_key) -> dict[str, Any]:
     """Override the resources in a Databricks bundle.
 
     Args:
@@ -15,7 +15,7 @@ def override_resources(bundle: dict, overrides: dict, default_key):
         overrides (Dict): the overrides to apply
 
     Returns:
-        Dict: the Databricks bundle with the overrides applied
+        Dict[str, Any]: the Databricks bundle with the overrides applied
     """
     result = {"resources": {"jobs": {}}}
     for name, workflow in bundle.get("resources", {}).get("jobs", {}).items():

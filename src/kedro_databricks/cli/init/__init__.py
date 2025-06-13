@@ -18,7 +18,12 @@ from kedro_databricks.utils import (
 log = get_logger("init")
 
 
-def init(metadata: ProjectMetadata, provider: str, default_key: str, *databricks_args):
+def init(
+    metadata: ProjectMetadata,
+    provider: str,
+    default_key: str,
+    *databricks_args: list[str],
+):
     """Initialize a Databricks Asset Bundle.
 
     This function creates a Databricks Asset Bundle in the current project

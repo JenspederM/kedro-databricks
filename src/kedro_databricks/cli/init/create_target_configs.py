@@ -19,6 +19,29 @@ log = get_logger("init")
 
 
 class DatabricksTarget:
+    """Represents a Databricks target for a Kedro project.
+
+    This class is used to create a target configuration for a Databricks Asset Bundle.
+    It retrieves metadata about the target from the Databricks CLI and stores
+    relevant information such as the bundle name, target name, mode, host, and file path.
+
+    Attributes:
+        bundle (str): The name of the Databricks bundle.
+        name (str): The name of the target.
+        mode (str): The mode of the target (e.g., "development").
+        host (str): The host of the Databricks workspace.
+        file_path (str): The file path in the Databricks workspace.
+
+    Args:
+        bundle (str): The name of the Databricks bundle.
+        name (str): The name of the target.
+        conf (dict): The configuration dictionary for the target, which may include
+            mode and workspace information.
+
+    Raises:
+        ValueError: If the metadata for the target cannot be retrieved.
+    """
+
     def __init__(self, bundle: str, name: str, conf: dict):
         self.bundle = bundle
         self.name = name
@@ -57,6 +80,27 @@ def create_target_configs(
     default_key: str,
     single_user_default: bool = True,
 ):
+    """Create target configurations for a Kedro project in Databricks.
+
+    This function creates target configurations for each target defined in the
+    Databricks configuration file. It sets up the necessary directories and files
+    for each target, including a `.gitkeep` file to ensure the directory is tracked
+    by Git. It also creates a target configuration file with the specified node type
+    and default key. If the target is the default target, it sets up a specific file path
+    for it in the Databricks File System (DBFS).
+
+
+    Args:
+        metadata (ProjectMetadata): The project metadata containing the project path.
+        node_type_id (str): The node type ID for the target configuration.
+        default_key (str): The default key to use for the target configuration.
+        single_user_default (bool, optional): Whether to set the target as single user by default.
+            Defaults to True.
+
+    Raises:
+        FileNotFoundError: If the Databricks configuration file does not exist.
+        ValueError: If the Databricks configuration is invalid or missing required fields.
+    """
     conf_dir = metadata.project_path / "conf"
     databricks_config = read_databricks_config(metadata.project_path)
     bundle_name = get_bundle_name(databricks_config)
