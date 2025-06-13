@@ -10,7 +10,7 @@ watch:
 theme:
   name: material
   features:
-    - navigation.tabs
+    - navigation.sections
     - content.tabs.link
 markdown_extensions:
   - pymdownx.superfences
@@ -19,16 +19,16 @@ markdown_extensions:
   - mkdocs-click
   - toc
 plugins:
-  - search
   - gen-files:
       scripts:
-        - scripts/gen_ref_pages.py
         - scripts/gen_example_pages.py
+        - scripts/gen_ref_pages.py
   - mkdocstrings:
       handlers:
         python:
           options:
+            show_root_heading: false
             docstring_options:
-              ignore_init_summary: false
+              ignore_init_summary: true
               trim_doctest_flags: true
             merge_init_into_class: true

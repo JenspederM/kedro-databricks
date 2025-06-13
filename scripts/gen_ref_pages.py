@@ -1,5 +1,3 @@
-"""Generate the code reference pages."""
-
 from pathlib import Path
 
 import mkdocs_gen_files
@@ -14,16 +12,24 @@ for path in sorted([f for f in src.rglob("*.py") if f.name != "databricks_run.py
 
     parts = tuple(module_path.parts)
 
-    if parts[-1] == "__init__":
+    if module_path.name in ["utils"]:
+        continue
+
+    if module_path.name == "__init__":
         try:
-            if Path(*parts[:-1]).stat().st_size == 0:
+            size = path.read_bytes()
+            if not size:
                 continue
         except Exception:
-            # If the __init__.py file does not exist or is empty, skip it
-            continue
+            pass
 
         parts = parts[:-1]
     elif parts[-1] == "__main__":
+        continue
+
+    identifier = ".".join(parts)
+
+    if identifier in ["kedro_databricks", "kedro_databricks.cli"]:
         continue
 
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:

@@ -10,9 +10,16 @@ log = get_logger("bundle").getChild(__name__)
 def override_resources(bundle: dict, overrides: dict, default_key) -> dict[str, Any]:
     """Override the resources in a Databricks bundle.
 
+    This function applies the given overrides to the resources in a Databricks bundle.
+
     Args:
         bundle (Dict): the Databricks bundle
         overrides (Dict): the overrides to apply
+        default_key (str): the default key to use for overrides
+
+    Raises:
+        ValueError: if the workflow or overrides are not dictionaries
+        ValueError: if the key in overrides is not found in OVERRIDE_KEY_MAP
 
     Returns:
         Dict[str, Any]: the Databricks bundle with the overrides applied

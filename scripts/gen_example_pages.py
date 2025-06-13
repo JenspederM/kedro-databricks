@@ -10,7 +10,6 @@ examples_dir = root / "examples"
 def gen():
     """Generate the code reference pages."""
     for p in sorted(examples_dir.iterdir()):
-        mkdocs_gen_files.log.info(f"Processing example: {p.name}")
         example_name = p.name
         if not p.is_dir() or example_name.startswith("."):
             continue

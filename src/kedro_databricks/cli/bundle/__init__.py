@@ -23,6 +23,21 @@ def bundle(
     pipeline_name: str | None = None,
     overwrite: bool = False,
 ):
+    """Convert Kedro pipelines into Databricks asset bundle resources.
+
+    This function generates asset bundle resources for the specified Kedro pipeline
+    and saves them in the `resources` directory. To validate the generated resources,
+    you can run the `databricks bundle validate` command.
+
+    Args:
+        metadata (ProjectMetadata): The metadata of the project.
+        env (str): The environment for the Kedro project (e.g., "dev", "prod").
+        default_key (str): The default configuration key to use for Databricks.
+        conf_source (str): The source of the Kedro configuration files (default: "conf").
+        params (str | None): Kedro run time parameters in `key1=value1,key2=value2` format (optional).
+        pipeline_name (str | None): The pipeline to bundle (optional).
+        overwrite (bool): Whether to overwrite existing resources (default: False).
+    """
     if default_key.startswith("_"):  # pragma: no cover
         raise ValueError(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
