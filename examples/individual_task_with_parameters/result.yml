@@ -32,8 +32,8 @@ resources:
               - /Workspace/${workspace.file_path}/conf
               - --env
               - local
-              - --load-version
-              - "2025-06-12"
+              - --load-versions
+              - "dataset:2025-06-12"
           libraries:
             - whl: ../dist/*.whl
         - task_key: report_accuracy
