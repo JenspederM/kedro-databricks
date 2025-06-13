@@ -97,6 +97,12 @@ resources:
             package_name: my_package
             entry_point: my-entrypoint
             parameters:
+              - --nodes
+              - make_predictions
+              - --conf-source
+              - /Workspace/${workspace.file_path}/conf
+              - --env
+              - local
               - other-param
             named_parameters:
               param1: value1
