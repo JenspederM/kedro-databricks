@@ -6,6 +6,7 @@ watch:
   - docs
   - src
   - examples
+  - scripts
 theme:
   name: material
   features:
@@ -22,6 +23,7 @@ plugins:
   - gen-files:
       scripts:
         - scripts/gen_ref_pages.py
+        - scripts/gen_example_pages.py
   - mkdocstrings:
       handlers:
         python:
