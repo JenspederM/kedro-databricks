@@ -17,5 +17,5 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         logging.Logger: The logger instance.
     """
-    ROOT_LOGGER = logging.getLogger("kedro").getChild("databricks")
+    ROOT_LOGGER = logging.getLogger("kedro-databricks")
     return ROOT_LOGGER.getChild(name)
