@@ -9,6 +9,12 @@ watch:
   - scripts
 theme:
   name: material
+  logo: assets/kedro-databricks-logo.png
+  palette:
+    scheme: blue grey
+    primary: indigo
+    accent: indigo
+
   features:
     - navigation.sections
     - content.tabs.link

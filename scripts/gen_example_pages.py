@@ -14,10 +14,14 @@ def gen():
         if not p.is_dir() or example_name.startswith("."):
             continue
 
+        description = ""
+        if (p / "README.md").exists():
+            description = (p / "README.md").read_text().strip()
+
         parts = [
             f"# {example_name.title().replace('_', ' ')}",
             "",
-            "This page contains the Databricks configuration and resources for the example.",
+            description,
             "",
             '=== "conf/[env]/databricks.yml"',
             "    ```yaml",

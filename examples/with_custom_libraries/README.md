@@ -1,0 +1,1 @@
+In this example, we demonstrate how to use custom libraries in Kedro Databricks. This feature allows you to specify additional libraries that should be installed in the Databricks environment when running your Kedro project. This is useful for ensuring that all necessary dependencies are available for your workflows.

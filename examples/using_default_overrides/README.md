@@ -1,0 +1,1 @@
+In this example, we demonstrate how to use default overrides in Kedro Databricks. Default overrides allow you to specify default configurations for your tasks and clusters, which can be applied across multiple workflows or tasks without needing to redefine them each time.

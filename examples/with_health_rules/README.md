@@ -1,0 +1,1 @@
+In this example, we demonstrate how to use health rules in Kedro Databricks. Health rules allow you to define conditions that must be met for a job to be considered healthy. If a job fails to meet these conditions, it can trigger alerts or notifications.

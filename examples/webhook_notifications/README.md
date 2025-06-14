@@ -1,0 +1,1 @@
+In this example, we demonstrate how to use webhook notifications in Kedro Databricks. This feature allows you to send notifications to a specified URL when a job starts or completes, which can be useful for monitoring and alerting purposes.
