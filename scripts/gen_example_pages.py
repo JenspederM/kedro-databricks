@@ -30,49 +30,49 @@ def _load_example(p: Path) -> list[str]:
     databricks_config = _parse_file(p / "databricks.yml")
     resources_config = _parse_file(p / "resources.yml")
     result_config = _parse_file(p / "result.yml")
-    result_diff = _add_diff(resources_config, result_config)
-
-    parts = [
-        f"# {example_name.title().replace('_', ' ')}",
-        "",
-        description,
-        "",
-        '=== "conf/[env]/databricks.yml"',
-        "    ```yaml",
-        *_add_padding(databricks_config, leftpad=4),
-        "    ```",
-        "",
-        '=== "Before: resources/<pipeline>.yml"',
-        "    ```yaml",
-        *_add_padding(resources_config, leftpad=4),
-        "    ```",
-        "",
-        '=== "After: resources/<pipeline>.yml"',
-        "    ```diff",
-        *_add_padding(result_diff, leftpad=4),
-        "    ```",
-    ]
+    result_highlight = _get_hl_lines(resources_config, result_config)
+    parts = []
+    parts.append(f"## {example_name.title().replace('_', ' ')}")
+    parts.append("")
+    parts.append(description)
+    parts.append("")
+    parts.append('=== "conf/[env]/databricks.yml"')
+    parts.append("    ```yaml")
+    parts.extend(_add_padding(databricks_config, leftpad=4))
+    parts.append("    ```")
+    parts.append("")
+    parts.append('=== "Before: resources/<pipeline>.yml"')
+    parts.append("    ```yaml")
+    parts.extend(_add_padding(resources_config, leftpad=4))
+    parts.append("    ```")
+    parts.append("")
+    parts.append('=== "After: resources/<pipeline>.yml"')
+    parts.append(f'    ```yaml hl_lines="{result_highlight}"')
+    parts.extend(_add_padding(result_config, leftpad=4))
+    parts.append("    ```")
     return parts
 
 
-def _add_diff(old, new):
+def _get_hl_lines(old, new):
+    old = old.copy()
+    new = new.copy()
     i, j = 0, 0
-    diffed = []
+    hl_lines = []
     while j < len(new):
         i = min(i, len(old) - 1)
         if old[i] != new[j]:
-            diffed.append("+" + new[j][1:])
+            # +1 for 1-based indexing in markdown hl_lines
+            hl_lines.append(j + 1)
             j += 1
         elif old[i] == new[j]:
-            diffed.append(new[j])
             i += 1
             j += 1
         else:
             raise ValueError("Unexpected case in diffing")
-    return diffed
+    return " ".join(str(x) for x in hl_lines)
 
 
-def _parse_file(file_path: Path, leftpad: int = 4) -> list[str]:
+def _parse_file(file_path: Path) -> list[str]:
     """Parse a file and return its content."""
     return [line for line in file_path.read_text().strip().splitlines()]
 
