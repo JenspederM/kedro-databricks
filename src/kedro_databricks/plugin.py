@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import cast
-
 import click
 from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
 from kedro.framework.cli.utils import ENV_HELP
@@ -64,7 +62,7 @@ def init(
         provider: The provider for the Databricks Asset Bundle (e.g., "aws", "azure").
         databricks_args: Additional arguments to pass to the `databricks` CLI.
     """
-    cli.init(metadata, provider, default_key, *cast(list, databricks_args))
+    cli.init(metadata, provider, default_key, *databricks_args)
 
 
 @databricks_commands.command()
@@ -175,7 +173,7 @@ def deploy(
             params=runtime_params,
             overwrite=True,
         )
-    cli.deploy(metadata, env, *cast(list, databricks_args))
+    cli.deploy(metadata, env, *databricks_args)
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))

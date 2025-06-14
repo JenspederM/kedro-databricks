@@ -13,7 +13,7 @@ from kedro_databricks.utils import Command, assert_databricks_cli
 log = get_logger("deploy")
 
 
-def deploy(metadata: ProjectMetadata, env: str, *databricks_args: list[str]):
+def deploy(metadata: ProjectMetadata, env: str, *databricks_args: str):
     """Deploy the Databricks Asset Bundle.
 
     This function deploys the Databricks Asset Bundle in the current project

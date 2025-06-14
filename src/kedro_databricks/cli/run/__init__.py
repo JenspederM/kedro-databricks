@@ -6,7 +6,7 @@ from kedro_databricks.utils import Command, assert_databricks_cli
 log = get_logger("run")
 
 
-def run(metadata: ProjectMetadata, pipeline: str, *databricks_args: list[str]):
+def run(metadata: ProjectMetadata, pipeline: str, *databricks_args: str):
     """Run a Databricks job using the specified pipeline.
 
     This function runs a Databricks job using the specified pipeline and additional

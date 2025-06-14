@@ -6,7 +6,7 @@ from kedro_databricks.utils import Command, assert_databricks_cli
 log = get_logger("destroy")
 
 
-def destroy(metadata: ProjectMetadata, env: str, *databricks_args: list[str]):
+def destroy(metadata: ProjectMetadata, env: str, *databricks_args: str):
     """Destroy the Databricks Asset Bundle.
 
     This function destroys the Databricks Asset Bundle in the current project

@@ -1,6 +1,4 @@
-"""# Bundle
-
-This module provides functionality to bundle Kedro pipelines into Databricks asset bundle resources."""
+"""This module provides functionality to bundle Kedro pipelines into Databricks asset bundle resources."""
 
 from __future__ import annotations
 

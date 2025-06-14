@@ -19,10 +19,7 @@ log = get_logger("init")
 
 
 def init(
-    metadata: ProjectMetadata,
-    provider: str,
-    default_key: str,
-    *databricks_args: list[str],
+    metadata: ProjectMetadata, provider: str, default_key: str, *databricks_args: str
 ):
     """Initialize a Databricks Asset Bundle.
 

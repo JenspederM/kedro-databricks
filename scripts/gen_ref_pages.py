@@ -7,33 +7,23 @@ src = root / "src"
 
 for path in sorted([f for f in src.rglob("*.py") if f.name != "databricks_run.py"]):
     module_path = path.relative_to(src).with_suffix("")
-    doc_path = path.relative_to(src).with_suffix(".md")
+    module_name = module_path.name
+    identifier = ".".join([part for part in module_path.parts if part != "__init__"])
+    docname = module_name if module_name != "__init__" else "index"
+    mkdocs_gen_files.log.info(
+        f"{module_path}: Generating reference page for {identifier} - {docname}"
+    )
+
+    doc_path = (module_path.parent / docname).with_suffix(".md")
     full_doc_path = Path("reference", doc_path)
 
-    parts = tuple(module_path.parts)
-
-    if module_path.name in ["utils"]:
+    if module_path.name == "__main__":
         continue
-
-    if module_path.name == "__init__":
-        try:
-            size = path.read_bytes()
-            if not size:
-                continue
-        except Exception:
-            pass
-
-        parts = parts[:-1]
-    elif parts[-1] == "__main__":
-        continue
-
-    identifier = ".".join(parts)
 
     if identifier in ["kedro_databricks", "kedro_databricks.cli"]:
         continue
 
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
-        identifier = ".".join(parts)
         print("::: " + identifier, file=fd)
 
     mkdocs_gen_files.set_edit_path(full_doc_path, path.relative_to(root))
