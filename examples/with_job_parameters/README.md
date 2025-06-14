@@ -1,0 +1,1 @@
+In this example, we demonstrate how to set job-level parameters in Kedro Databricks. Job-level parameters allow you to define parameters that can be used across all tasks in a job, providing a way to configure the job's behavior without modifying individual task definitions.

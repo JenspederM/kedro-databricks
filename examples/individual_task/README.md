@@ -1,0 +1,1 @@
+In this example, we tell `kedro-databricks` that we want to create two job clusters for the workflow: `default` and `high-performance`. We also specify that all tasks, except for the `high_performance_task`, should run on the `default` cluster. The `high_performance_task` will run on the `high-performance` cluster.

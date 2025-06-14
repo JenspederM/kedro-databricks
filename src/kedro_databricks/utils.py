@@ -15,6 +15,23 @@ log = get_logger("utils")
 
 
 class Command:
+    """A class to run shell commands and handle their output.
+
+    This class provides a way to run shell commands while capturing their output
+    and logging it. It can also handle errors by either raising an exception or
+    logging a warning, depending on the `warn` parameter.
+
+    Attributes:
+        command (list[str]): The command to run as a list of strings.
+        log (logging.Logger): The logger to use for logging output.
+        warn (bool): If True, log a warning instead of raising an exception on error.
+
+    Args:
+        command (list[str]): The command to run as a list of strings.
+        log (logging.Logger): The logger to use for logging output.
+        warn (bool): If True, log a warning instead of raising an exception on error.
+    """
+
     def __init__(self, command: list[str], log: logging.Logger, warn: bool = False):
         self.log = log.getChild("command")
         self.command = command

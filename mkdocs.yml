@@ -1,0 +1,65 @@
+site_name: Kedro Databricks
+site_url: https://github.com/JenspederM/kedro-databricks
+repo_name: JenspederM/kedro-databricks
+repo_url: https://github.com/JenspederM/kedro-databricks
+watch:
+  - docs
+  - src
+  - examples
+  - scripts
+extra_css:
+  - stylesheets/extra.css
+theme:
+  name: material
+  logo: assets/kedro-databricks-logo.png
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    # Palette toggle for automatic mode
+    # - media: "(prefers-color-scheme)"
+    #   toggle:
+    #     icon: material/brightness-auto
+    #     name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to system preference
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - mkdocs-click
+  - toc
+plugins:
+  - gen-files:
+      scripts:
+        - scripts/gen_example_pages.py
+        - scripts/gen_ref_pages.py
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: false
+            docstring_options:
+              ignore_init_summary: true
+              trim_doctest_flags: true
+            merge_init_into_class: true

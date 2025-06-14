@@ -45,10 +45,8 @@ class ResourceGenerator:
         for each according to the Databricks REST API
 
         Args:
-            env (str): The name of the kedro environment to be used by the workflow
             pipeline_name (str | None): The name of the pipeline for which Databricks asset bundle resources should be generated.
-            If None, generates all pipelines.
-            MSG (str): The message to display
+                If None, generates all pipelines.
 
         Returns:
             dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
