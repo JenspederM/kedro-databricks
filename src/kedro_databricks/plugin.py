@@ -182,7 +182,7 @@ def deploy(
 @click.argument("pipeline")
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
-def run(metadata: ProjectMetadata, pipeline, databricks_args: list[str]):
+def run(metadata: ProjectMetadata, pipeline: str, databricks_args: list[str]):
     """Run the project on Databricks
 
     This is a wrapper for the `databricks bundle run` command.
@@ -200,7 +200,7 @@ def run(metadata: ProjectMetadata, pipeline, databricks_args: list[str]):
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
-def destroy(metadata: ProjectMetadata, env, databricks_args: list[str]):
+def destroy(metadata: ProjectMetadata, env: str, databricks_args: list[str]):
     """Destroy the Databricks asset bundle
 
     This is a wrapper for the `databricks bundle destroy` command.

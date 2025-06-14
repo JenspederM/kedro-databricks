@@ -18,6 +18,11 @@ def gen():
         if (p / "README.md").exists():
             description = (p / "README.md").read_text().strip()
 
+        databricks_config = _parse_file(p / "databricks.yml")
+        resources_config = _parse_file(p / "resources.yml")
+        result_config = _parse_file(p / "result.yml")
+        result_diff = _add_diff(resources_config, result_config)
+
         parts = [
             f"# {example_name.title().replace('_', ' ')}",
             "",
@@ -25,31 +30,50 @@ def gen():
             "",
             '=== "conf/[env]/databricks.yml"',
             "    ```yaml",
-            *[
-                "    " + line
-                for line in (p / "databricks.yml").read_text().strip().splitlines()
-            ],
+            *_add_padding(databricks_config, leftpad=4),
             "    ```",
             "",
             '=== "Before: resources/<pipeline>.yml"',
             "    ```yaml",
-            *[
-                "    " + line
-                for line in (p / "resources.yml").read_text().strip().splitlines()
-            ],
+            *_add_padding(resources_config, leftpad=4),
             "    ```",
             "",
             '=== "After: resources/<pipeline>.yml"',
-            "    ```yaml",
-            *[
-                "    " + line
-                for line in (p / "result.yml").read_text().strip().splitlines()
-            ],
+            "    ```diff",
+            *_add_padding(result_diff, leftpad=4),
             "    ```",
         ]
         with mkdocs_gen_files.open(f"examples/{example_name}.md", "w") as f:
             f.write("\n".join(parts) + "\n")
     pass
+
+
+def _add_diff(old, new):
+    i, j = 0, 0
+    diffed = []
+    while j < len(new):
+        i = min(i, len(old) - 1)
+        if old[i] != new[j]:
+            diffed.append("+" + new[j][1:])
+            j += 1
+        elif old[i] == new[j]:
+            diffed.append(new[j])
+            i += 1
+            j += 1
+        else:
+            raise ValueError("Unexpected case in diffing")
+    return diffed
+
+
+def _parse_file(file_path: Path, leftpad: int = 4) -> list[str]:
+    """Parse a file and return its content."""
+    return [line for line in file_path.read_text().strip().splitlines()]
+
+
+def _add_padding(lines: list[str], leftpad: int = 4) -> list[str]:
+    """Add padding to each line in the list."""
+    padding = " " * leftpad
+    return [padding + line for line in lines]
 
 
 gen()
