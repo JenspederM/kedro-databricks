@@ -1,3 +1,9 @@
+## 0.12.0 (2025-06-14)
+
+### Feat
+
+- remove python 3.9 support due to EOL in October 2025.
+
 ## 0.11.0 (2025-06-13)
 
 ### Feat
