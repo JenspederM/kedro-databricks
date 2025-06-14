@@ -14,38 +14,45 @@ def gen():
         if not p.is_dir() or example_name.startswith("."):
             continue
 
-        description = ""
-        if (p / "README.md").exists():
-            description = (p / "README.md").read_text().strip()
+        example = _load_example(p)
 
-        databricks_config = _parse_file(p / "databricks.yml")
-        resources_config = _parse_file(p / "resources.yml")
-        result_config = _parse_file(p / "result.yml")
-        result_diff = _add_diff(resources_config, result_config)
-
-        parts = [
-            f"# {example_name.title().replace('_', ' ')}",
-            "",
-            description,
-            "",
-            '=== "conf/[env]/databricks.yml"',
-            "    ```yaml",
-            *_add_padding(databricks_config, leftpad=4),
-            "    ```",
-            "",
-            '=== "Before: resources/<pipeline>.yml"',
-            "    ```yaml",
-            *_add_padding(resources_config, leftpad=4),
-            "    ```",
-            "",
-            '=== "After: resources/<pipeline>.yml"',
-            "    ```diff",
-            *_add_padding(result_diff, leftpad=4),
-            "    ```",
-        ]
         with mkdocs_gen_files.open(f"examples/{example_name}.md", "w") as f:
-            f.write("\n".join(parts) + "\n")
+            f.write("\n".join(example) + "\n")
     pass
+
+
+def _load_example(p: Path) -> list[str]:
+    example_name = p.name
+    description = ""
+    if (p / "README.md").exists():
+        description = (p / "README.md").read_text().strip()
+
+    databricks_config = _parse_file(p / "databricks.yml")
+    resources_config = _parse_file(p / "resources.yml")
+    result_config = _parse_file(p / "result.yml")
+    result_diff = _add_diff(resources_config, result_config)
+
+    parts = [
+        f"# {example_name.title().replace('_', ' ')}",
+        "",
+        description,
+        "",
+        '=== "conf/[env]/databricks.yml"',
+        "    ```yaml",
+        *_add_padding(databricks_config, leftpad=4),
+        "    ```",
+        "",
+        '=== "Before: resources/<pipeline>.yml"',
+        "    ```yaml",
+        *_add_padding(resources_config, leftpad=4),
+        "    ```",
+        "",
+        '=== "After: resources/<pipeline>.yml"',
+        "    ```diff",
+        *_add_padding(result_diff, leftpad=4),
+        "    ```",
+    ]
+    return parts
 
 
 def _add_diff(old, new):
