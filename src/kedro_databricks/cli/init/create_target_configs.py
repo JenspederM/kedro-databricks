@@ -130,7 +130,7 @@ def _create_target_config(
     new_cluster = {
         "spark_version": "15.4.x-scala2.12",
         "node_type_id": node_type_id,
-        "num_workers": 2,
+        "num_workers": 1,
         "spark_env_vars": {
             "KEDRO_LOGGING_CONFIG": "/Workspace/\\${workspace.file_path}/conf/logging.yml"
         },
