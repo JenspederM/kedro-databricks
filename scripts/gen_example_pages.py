@@ -10,29 +10,38 @@ examples_dir = root / "examples"
 def gen():
     """Generate the code reference pages."""
     for p in sorted(examples_dir.iterdir()):
-        example_name = p.name
-        if not p.is_dir() or example_name.startswith("."):
+        if not p.is_dir() or p.name.startswith("."):
             continue
 
-        example = _load_example(p)
+        description = ""
+        if (p / "README.md").exists():
+            description = (p / "README.md").read_text().strip()
+        databricks_config = _parse_file(p / "databricks.yml")
+        resources_config = _parse_file(p / "resources.yml")
+        result_config = _parse_file(p / "result.yml")
+        example = _load_example(
+            name=p.name,
+            databricks_config=databricks_config,
+            resources_config=resources_config,
+            result_config=result_config,
+            description=description,
+        )
 
-        with mkdocs_gen_files.open(f"examples/{example_name}.md", "w") as f:
+        with mkdocs_gen_files.open(f"examples/{p.name}.md", "w") as f:
             f.write("\n".join(example) + "\n")
     pass
 
 
-def _load_example(p: Path) -> list[str]:
-    example_name = p.name
-    description = ""
-    if (p / "README.md").exists():
-        description = (p / "README.md").read_text().strip()
-
-    databricks_config = _parse_file(p / "databricks.yml")
-    resources_config = _parse_file(p / "resources.yml")
-    result_config = _parse_file(p / "result.yml")
+def _load_example(
+    name: str,
+    databricks_config: list[str],
+    resources_config: list[str],
+    result_config: list[str],
+    description: str,
+) -> list[str]:
     result_highlight = _get_hl_lines(resources_config, result_config)
     parts = []
-    parts.append(f"## {example_name.title().replace('_', ' ')}")
+    parts.append(f"## {name.title().replace('_', ' ')}")
     parts.append("")
     parts.append(description)
     parts.append("")
