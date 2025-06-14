@@ -50,8 +50,10 @@ markdown_extensions:
   - mkdocs-click
   - toc
 plugins:
+  - awesome-nav
   - gen-files:
       scripts:
+        - scripts/gen_changelog.py
         - scripts/gen_example_pages.py
         - scripts/gen_ref_pages.py
   - mkdocstrings:
