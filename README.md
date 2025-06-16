@@ -7,7 +7,7 @@
 <a href="https://codeclimate.com/github/JenspederM/kedro-databricks/maintainability"><img src="https://api.codeclimate.com/v1/badges/d5ef60eb0f20cb369b18/maintainability" /></a>
 [![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://pypi.org/project/kedro-databricks/)
 [![PyPI Version](https://badge.fury.io/py/kedro-databricks.svg)](https://pypi.org/project/kedro-databricks/)
-[![Read the Docs](https://app.readthedocs.org/projects/kedro-readthedocs/badge/?version=latest)](https://kedro-databricks.readthedocs.io/)
+[![Read the Docs](https://app.readthedocs.org/projects/kedro-databricks/badge/?version=latest)](https://kedro-databricks.readthedocs.io/)
 
 Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to provide the ultimate developer experience when using Kedro on Databricks.
 
