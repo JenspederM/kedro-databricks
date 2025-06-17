@@ -19,7 +19,6 @@ dev = [
     "pre-commit>=4.0.1",
     "ruff>=0.7.2",
     "commitizen>=3.30.0",
-    "tomli-w>=1.2.0",
 ]
 test = [
     "ipython>=8.10",
