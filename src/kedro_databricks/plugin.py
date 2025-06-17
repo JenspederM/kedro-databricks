@@ -5,6 +5,7 @@ from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
 from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.startup import ProjectMetadata
 
+import kedro_databricks
 from kedro_databricks import cli
 from kedro_databricks.constants import (
     DEFAULT_CONF_FOLDER,
@@ -30,6 +31,16 @@ def databricks_commands():
     They allow you to initialize, bundle, deploy, run, and destroy Databricks asset bundles.
     """
     pass
+
+
+@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+def version():
+    """Display the version of Kedro-Databricks
+
+    This command prints the version of the Kedro-Databricks plugin.
+    It is useful for checking the installed version of the plugin in your Kedro project.
+    """
+    print(f"Kedro-Databricks version: {kedro_databricks.__version__}")  # noqa: T201
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
