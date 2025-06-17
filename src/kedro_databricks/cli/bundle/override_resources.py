@@ -83,19 +83,7 @@ def _update_list_by_key(
     Returns:
         List[Dict[str, Any]]: updated list of dictionaries
     """
-    assert isinstance(
-        old, list
-    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
-    assert isinstance(
-        new, list
-    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
-    assert all(
-        lookup_key in o for o in old
-    ), f"lookup_key {lookup_key} not found in current: {old}"
-    assert all(
-        lookup_key in n for n in new
-    ), f"lookup_key {lookup_key} not found in updates: {new}"
-
+    _validate_list_by_key(old=old, new=new, lookup_key=lookup_key)
     old_obj = {curr.pop(lookup_key): curr for curr in copy.deepcopy(old)}
     new_obj = {update.pop(lookup_key): update for update in copy.deepcopy(new)}
     keys = set(old_obj.keys()).union(set(new_obj.keys()))
@@ -112,6 +100,33 @@ def _update_list_by_key(
     return sorted(
         [{lookup_key: k, **v} for k, v in old_obj.items()], key=lambda x: x[lookup_key]
     )
+
+
+def _validate_list_by_key(
+    old: list[dict[str, Any]], new: list[dict[str, Any]], lookup_key: str
+):
+    """Validate that a list of dictionaries contains the lookup key.
+
+    Args:
+        old (List[Dict[str, Any]]): list of dictionaries to validate
+        new (List[Dict[str, Any]]): list of dictionaries to validate
+        lookup_key (str): key to use for looking up dictionaries
+
+    Raises:
+        ValueError: if the lookup key is not found in any dictionary
+    """
+    assert isinstance(
+        old, list
+    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
+    assert isinstance(
+        new, list
+    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
+    assert all(
+        lookup_key in o for o in old
+    ), f"lookup_key {lookup_key} not found in current: {old}"
+    assert all(
+        lookup_key in n for n in new
+    ), f"lookup_key {lookup_key} not found in updates: {new}"
 
 
 def _get_old_value(result: Any, key: Any, value: Any):

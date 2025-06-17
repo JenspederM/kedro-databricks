@@ -86,7 +86,11 @@ def _load_kedro_env_config(
                 {"databricks": ["databricks*", "databricks/**"]}
             )
 
-        assert "databricks" in config_loader.config_patterns.keys()  # type: ignore
+        if "databricks" not in config_loader.config_patterns.keys():  # type: ignore
+            log.warning(
+                "No Databricks configuration found. "
+                "Please ensure that `databricks` is included in your config patterns."
+            )
 
         # Load the config
         try:
