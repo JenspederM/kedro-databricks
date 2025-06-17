@@ -10,9 +10,9 @@
 
 {% for change in changes %}
 {% if change.issue %}
-- {{change.scope}} [`{{ change.sha1 | truncate(7, end="") }}`](https://github.com/JenspederM/kedro-databricks/commit/{{ change.sha1 }}): [{{ change.message }}](https://github.com/JenspederM/kedro-databricks/pull/{{ change.issue }}) ({{ change.author }})
+- {{change.scope}} [`{{ change.sha1 | truncate(7, end="") }}`](https://github.com/JenspederM/kedro-databricks/commit/{{ change.sha1 }}): [{{ change.message }}](https://github.com/JenspederM/kedro-databricks/pull/{{ change.issue }})
 {% else %}
-- {{change.scope}} [`{{ change.sha1 | truncate(7, end="") }}`](https://github.com/JenspederM/kedro-databricks/commit/{{ change.sha1 }}): {{ change.message }} ({{ change.author }})
+- {{change.scope}} [`{{ change.sha1 | truncate(7, end="") }}`](https://github.com/JenspederM/kedro-databricks/commit/{{ change.sha1 }}): {{ change.message }}
 {% endif %}
 {% endfor %}
 {% endfor %}

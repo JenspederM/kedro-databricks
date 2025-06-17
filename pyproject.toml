@@ -19,6 +19,7 @@ dev = [
     "pre-commit>=4.0.1",
     "ruff>=0.7.2",
     "commitizen>=3.30.0",
+    "tomli-w>=1.2.0",
 ]
 test = [
     "ipython>=8.10",
@@ -101,6 +102,7 @@ version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
 template = "scripts/CHANGELOG.md.j2"
+version_files = ["pyproject.toml", "src/kedro_databricks/__init__.py"]
 
 
 [tool.commitizen.customize]
