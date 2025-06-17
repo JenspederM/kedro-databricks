@@ -5,8 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import tomli
-import tomli_w
+import tomlkit
 
 root = Path(__file__).parent.parent
 logging.basicConfig(
@@ -36,7 +35,7 @@ def current_version() -> str:
         raise FileNotFoundError(f"pyproject.toml not found at {pyproject}.")
 
     with open(pyproject, "rb") as f:
-        project = tomli.load(f)
+        project = tomlkit.load(f)
 
     return project.get("project", {}).get("version", "0.0.0")
 
@@ -92,12 +91,12 @@ def new(project_name: str, project_path: Path, overwrite: bool = False):
     )
 
     with open(project_path / "pyproject.toml", "rb") as f:
-        project = tomli.load(f)
+        project = tomlkit.load(f)
 
-    project["project"]["requires-python"] = ">=3.10"
+    project["project"]["requires-python"] = ">=3.10"  # type: ignore
 
-    with open(project_path / "pyproject.toml", "wb") as f:
-        tomli_w.dump(project, f)
+    with open(project_path / "pyproject.toml", "w") as f:
+        tomlkit.dump(project, f)
 
     Path(project_path / ".tool-versions").write_text("uv 0.7.8\n")
     Path(project_path / ".python-version").write_text("3.11\n")
