@@ -1,6 +1,4 @@
 
-# Getting Started
-
 ### Installation
 
 To install the plugin, simply run:

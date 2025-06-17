@@ -35,8 +35,6 @@ def _load_example(p: Path) -> list[str]:
     databricks_config, resources_config, result_config, description = _load_data(p)
     result_highlight = _get_hl_lines(resources_config, result_config)
     parts = []
-    parts.append(f"## {p.name.title().replace('_', ' ')}")
-    parts.append("")
     parts.append(description)
     parts.append("")
     parts.append('=== "conf/[env]/databricks.yml"')

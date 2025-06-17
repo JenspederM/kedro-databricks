@@ -94,9 +94,44 @@ lint.ignore = ["E501", "PLR0913"] # Black takes care of line-too-long
 "{tests,features}/*" = ["T201", "PLR2004", "PLR0915", "PLW1510"]
 
 [tool.commitizen]
-name = "cz_conventional_commits"
+name = "cz_customize"
 tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
+template = "scripts/CHANGELOG.md.j2"
+
+
+[tool.commitizen.customize]
+message_template = "{{change_type}}:{% if show_message %} {{message}}{% endif %}"
+bump_pattern = "^(break|feat|new|fix|hotfix)"
+bump_map = { "break" = "MAJOR", "new" = "MINOR", "feat" = "MINOR", "fix" = "PATCH", "hotfix" = "PATCH" }
+change_type_order = [
+    "BREAKING CHANGE",
+    "feat",
+    "fix",
+    "refactor",
+    "perf",
+    "docs",
+    "ci",
+    "chore",
+    "style",
+    "test",
+]
+commit_parser = "^(?P<change_type>feat|feature|bug fix|fix|hotfix|refactor|docs|ci|bundle|build|project|chore|Merge pull request)(:| #(?P<issue>\\d+) from)(?P<message>.*)?"
+
+[tool.commitizen.customize.change_type_map]
+"Merge pull request" = "Pull Requests"
+"feature" = " Feat"
+"feat" = " Feat"
+"bug fix" = "  Fix"
+"fix" = "  Fix"
+"hotfix" = "  Fix"
+"refactor" = "   Refactor"
+"refact" = "   Refactor"
+"docs" = "     Other Changes"
+"ci" = "     Other Changes"
+"build" = "     Other Changes"
+"project" = "     Other Changes"
+"chore" = "     Other Changes"
