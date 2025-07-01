@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, MutableMapping
 from typing import Any
 
@@ -9,7 +10,11 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
 from kedro_databricks.cli.bundle.utils import get_entry_point, remove_nulls, sort_dict
-from kedro_databricks.constants import TASK_KEY_ORDER, WORKFLOW_KEY_ORDER
+from kedro_databricks.constants import (
+    MAX_TASK_KEY_LENGTH,
+    TASK_KEY_ORDER,
+    WORKFLOW_KEY_ORDER,
+)
 from kedro_databricks.logger import get_logger
 from kedro_databricks.utils import make_workflow_name, require_databricks_run_script
 
@@ -108,7 +113,7 @@ class ResourceGenerator:
         workflow = {
             "name": name,
             "tasks": [
-                self._create_task(node.name, depends_on=deps)
+                self._create_task(node, depends_on=deps)
                 for node, deps in sorted(pipeline.node_dependencies.items())
             ],
         }
@@ -119,7 +124,7 @@ class ResourceGenerator:
 
     def _create_task(
         self,
-        name: str,
+        node: Node,
         depends_on: Iterable[Node],
     ) -> dict[str, Any]:
         """Create a Databricks task for a given node.
@@ -137,7 +142,7 @@ class ResourceGenerator:
         entry_point = get_entry_point(self.metadata.project_name)
         params = [
             "--nodes",
-            name,
+            node.name,
             "--conf-source",
             self.remote_conf_dir,
             "--env",
@@ -152,10 +157,10 @@ class ResourceGenerator:
             params = params + ["--params", self.params]
 
         task = {
-            "task_key": name.replace(".", "_"),
+            "task_key": sanitize_name(node),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
-                {"task_key": dep.name.replace(".", "_")}
+                {"task_key": sanitize_name(dep)}
                 for dep in sorted(depends_on, key=lambda dep: dep.name)
             ],
             "python_wheel_task": {
@@ -166,3 +171,32 @@ class ResourceGenerator:
         }
 
         return sort_dict(task, TASK_KEY_ORDER)
+
+
+def sanitize_name(node: Node) -> str:
+    """Sanitize the node name to be used as a task key in Databricks.
+
+    Args:
+        node (Node): Kedro node object
+
+    Returns:
+        str: sanitized task key
+    """
+    _name = node.name
+    if not re.match(r"^[\w\-\_]+$", _name):  # Ensure the name is valid
+        log.warning(
+            f"Node name '{_name}' contains invalid characters and will be sanitized. "
+            "To avoid this use an explicit node name as `node(..., name='valid_name')`."
+        )
+
+        _name = re.sub(r"[^\w\_]", "_", _name)
+        _name = re.sub(r"_{2,}", "_", _name).lstrip("_").rstrip("_")
+
+    if len(_name) > MAX_TASK_KEY_LENGTH:  # Ensure the name is not too long
+        log.warning(
+            f"Node name '{_name}' is too long. "
+            f"Truncating to {MAX_TASK_KEY_LENGTH} characters."
+        )
+        _name = _name[:MAX_TASK_KEY_LENGTH]
+
+    return _name

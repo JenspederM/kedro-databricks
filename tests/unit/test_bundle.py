@@ -11,6 +11,7 @@ from kedro_databricks.cli.bundle import (
 from kedro_databricks.cli.bundle.generate_resources import (
     ResourceGenerator,
     remove_nulls,
+    sanitize_name,
     sort_dict,
 )
 from kedro_databricks.cli.bundle.override_resources import (
@@ -22,7 +23,7 @@ from kedro_databricks.cli.bundle.override_resources import (
 from kedro_databricks.cli.bundle.utils import get_entry_point
 from kedro_databricks.constants import OVERRIDE_KEY_MAP
 from kedro_databricks.utils import require_databricks_run_script
-from tests.utils import WORKFLOW, _generate_task, identity, pipeline
+from tests.utils import WORKFLOW, _generate_task, identity, long_identity, pipeline
 
 
 def test_bundle(metadata):
@@ -34,6 +35,33 @@ def test_generate_workflow(metadata):
     assert g._create_workflow("workflow1", pipeline) == WORKFLOW
 
 
+@pytest.mark.parametrize(
+    "node, expected",
+    [
+        (
+            node(
+                long_identity,
+                ["input", "input1", "input2", "input3", "input4", "input5"],
+                ["output", "output1", "output2", "output3", "output4", "output5"],
+            ),
+            "long_identity_input_input1_input2_input3_input4_input5_output_output1_output2_output3_output4_output",  # Last 5 gets truncated
+        ),
+        (
+            node(identity, ["input"], ["output", "another"]),
+            "identity_input_output_another",
+        ),
+        (node(identity, ["input"], ["output"]), "identity_input_output"),
+        (node(identity, ["input"], ["output"], name="a"), "a"),
+        (node(identity, ["input"], ["output"], name="a", namespace="abc"), "abc_a"),
+        (node(identity, ["input"], ["output"], name="a" * 150), "a" * 100),
+    ],
+)
+def test_sanitize_name(node, expected):
+    assert (
+        sanitize_name(node) == expected
+    ), f"Expected '{expected}', got '{sanitize_name(node)}'"
+
+
 def test_create_task(metadata):
     g = ResourceGenerator(metadata, "fake_env")
     expected_task = _generate_task("task", ["a", "b"])
@@ -41,7 +69,12 @@ def test_create_task(metadata):
     node_b = node(identity, ["input"], ["output"], name="b")
     assert (
         g._create_task(
-            "task",
+            node(
+                long_identity,
+                ["input", "input1", "input2"],
+                ["output", "output1"],
+                name="task",
+            ),
             [
                 node_b,
                 node_a,
@@ -62,7 +95,12 @@ def test_create_task_with_runtime_params(metadata):
     node_b = node(identity, ["input"], ["output"], name="b")
     assert (
         controller._create_task(
-            "task",
+            node(
+                long_identity,
+                ["input", "input1", "input2"],
+                ["output", "output1"],
+                name="task",
+            ),
             [
                 node_b,
                 node_a,

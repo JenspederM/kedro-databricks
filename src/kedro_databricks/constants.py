@@ -10,6 +10,9 @@ KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
 MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
 """Minimum Databricks version required for this plugin."""
 
+MAX_TASK_KEY_LENGTH = 100
+"""Maximum number of characters in a task key in Databricks jobs."""
+
 TASK_KEY_ORDER = [
     "task_key",
     "job_cluster_key",
