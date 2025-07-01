@@ -68,7 +68,7 @@ IGNORED_OVERRIDE_KEYS = ["init_scripts", "access_control_list"]
 """Keys that should be ignored when overriding the Databricks configuration."""
 
 NODE_TYPE_MAP = {
-    "aws": "m5.xlarge",
+    "aws": "i3.xlarge",
     "azure": "Standard_DS3_v2",
     "gcp": "n1-standard-4",
 }
