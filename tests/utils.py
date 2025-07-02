@@ -18,6 +18,10 @@ def identity(arg):
     return arg
 
 
+def long_identity(*args):
+    return "_".join(str(arg) for arg in args)
+
+
 pipeline = Pipeline(
     [
         node(

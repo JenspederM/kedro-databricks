@@ -10,6 +10,9 @@ KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
 MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
 """Minimum Databricks version required for this plugin."""
 
+MAX_TASK_KEY_LENGTH = 100
+"""Maximum number of characters in a task key in Databricks jobs."""
+
 TASK_KEY_ORDER = [
     "task_key",
     "job_cluster_key",
@@ -68,7 +71,7 @@ IGNORED_OVERRIDE_KEYS = ["init_scripts", "access_control_list"]
 """Keys that should be ignored when overriding the Databricks configuration."""
 
 NODE_TYPE_MAP = {
-    "aws": "m5.xlarge",
+    "aws": "i3.xlarge",
     "azure": "Standard_DS3_v2",
     "gcp": "n1-standard-4",
 }
