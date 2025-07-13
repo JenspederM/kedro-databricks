@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from kedro.pipeline import Pipeline, node
+from packaging.version import Version
 
 from kedro_databricks.cli.bundle import (
     _load_kedro_env_config,
@@ -370,8 +371,8 @@ def test_sort_dict(actual, order, expected):
 @pytest.mark.parametrize(
     ["value", "expected"],
     [
-        ([0, 19, 8], False),
-        ([0, 19, 6], True),
+        (Version("0.19.8"), False),
+        (Version("0.19.6"), True),
     ],
 )
 def test_require_databricks_run_script(value, expected):
