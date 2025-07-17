@@ -1,10 +1,10 @@
-from importlib import resources
+from importlib import metadata, resources
 
-from kedro import __version__ as kedro_version
+from packaging.version import Version
 
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
 
-KEDRO_VERSION = [int(x) for x in kedro_version.split(".")]
+KEDRO_VERSION = Version(metadata.version("kedro"))
 """Kedro version used to build this plugin."""
 
 MINIMUM_DATABRICKS_VERSION = [0, 205, 0]

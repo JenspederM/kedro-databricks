@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import yaml
+from packaging.version import Version
 
 from kedro_databricks.constants import KEDRO_VERSION, MINIMUM_DATABRICKS_VERSION
 from kedro_databricks.logger import get_logger
@@ -182,7 +183,7 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
     Returns:
         bool: whether the current Kedro version is less than 0.19.8
     """
-    return _version < [0, 19, 8]
+    return _version < Version("0.19.8")
 
 
 def _check_version(raise_error: bool = True):
