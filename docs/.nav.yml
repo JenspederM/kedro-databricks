@@ -5,6 +5,5 @@ nav:
       - "examples/*"
   - Reference:
       - "reference/*"
-  - Contribute:
-      - contributing.md
+  - contributing.md
   - changelog.md

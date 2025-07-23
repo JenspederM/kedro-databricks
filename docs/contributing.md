@@ -1,4 +1,4 @@
-# Contributing to kedro-databricks
+# Contribute
 
 Thank you for your interest in contributing to kedro-databricks! This document provides guidelines and instructions for contributing to this project.
 
