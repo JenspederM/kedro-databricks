@@ -23,4 +23,4 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 
 To learn more about the plugin, please refer to the [documentation](https://kedro-databricks.readthedocs.io/).
 
-Interested in contributing? Check out our [contribution guidelines](CONTRIBUTING.md) to get started!
+Interested in contributing? Check out our [contribution guidelines](docs/contributing.md) to get started!
