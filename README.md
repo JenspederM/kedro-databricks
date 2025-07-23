@@ -19,4 +19,8 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 4. **Execution**: Run your Kedro pipelines on Databricks straight from the command line.
 5. **Cleanup**: Remove all Databricks resources created by the plugin.
 
+## Documentation & Contributing
+
 To learn more about the plugin, please refer to the [documentation](https://kedro-databricks.readthedocs.io/).
+
+Interested in contributing? Check out our [contribution guidelines](CONTRIBUTING.md) to get started!

@@ -317,7 +317,7 @@ git push --tags
 ## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/JenspederM/kedro-databricks/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/JenspederM/kedro-databricks/discussions)
+- **Pull Requests**: [GitHub Pull Requests](https://github.com/JenspederM/kedro-databricks/pulls)
 - **Documentation**: [Read the Docs](https://kedro-databricks.readthedocs.io/)
 
 ## Code of Conduct
