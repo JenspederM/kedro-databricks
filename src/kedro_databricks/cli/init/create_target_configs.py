@@ -1,4 +1,5 @@
 import json
+import os.path
 import re
 from pathlib import Path
 
@@ -132,7 +133,7 @@ def _create_target_config(
         "node_type_id": node_type_id,
         "num_workers": 1,
         "spark_env_vars": {
-            "KEDRO_LOGGING_CONFIG": "/Workspace/\\${workspace.file_path}/conf/logging.yml"
+            "KEDRO_LOGGING_CONFIG": "/\\${workspace.file_path}/conf/logging.yml"
         },
     }
 
@@ -167,11 +168,21 @@ def _substitute_file_path(string: str) -> str:
 def _save_target_catalog(
     conf_dir: Path, target_conf_dir: Path, target_file_path: str
 ):  # pragma: no cover
-    with open(f"{conf_dir}/base/catalog.yml") as f:
-        cat = f.read()
-    target_catalog = _substitute_file_path(cat)
-    with open(target_conf_dir / "catalog.yml", "w") as f:
-        f.write("_file_path: " + target_file_path + "\n" + target_catalog)
+    # Find all catalog.yaml in this directory and its subdirectories
+    for file in (conf_dir / "base").rglob("catalog.yaml"):
+        if file.is_file():
+            with open(file, "r") as f:
+                content = f.read()
+            substituted_content = _substitute_file_path(content)
+            target_path = target_conf_dir / os.path.relpath(file, conf_dir / "base")
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(target_path, "w") as f:
+                f.write(substituted_content)
+    # with open(f"{conf_dir}/base/catalog.yml") as f:
+    #     cat = f.read()
+    # target_catalog = _substitute_file_path(cat)
+    # with open(target_conf_dir / "catalog.yml", "w") as f:
+    #     f.write("_file_path: " + target_file_path + "\n" + target_catalog)
 
 
 def _save_target_config(target_config: dict, target_conf_dir: Path):  # pragma: no cover
