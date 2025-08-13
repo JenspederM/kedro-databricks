@@ -38,7 +38,7 @@ class ResourceGenerator:
         self.metadata = metadata
         self.env = env
         self.pipelines: MutableMapping = pipelines
-        self.remote_conf_dir = f"/Workspace/${{workspace.file_path}}/{conf_source}"
+        self.remote_conf_dir = f"/${{workspace.file_path}}/{conf_source}"
         self.params = params
 
     def generate_resources(
