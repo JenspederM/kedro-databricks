@@ -49,6 +49,7 @@ pipeline = Pipeline(
 pipelines = {
     "__default__": pipeline,
     "ds": pipeline,
+    "namespaced.pipeline": pipeline,
 }
 
 

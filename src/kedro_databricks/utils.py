@@ -104,7 +104,8 @@ def make_workflow_name(package_name, pipeline_name: str) -> str:
     """
     if pipeline_name == "__default__":
         return package_name
-    return f"{package_name}_{pipeline_name}"
+    sanitised_pipeline_name = pipeline_name.replace(".", "_")
+    return f"{package_name}_{sanitised_pipeline_name}"
 
 
 def read_databricks_config(project_path: Path) -> dict:

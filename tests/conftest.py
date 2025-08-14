@@ -82,12 +82,16 @@ def register_pipelines():
             node(identity, ["intermediate"], ["output2"], name="node2", tags=["tag0"]),
             node(identity, ["intermediate"], ["output3"], name="node3", tags=["tag1", "tag2"]),
             node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
+            node(identity, ["intermediate"], ["output_5.output_5_1"], name="ns_5.node_5_1"),
+            node(identity, ["intermediate"], ["output_6.output_6_1"], name="ns_6.node_6_1"),
+            node(identity, ["intermediate"], ["output_7.output_7_1"], name="ns_7.node_7_1"),
         ],
         tags="pipeline0",
     )
     return {
         "__default__": pipeline,
         "ds": pipeline,
+        "namespaced.pipeline": pipeline,
     }
     """
 

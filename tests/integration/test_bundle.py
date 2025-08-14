@@ -94,9 +94,9 @@ def test_databricks_bundle_with_overrides(init_kedro_project):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     def task_validator(tasks):
-        assert len(tasks) == 5
+        assert len(tasks) == 8
         for i, task in enumerate(tasks):
-            assert task.get("task_key") == f"node{i}"
+            assert task.get("task_key") in (f"node{i}", f"ns_{i}_node_{i}_1")
             assert task.get("job_cluster_key") == "default"
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
@@ -109,6 +109,7 @@ def test_databricks_bundle_with_overrides(init_kedro_project):
         required_files=[
             f"{metadata.package_name}.yml",
             f"{metadata.package_name}_ds.yml",
+            f"{metadata.package_name}_namespaced_pipeline.yml",
         ],
         task_validator=task_validator,
     )
@@ -130,9 +131,9 @@ def test_databricks_bundle_with_conf(init_kedro_project):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     def task_validator(tasks):
-        assert len(tasks) == 5
+        assert len(tasks) == 8
         for i, task in enumerate(tasks):
-            assert task.get("task_key") == f"node{i}"
+            assert task.get("task_key") in (f"node{i}", f"ns_{i}_node_{i}_1")
             assert task.get("job_cluster_key") == "default"
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
@@ -145,6 +146,7 @@ def test_databricks_bundle_with_conf(init_kedro_project):
         required_files=[
             f"{metadata.package_name}.yml",
             f"{metadata.package_name}_ds.yml",
+            f"{metadata.package_name}_namespaced_pipeline.yml",
         ],
         task_validator=task_validator,
     )
@@ -159,9 +161,9 @@ def test_databricks_bundle_without_overrides(init_kedro_project):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     def task_validator(tasks):
-        assert len(tasks) == 5
+        assert len(tasks) == 8
         for i, task in enumerate(tasks):
-            assert task.get("task_key") == f"node{i}"
+            assert task.get("task_key") in (f"node{i}", f"ns_{i}_node_{i}_1")
             assert task.get("job_cluster_key") == "default"
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
@@ -174,6 +176,7 @@ def test_databricks_bundle_without_overrides(init_kedro_project):
         required_files=[
             f"{metadata.package_name}.yml",
             f"{metadata.package_name}_ds.yml",
+            f"{metadata.package_name}_namespaced_pipeline.yml",
         ],
         task_validator=task_validator,
     )
@@ -195,9 +198,9 @@ def test_databricks_bundle_with_params(init_kedro_project):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     def task_validator(tasks):
-        assert len(tasks) == 5
+        assert len(tasks) == 8
         for i, task in enumerate(tasks):
-            assert task.get("task_key") == f"node{i}"
+            assert task.get("task_key") in (f"node{i}", f"ns_{i}_node_{i}_1")
             assert task.get("job_cluster_key") == "default"
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
@@ -213,6 +216,7 @@ def test_databricks_bundle_with_params(init_kedro_project):
         required_files=[
             f"{metadata.package_name}.yml",
             f"{metadata.package_name}_ds.yml",
+            f"{metadata.package_name}_namespaced_pipeline.yml",
         ],
         task_validator=task_validator,
     )
@@ -236,9 +240,9 @@ def test_databricks_bundle_with_pipeline(init_kedro_project):
     assert result.exit_code == 0, (result.exit_code, result.stdout)
 
     def task_validator(tasks):
-        assert len(tasks) == 5
+        assert len(tasks) == 8
         for i, task in enumerate(tasks):
-            assert task.get("task_key") == f"node{i}"
+            assert task.get("task_key") in (f"node{i}", f"ns_{i}_node_{i}_1")
             assert task.get("job_cluster_key") == "default"
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
