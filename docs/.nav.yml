@@ -1,8 +1,9 @@
 nav:
-    - Kedro Databricks: index.md
-    - Getting Started: getting_started.md
-    - Examples:
-          - "examples/*"
-    - Reference:
-          - "reference/*"
-    - changelog.md
+  - Kedro Databricks: index.md
+  - Getting Started: getting_started.md
+  - Examples:
+      - "examples/*"
+  - Reference:
+      - "reference/*"
+  - contributing.md
+  - changelog.md
