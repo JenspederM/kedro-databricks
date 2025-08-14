@@ -45,13 +45,15 @@ def test_generate_workflow(metadata):
                 ["input", "input1", "input2", "input3", "input4", "input5"],
                 ["output", "output1", "output2", "output3", "output4", "output5"],
             ),
-            "long_identity_input_input1_input2_input3_input4_input5_output_output1_output2_output3_output4_output",  # Last 5 gets truncated
+            # if name not provided, node name is generated based on:
+            # <func_name>__<hash(node_func_mod,node_func_name,node_input,node_output)>
+            "long_identity__faf8b039",
         ),
         (
             node(identity, ["input"], ["output", "another"]),
-            "identity_input_output_another",
+            "identity__635484ea",
         ),
-        (node(identity, ["input"], ["output"]), "identity_input_output"),
+        (node(identity, ["input"], ["output"]), "identity__3060bcbf"),
         (node(identity, ["input"], ["output"], name="a"), "a"),
         (node(identity, ["input"], ["output"], name="a", namespace="abc"), "abc_a"),
         (node(identity, ["input"], ["output"], name="a" * 150), "a" * 100),
@@ -279,6 +281,8 @@ def test_override_resources(jobs, overrides, expected, error):
         ("Fake Project 123 456", "fake-project"),
         ("Fake Project #%", "fake-project"),
         ("# Fake Project #%", "fake-project"),
+        ("my-project-package", "my-project-package"),
+        ("my_project_package", "my_project_package"),
     ],
 )
 def test_get_entry_point(actual, expected):

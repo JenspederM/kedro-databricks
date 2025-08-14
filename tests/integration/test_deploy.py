@@ -29,6 +29,19 @@ pipeline = Pipeline(
             tags=["tag1", "tag2"],
         ),
         node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
+        node(
+            identity,
+            ["intermediate"],
+            ["outputs.output_1.output_1_1"],
+            name="outputs.output_1.output_1_1",
+        ),
+        node(
+            identity,
+            ["intermediate"],
+            ["outputs.output_1.output_1_2"],
+            name="outputs.output_1.output_1_2",
+        ),
+        node(identity, ["intermediate"], ["outputs.output_2"], name="outputs.output_2"),
     ],
     tags="pipeline0",
 )
