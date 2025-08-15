@@ -12,9 +12,17 @@ def test_init_arg(cli_runner, metadata, provider):
     command = ["databricks", "init", "--provider", provider]
     result = cli_runner.invoke(commands, command, obj=metadata)
     if provider not in NODE_TYPE_MAP:
-        assert result.exit_code == 1, (result.exit_code, result.stdout)
+        assert result.exit_code == 1, (
+            result.exit_code,
+            result.stdout,
+            result.exception,
+        )
     else:
-        assert result.exit_code == 0, (result.exit_code, result.stdout)
+        assert result.exit_code == 0, (
+            result.exit_code,
+            result.stdout,
+            result.exception,
+        )
         files = [f"{f.parent.name}/{f.name}" for f in metadata.project_path.rglob("*")]
         assert len(files) > 0, "Found no files in the directory."
 

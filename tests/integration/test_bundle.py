@@ -57,13 +57,13 @@ def _validate_resources(metadata, required_files, task_validator):
 
 @pytest.fixture(scope="module")
 def init_kedro_project(
-    cli_runner, metadata
+    cli_runner, metadata, custom_provider
 ) -> Generator[tuple[ProjectMetadata, CliRunner]]:
     reset_init(metadata)
     _reset_bundle(metadata)
-    init_cmd = ["databricks", "init", "--provider", "azure"]
+    init_cmd = ["databricks", "init", "--provider", custom_provider]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert metadata.project_path / "databricks.yml", "Databricks config not created"
@@ -83,7 +83,7 @@ def init_kedro_project(
 def test_databricks_bundle_fail(cli_runner, metadata):
     bundle_fail = ["databricks", "bundle", "--default-key", "_deault"]
     result = cli_runner.invoke(commands, bundle_fail, obj=metadata)
-    assert result.exit_code == 1, (result.exit_code, result.stdout)
+    assert result.exit_code == 1, (result.exit_code, result.stdout, result.exception)
 
 
 def test_databricks_bundle_with_overrides(init_kedro_project):
@@ -91,7 +91,7 @@ def test_databricks_bundle_with_overrides(init_kedro_project):
 
     command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 
     def task_validator(tasks):
         assert len(tasks) == 8
@@ -128,7 +128,7 @@ def test_databricks_bundle_with_conf(init_kedro_project):
         "conf/sub_pipeline",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 
     def task_validator(tasks):
         assert len(tasks) == 8
@@ -158,7 +158,7 @@ def test_databricks_bundle_without_overrides(init_kedro_project):
 
     command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 
     def task_validator(tasks):
         assert len(tasks) == 8
@@ -195,7 +195,7 @@ def test_databricks_bundle_with_params(init_kedro_project):
         "--overwrite",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 
     def task_validator(tasks):
         assert len(tasks) == 8
@@ -237,7 +237,7 @@ def test_databricks_bundle_with_pipeline(init_kedro_project):
         "--overwrite",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 
     def task_validator(tasks):
         assert len(tasks) == 8
@@ -274,7 +274,7 @@ def test_databricks_bundle_with_no_nodes(init_kedro_project):
         "--overwrite",
     ]
     result = cli_runner.invoke(commands, command, obj=metadata)
-    assert result.exit_code == 1, (result.exit_code, result.stdout)
+    assert result.exit_code == 1, (result.exit_code, result.stdout, result.exception)
     assert isinstance(result.exception, KeyError)
     exception = bytes(str(result.exception), "utf-8").decode("unicode_escape")
     expected = "Pipeline 'non-existing-pipeline' not found."
