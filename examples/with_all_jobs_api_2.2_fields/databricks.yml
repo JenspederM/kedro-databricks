@@ -61,7 +61,7 @@ default: # will be applied to all workflows
         notebook_path: /Users/username/notebooks/make_predictions
         base_parameters:
           nodes: make_predictions
-          conf-source: /Workspace/${workspace.file_path}/conf
+          conf-source: /${workspace.file_path}/conf
           env: local
         source: WORKSPACE
         warehouse_id: ab12cd34efgh567i
@@ -71,7 +71,7 @@ default: # will be applied to all workflows
           - --nodes
           - make_predictions
           - --conf-source
-          - /Workspace/${workspace.file_path}/conf
+          - /${workspace.file_path}/conf
           - --env
           - local
       spark_python_task:
@@ -80,7 +80,7 @@ default: # will be applied to all workflows
           - --nodes
           - make_predictions
           - --conf-source
-          - /Workspace/${workspace.file_path}/conf
+          - /${workspace.file_path}/conf
           - --env
           - local
         source: GIT
@@ -153,7 +153,7 @@ default: # will be applied to all workflows
             notebook_path: /Users/username/notebooks/make_predictions
             base_parameters:
               nodes: make_predictions
-              conf-source: /Workspace/${workspace.file_path}/conf
+              conf-source: /${workspace.file_path}/conf
               env: local
             source: WORKSPACE
             warehouse_id: ab12cd34efgh567i

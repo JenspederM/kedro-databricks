@@ -132,7 +132,7 @@ def _create_target_config(
         "node_type_id": node_type_id,
         "num_workers": 1,
         "spark_env_vars": {
-            "KEDRO_LOGGING_CONFIG": "/Workspace/\\${workspace.file_path}/conf/logging.yml"
+            "KEDRO_LOGGING_CONFIG": "/\\${workspace.file_path}/conf/logging.yml"
         },
     }
 

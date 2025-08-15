@@ -56,24 +56,23 @@ def iris_meta(databricks_iris_starter):
     return metadata
 
 
-def test_run(cli_runner, iris_meta):
+def test_run(cli_runner, iris_meta, custom_provider):
     """Test the run command."""
     project_path = iris_meta.project_path
-    provider = "azure"
-    command = ["databricks", "init", "--provider", provider]
+    command = ["databricks", "init", "--provider", custom_provider]
     result = cli_runner.invoke(commands, command, obj=iris_meta)  # noqa: F821
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     assert (project_path / "databricks.yml").exists(), "Databricks config not created"
     command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
     result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     assert (project_path / "resources").exists(), "Resources directory not created"
     deploy_cmd = ["databricks", "deploy", "--bundle"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     command = ["databricks", "run", iris_meta.package_name]
     result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     command = ["databricks", "destroy", "--auto-approve"]
     result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout)
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)

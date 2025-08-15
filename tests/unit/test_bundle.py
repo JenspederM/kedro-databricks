@@ -45,7 +45,7 @@ def test_generate_workflow(metadata):
                 ["input", "input1", "input2", "input3", "input4", "input5"],
                 ["output", "output1", "output2", "output3", "output4", "output5"],
             ),
-            "long_identity_input_input1_input2_input3_input4_input5_output_output1_output2_output3_output4_output",  # Last 5 gets truncated
+            "long_identity_input_input1_input2_input3_input4_input5_output_output1_output2_output3_output4_output",
         ),
         (
             node(identity, ["input"], ["output", "another"]),
@@ -279,6 +279,8 @@ def test_override_resources(jobs, overrides, expected, error):
         ("Fake Project 123 456", "fake-project"),
         ("Fake Project #%", "fake-project"),
         ("# Fake Project #%", "fake-project"),
+        ("my-project-package", "my-project-package"),
+        ("my_project_package", "my_project_package"),
     ],
 )
 def test_get_entry_point(actual, expected):
