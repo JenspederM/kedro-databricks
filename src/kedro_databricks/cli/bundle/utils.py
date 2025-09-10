@@ -4,6 +4,13 @@ import copy
 import re
 from typing import Any
 
+from kedro.pipeline.node import Node
+
+from kedro_databricks.constants import MAX_TASK_KEY_LENGTH
+from kedro_databricks.logger import get_logger
+
+log = get_logger("bundle").getChild(__name__)
+
 
 def remove_nulls(value: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:
     """Remove None values from a dictionary or list.
@@ -86,3 +93,36 @@ def sort_dict(d: dict[Any, Any], key_order: list[str]) -> dict[Any, Any]:
     order = key_order + other_keys
 
     return dict(sorted(d.items(), key=lambda x: order.index(x[0])))
+
+
+def sanitize_name(node: Node | str) -> str:
+    """Sanitize the node name to be used as a task key in Databricks.
+
+    Args:
+        node (Node | str): Kedro node object or node name
+
+    Returns:
+        str: sanitized task key
+    """
+    if isinstance(node, str):
+        _name = node
+    else:
+        _name = node.name
+
+    if not re.match(r"^[\w\-\_]+$", _name):  # Ensure the name is valid
+        log.warning(
+            f"Node name '{_name}' contains invalid characters and will be sanitized. "
+            "To avoid this use an explicit node name as `node(..., name='valid_name')`."
+        )
+
+        _name = re.sub(r"[^\w\_]", "_", _name)
+        _name = re.sub(r"_{2,}", "_", _name).lstrip("_").rstrip("_")
+
+    if len(_name) > MAX_TASK_KEY_LENGTH:  # Ensure the name is not too long
+        log.warning(
+            f"Node name '{_name}' is too long. "
+            f"Truncating to {MAX_TASK_KEY_LENGTH} characters."
+        )
+        _name = _name[:MAX_TASK_KEY_LENGTH]
+
+    return _name

@@ -44,8 +44,13 @@ DEFAULT_CONF_FOLDER = "conf"
 DEFAULT_CONFIG_KEY = "default"
 """Default configuration key for Databricks jobs."""
 
+DEFAULT_CONFIG_GENERATOR = "node"
+"""Default resource generator for Databricks Asset Bundle."""
+
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 """Help text for the default configuration key option."""
+
+DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a workflow for each node) or 'pipeline' (create a single workflow for the entire pipeline)."
 
 DEFAULT_PROVIDER = "azure"
 """Default cloud provider for Databricks Asset Bundle."""

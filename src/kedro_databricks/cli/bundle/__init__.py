@@ -9,8 +9,8 @@ from kedro.config import MissingConfigException
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.cli.bundle.generate_resources import ResourceGenerator
 from kedro_databricks.cli.bundle.override_resources import override_resources
+from kedro_databricks.cli.bundle.resource_generator import RESOURCE_GENERATORS
 from kedro_databricks.logger import get_logger
 
 log = get_logger("bundle")
@@ -20,6 +20,7 @@ def bundle(
     metadata: ProjectMetadata,
     env: str,
     default_key: str,
+    resource_generator_name: str,
     conf_source: str = "conf",
     params: str | None = None,
     pipeline_name: str | None = None,
@@ -35,6 +36,7 @@ def bundle(
         metadata (ProjectMetadata): The metadata of the project.
         env (str): The environment for the Kedro project (e.g., "dev", "prod").
         default_key (str): The default configuration key to use for Databricks.
+        resource_generator_name (str): The resource generator to use ("node" or "pipeline").
         conf_source (str): The source of the Kedro configuration files (default: "conf").
         params (str | None): Kedro run time parameters in `key1=value1,key2=value2` format (optional).
         pipeline_name (str | None): The pipeline to bundle (optional).
@@ -44,6 +46,15 @@ def bundle(
         raise ValueError(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
         )
+
+    try:
+        ResourceGenerator = RESOURCE_GENERATORS[resource_generator_name]
+    except KeyError:
+        raise ValueError(
+            f"Invalid resource generator: {resource_generator_name}. "
+            f"Valid options are: {', '.join(RESOURCE_GENERATORS.keys())}"
+        )
+
     overrides = _load_kedro_env_config(metadata, config_dir=conf_source, env=env)
     g = ResourceGenerator(metadata, env, conf_source, params)
     resources = g.generate_resources(pipeline_name)
