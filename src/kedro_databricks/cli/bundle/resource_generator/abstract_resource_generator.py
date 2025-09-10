@@ -1,3 +1,11 @@
+"""Base interfaces and helpers for Databricks resource generation.
+
+This module defines the abstract generator responsible for converting Kedro
+pipelines into Databricks jobs/workflows according to the Databricks REST API.
+Concrete implementations specify how tasks are laid out (e.g., per-node or
+per-pipeline).
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
