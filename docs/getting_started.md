@@ -1,4 +1,3 @@
-
 ### Installation
 
 To install the plugin, simply run:
@@ -21,11 +20,13 @@ You can check that the Databricks CLI is configured correctly by running the fol
 ```bash
 databricks auth describe
 ```
+
 If the command returns your username and workspace URL, then the Databricks CLI is configured correctly. If you see an error message, please refer to the [Databricks CLI documentation](https://docs.databricks.com/aws/en/dev-tools/cli/authentication) for troubleshooting.
 
 ### How to use the plugin
 
 #### Initializing a new Kedro project
+
 To create a project based on this starter, [ensure you have installed Kedro into a virtual environment](https://docs.kedro.org/en/stable/get_started/install.html). Then use the following command:
 
 ```bash
@@ -52,6 +53,7 @@ pip install kedro-databricks
 ```
 
 #### Initializing the Databricks Asset Bundle
+
 Now you can initialize the Databricks asset bundle
 
 ```bash
@@ -79,30 +81,30 @@ Override the Kedro workflow configuration for Databricks in the `conf/<env>/data
 # conf/dev/databricks.yml
 
 default: # will be applied to all workflows
-    job_clusters:
-        - job_cluster_key: default
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: Standard_DS3_v2
-            num_workers: 2
-            spark_env_vars:
-                KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-    tasks: # will be applied to all tasks in each workflow
-        - task_key: default
-          job_cluster_key: default
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        spark_version: 15.4.x-scala2.12
+        node_type_id: Standard_DS3_v2
+        num_workers: 2
+        spark_env_vars:
+          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+  tasks: # will be applied to all tasks in each workflow
+    - task_key: default
+      job_cluster_key: default
 
 <workflow-name>: # will only be applied to the workflow with the specified name
-    job_clusters:
-        - job_cluster_key: high-concurrency
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: Standard_DS3_v2
-            num_workers: 2
-            spark_env_vars:
-                KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-    tasks:
-        - task_key: <my-task> # will only be applied to the specified task in the specified workflow
-          job_cluster_key: high-concurrency
+  job_clusters:
+    - job_cluster_key: high-concurrency
+      new_cluster:
+        spark_version: 15.4.x-scala2.12
+        node_type_id: Standard_DS3_v2
+        num_workers: 2
+        spark_env_vars:
+          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+  tasks:
+    - task_key: <my-task> # will only be applied to the specified task in the specified workflow
+      job_cluster_key: high-concurrency
 ```
 
 The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
@@ -124,6 +126,31 @@ This command will generate the following files:
 ```
 
 The generated files contain the Asset Bundle resources definition for your Kedro project, which is necessary for deploying your project to Databricks.
+
+##### Choosing the resource generator
+
+You can choose how resources are generated using `-g/--resource-generator`:
+
+- `node` (default): creates a workflow task for each Kedro node with dependencies.
+- `pipeline`: creates a single task that runs the entire pipeline.
+
+Examples:
+
+```bash
+# Generate per-node tasks (default behavior)
+kedro databricks bundle -g node
+
+# Generate a single-task workflow for the whole pipeline
+kedro databricks bundle -g pipeline
+
+# Bundle only one pipeline by name
+kedro databricks bundle -g pipeline -p my_pipeline
+
+# Pass runtime parameters to tasks
+kedro databricks bundle -g node -r "param1=val1,param2=val2"
+```
+
+Tip: The same `-g/--resource-generator`, `-p/--pipeline`, and `-r/--params` options are also available when using `kedro databricks deploy --bundle`.
 
 #### Deploying to Databricks
 
