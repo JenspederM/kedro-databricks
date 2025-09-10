@@ -9,6 +9,8 @@ import kedro_databricks
 from kedro_databricks import cli
 from kedro_databricks.constants import (
     DEFAULT_CONF_FOLDER,
+    DEFAULT_CONFIG_GENERATOR,
+    DEFAULT_CONFIG_GENERATOR_HELP,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
     DEFAULT_PROVIDER,
@@ -80,6 +82,12 @@ def init(
 @click.option(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
+@click.option(
+    "-g",
+    "--resource-generator",
+    default=DEFAULT_CONFIG_GENERATOR,
+    help=DEFAULT_CONFIG_GENERATOR_HELP,
+)
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
 @click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
@@ -100,6 +108,7 @@ def init(
 def bundle(
     metadata: ProjectMetadata,
     default_key: str,
+    resource_generator: str,
     env: str,
     conf_source: str,
     pipeline: str | None,
@@ -127,6 +136,7 @@ def bundle(
         conf_source=conf_source,
         pipeline_name=pipeline,
         default_key=default_key,
+        resource_generator_name=resource_generator,
         params=params,
         overwrite=overwrite,
     )
@@ -141,6 +151,12 @@ def bundle(
     help="Bundle the project before deploying",
 )
 @click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
+@click.option(
+    "-g",
+    "--resource-generator",
+    default=DEFAULT_CONFIG_GENERATOR,
+    help=DEFAULT_CONFIG_GENERATOR_HELP,
+)
 @click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
 @click.option(
     "-r",
@@ -155,6 +171,7 @@ def deploy(
     env: str,
     bundle: bool,
     conf_source: str,
+    resource_generator: str,
     pipeline: str,
     runtime_params: str | None,
     databricks_args: list[str],
@@ -181,6 +198,7 @@ def deploy(
             pipeline_name=pipeline,
             conf_source=conf_source,
             default_key=DEFAULT_CONFIG_KEY,
+            resource_generator_name=resource_generator,
             params=runtime_params,
             overwrite=True,
         )

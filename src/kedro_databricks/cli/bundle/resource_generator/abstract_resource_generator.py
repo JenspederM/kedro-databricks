@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import re
+from abc import ABC, abstractmethod
 from collections.abc import Iterable, MutableMapping
 from typing import Any
 
@@ -9,9 +9,13 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from kedro_databricks.cli.bundle.utils import get_entry_point, remove_nulls, sort_dict
+from kedro_databricks.cli.bundle.utils import (
+    get_entry_point,
+    remove_nulls,
+    sanitize_name,
+    sort_dict,
+)
 from kedro_databricks.constants import (
-    MAX_TASK_KEY_LENGTH,
     TASK_KEY_ORDER,
     WORKFLOW_KEY_ORDER,
 )
@@ -21,7 +25,7 @@ from kedro_databricks.utils import make_workflow_name, require_databricks_run_sc
 log = get_logger("bundle").getChild(__name__)
 
 
-class ResourceGenerator:
+class AbstractResourceGenerator(ABC):
     """Generates Databricks resources for the given pipelines.
 
     Finds all pipelines in the project and generates Databricks asset bundle resources
@@ -110,21 +114,21 @@ class ResourceGenerator:
         """
         ## Follows the Databricks REST API schema
         ## https://docs.databricks.com/api/workspace/jobs/create
-        workflow = {
-            "name": name,
-            "tasks": [
-                self._create_task(node, depends_on=deps)
-                for node, deps in sorted(pipeline.node_dependencies.items())
-            ],
-        }
+        workflow = self._create_workflow_dict(name=name, pipeline=pipeline)
         non_null = remove_nulls(sort_dict(workflow, WORKFLOW_KEY_ORDER))
         if not isinstance(non_null, dict):  # pragma: no cover - this is a type check
             raise RuntimeError("Expected a dict")
         return non_null
 
-    def _create_task(
+    @abstractmethod
+    def _create_workflow_dict(
+        self, name: str, pipeline: Pipeline
+    ) -> dict[str, Any]: ...
+
+    def _create_task_with_params(
         self,
-        node: Node,
+        name: str,
+        params: list[str],
         depends_on: Iterable[Node],
     ) -> dict[str, Any]:
         """Create a Databricks task for a given node.
@@ -140,14 +144,6 @@ class ResourceGenerator:
         ## Follows the Databricks REST API schema. See "tasks" in the link below
         ## https://docs.databricks.com/api/workspace/jobs/create
         entry_point = get_entry_point(self.metadata.project_name)
-        params = [
-            "--nodes",
-            node.name,
-            "--conf-source",
-            self.remote_conf_dir,
-            "--env",
-            "${var.environment}",
-        ]
 
         if require_databricks_run_script():  # pragma: no cover
             entry_point = "databricks_run"
@@ -157,7 +153,7 @@ class ResourceGenerator:
             params = params + ["--params", self.params]
 
         task = {
-            "task_key": sanitize_name(node),
+            "task_key": sanitize_name(name),
             "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
                 {"task_key": sanitize_name(dep)}
@@ -171,32 +167,3 @@ class ResourceGenerator:
         }
 
         return sort_dict(task, TASK_KEY_ORDER)
-
-
-def sanitize_name(node: Node) -> str:
-    """Sanitize the node name to be used as a task key in Databricks.
-
-    Args:
-        node (Node): Kedro node object
-
-    Returns:
-        str: sanitized task key
-    """
-    _name = node.name
-    if not re.match(r"^[\w\-\_]+$", _name):  # Ensure the name is valid
-        log.warning(
-            f"Node name '{_name}' contains invalid characters and will be sanitized. "
-            "To avoid this use an explicit node name as `node(..., name='valid_name')`."
-        )
-
-        _name = re.sub(r"[^\w\_]", "_", _name)
-        _name = re.sub(r"_{2,}", "_", _name).lstrip("_").rstrip("_")
-
-    if len(_name) > MAX_TASK_KEY_LENGTH:  # Ensure the name is not too long
-        log.warning(
-            f"Node name '{_name}' is too long. "
-            f"Truncating to {MAX_TASK_KEY_LENGTH} characters."
-        )
-        _name = _name[:MAX_TASK_KEY_LENGTH]
-
-    return _name

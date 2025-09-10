@@ -9,31 +9,54 @@ from kedro_databricks.cli.bundle import (
     _save_bundled_resources,
     bundle,
 )
-from kedro_databricks.cli.bundle.generate_resources import (
-    ResourceGenerator,
-    remove_nulls,
-    sanitize_name,
-    sort_dict,
-)
 from kedro_databricks.cli.bundle.override_resources import (
     _get_lookup_key,
     _override_workflow,
     _update_list_by_key,
     override_resources,
 )
-from kedro_databricks.cli.bundle.utils import get_entry_point
+from kedro_databricks.cli.bundle.resource_generator import (
+    NodeResourceGenerator,
+    PipelineResourceGenerator,
+)
+from kedro_databricks.cli.bundle.utils import (
+    get_entry_point,
+    remove_nulls,
+    sanitize_name,
+    sort_dict,
+)
 from kedro_databricks.constants import OVERRIDE_KEY_MAP
 from kedro_databricks.utils import require_databricks_run_script
 from tests.utils import WORKFLOW, _generate_task, identity, long_identity, pipeline
 
 
 def test_bundle(metadata):
-    bundle(metadata=metadata, env="fake_env", default_key="default")
+    bundle(
+        metadata=metadata,
+        env="fake_env",
+        default_key="default",
+        resource_generator_name="node",
+    )
+
+
+def test_bundle_invalid_resource_generator(metadata):
+    with pytest.raises(ValueError):
+        bundle(
+            metadata=metadata,
+            env="fake_env",
+            default_key="default",
+            resource_generator_name="invalid",
+        )
 
 
 def test_generate_workflow(metadata):
-    g = ResourceGenerator(metadata, "fake_env")
+    g = NodeResourceGenerator(metadata, "fake_env")
     assert g._create_workflow("workflow1", pipeline) == WORKFLOW
+
+
+def test_generate_workflow_pipeline(metadata):
+    g = PipelineResourceGenerator(metadata, "fake_env")
+    assert g._create_workflow("workflow1", pipeline) is not None
 
 
 @pytest.mark.parametrize(
@@ -55,6 +78,7 @@ def test_generate_workflow(metadata):
         (node(identity, ["input"], ["output"], name="a"), "a"),
         (node(identity, ["input"], ["output"], name="a", namespace="abc"), "abc_a"),
         (node(identity, ["input"], ["output"], name="a" * 150), "a" * 100),
+        ("a" * 150, "a" * 100),
     ],
 )
 def test_sanitize_name(node, expected):
@@ -64,7 +88,7 @@ def test_sanitize_name(node, expected):
 
 
 def test_create_task(metadata):
-    g = ResourceGenerator(metadata, "fake_env")
+    g = NodeResourceGenerator(metadata, "fake_env")
     expected_task = _generate_task("task", ["a", "b"])
     node_a = node(identity, ["input"], ["output"], name="a")
     node_b = node(identity, ["input"], ["output"], name="b")
@@ -85,8 +109,31 @@ def test_create_task(metadata):
     )
 
 
+def test_create_pipeline_task(metadata):
+    g = PipelineResourceGenerator(metadata, "fake_env")
+    pipeline_name = "pipeline_task"
+
+    assert g._create_pipeline_task(pipeline_name) == {
+        "task_key": pipeline_name,
+        "libraries": [{"whl": "../dist/*.whl"}],
+        "depends_on": [],
+        "python_wheel_task": {
+            "entry_point": "fake-project",
+            "package_name": "fake_project",
+            "parameters": [
+                "--pipeline",
+                pipeline_name,
+                "--conf-source",
+                "/${workspace.file_path}/conf",
+                "--env",
+                "${var.environment}",
+            ],
+        },
+    }
+
+
 def test_create_task_with_runtime_params(metadata):
-    controller = ResourceGenerator(
+    controller = NodeResourceGenerator(
         metadata, "fake_env", params="key1=value1,key2=value2"
     )
     expected_task = _generate_task(
@@ -112,7 +159,7 @@ def test_create_task_with_runtime_params(metadata):
 
 
 def test_generate_resources(metadata):
-    controller = ResourceGenerator(metadata, "fake_env")
+    controller = NodeResourceGenerator(metadata, "fake_env")
     controller.pipelines = {"__default__": Pipeline([])}
     assert controller.generate_resources(pipeline_name=None) == {}
     controller.pipelines = {
@@ -135,7 +182,7 @@ def test_generate_resources(metadata):
 
 
 def test_generate_resources_another_conf(metadata):
-    controller = ResourceGenerator(metadata, "fake_env", "sub_conf")
+    controller = NodeResourceGenerator(metadata, "fake_env", "sub_conf")
     controller.pipelines = {
         "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
     }
@@ -157,7 +204,7 @@ def test_generate_resources_another_conf(metadata):
 
 
 def test_generate_resources_in_a_sorted_manner(metadata):
-    controller = ResourceGenerator(metadata, "fake_env")
+    controller = NodeResourceGenerator(metadata, "fake_env")
     controller.pipelines = {
         "__default__": Pipeline(
             [
@@ -184,7 +231,7 @@ def test_generate_resources_in_a_sorted_manner(metadata):
 
 
 def test_generate_resources_for_a_single_pipeline(metadata):
-    controller = ResourceGenerator(metadata, "fake_env")
+    controller = NodeResourceGenerator(metadata, "fake_env")
     controller.pipelines = {
         "__default__": Pipeline(
             [
@@ -219,7 +266,7 @@ def test_generate_resources_for_a_single_pipeline(metadata):
 
 
 def test_save_resources(metadata):
-    controller = ResourceGenerator(metadata, "fake_env")
+    controller = NodeResourceGenerator(metadata, "fake_env")
     resources = controller.generate_resources()
     overrides = _load_kedro_env_config(metadata, "conf", "fake_env")
     result = {}
