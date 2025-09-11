@@ -10,7 +10,9 @@ from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.cli.bundle.override_resources import override_resources
-from kedro_databricks.cli.bundle.resource_generator import RESOURCE_GENERATORS
+from kedro_databricks.cli.bundle.resource_generator_resolver import (
+    RESOURCE_GENERATOR_RESOLVER,
+)
 from kedro_databricks.logger import get_logger
 
 log = get_logger("bundle")
@@ -47,13 +49,7 @@ def bundle(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
         )
 
-    try:
-        ResourceGenerator = RESOURCE_GENERATORS[resource_generator_name]
-    except KeyError:
-        raise ValueError(
-            f"Invalid resource generator: {resource_generator_name}. "
-            f"Valid options are: {', '.join(RESOURCE_GENERATORS.keys())}"
-        )
+    ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator_name)
 
     overrides = _load_kedro_env_config(metadata, config_dir=conf_source, env=env)
     g = ResourceGenerator(metadata, env, conf_source, params)

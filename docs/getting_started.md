@@ -134,6 +134,9 @@ You can choose how resources are generated using `-g/--resource-generator`:
 - `node` (default): creates a workflow task for each Kedro node with dependencies.
 - `pipeline`: creates a single task that runs the entire pipeline.
 
+You can also provide a fully-qualified dotted path to a custom generator class
+that subclasses `kedro_databricks.cli.bundle.resource_generator.AbstractResourceGenerator`.
+
 Examples:
 
 ```bash
@@ -151,6 +154,38 @@ kedro databricks bundle -g node -r "param1=val1,param2=val2"
 ```
 
 Tip: The same `-g/--resource-generator`, `-p/--pipeline`, and `-r/--params` options are also available when using `kedro databricks deploy --bundle`.
+
+##### Creating a custom resource generator
+
+You can implement your own generator by subclassing
+`kedro_databricks.cli.bundle.resource_generator.AbstractResourceGenerator` and
+returning a Databricks workflow payload in `_create_workflow_dict`. For example,
+the snippet below creates per-node tasks and attaches a custom cluster:
+
+```python
+# my_project/generators/custom.py
+from __future__ import annotations
+from typing import Any
+
+from kedro.pipeline import Pipeline
+from kedro_databricks.cli.bundle.resource_generator.abstract_resource_generator import (
+    AbstractResourceGenerator,
+)
+
+
+class CustomGenerator(AbstractResourceGenerator):
+    """Example generator with a predefined job cluster per task."""
+
+    def _create_workflow_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+        # Your custom logic
+        return {"name": name, "tasks": []}
+```
+
+Use your custom generator by passing its dotted path with `-g/--resource-generator`:
+
+```bash
+kedro databricks bundle -g "my_project.generators.custom.CustomGenerator"
+```
 
 #### Deploying to Databricks
 
