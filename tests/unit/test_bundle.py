@@ -26,6 +26,7 @@ from kedro_databricks.cli.bundle.utils import (
     sort_dict,
 )
 from kedro_databricks.constants import OVERRIDE_KEY_MAP
+from kedro_databricks.resource_resolver import ResourceNotFoundError
 from kedro_databricks.utils import require_databricks_run_script
 from tests.utils import WORKFLOW, _generate_task, identity, long_identity, pipeline
 
@@ -40,7 +41,7 @@ def test_bundle(metadata):
 
 
 def test_bundle_invalid_resource_generator(metadata):
-    with pytest.raises(ValueError):
+    with pytest.raises(ResourceNotFoundError):
         bundle(
             metadata=metadata,
             env="fake_env",
