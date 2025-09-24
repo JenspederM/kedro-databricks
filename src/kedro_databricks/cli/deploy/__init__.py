@@ -8,7 +8,7 @@ from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.cli.deploy.get_deployed_resources import get_deployed_resources
 from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import Command, assert_databricks_cli
+from kedro_databricks.utils import Command, _get_arg_value, assert_databricks_cli
 
 log = get_logger("deploy")
 
@@ -104,16 +104,6 @@ def _deploy_project(
     log.info("Successfully Deployed Jobs")
     get_deployed_resources(metadata, only_dev=target in ["dev", "local"])
     return result
-
-
-def _get_arg_value(args: list[str], arg_name: str) -> str | None:
-    for i, arg in enumerate(args):
-        if "=" in arg:
-            _arg, value = arg.split("=", 1)
-            if _arg == arg_name:
-                return value
-        elif arg == arg_name:
-            return args[i + 1]
 
 
 def _check_deployment_complete(result: CompletedProcess) -> bool:

@@ -1791,7 +1791,7 @@ wheels = [
 
 [[package]]
 name = "kedro-databricks"
-version = "0.12.3"
+version = "0.12.4"
 source = { editable = "." }
 dependencies = [
     { name = "databricks-sdk" },
