@@ -211,3 +211,13 @@ def _version_to_str(version: list[int]) -> str:
     if len(version) != 3:  # noqa: PLR2004 - Semantic versioning requires 3 parts
         raise ValueError(f"Invalid version: {version}")
     return ".".join(str(x) for x in version)
+
+
+def _get_arg_value(args: list[str], arg_name: str) -> str | None:
+    for i, arg in enumerate(args):
+        if "=" in arg:
+            _arg, value = arg.split("=", 1)
+            if _arg == arg_name:
+                return value
+        elif arg == arg_name:
+            return args[i + 1]
