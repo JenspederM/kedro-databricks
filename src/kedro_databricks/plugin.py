@@ -220,4 +220,4 @@ def destroy(metadata: ProjectMetadata, env: str, databricks_args: list[str]):
         env: The environment for the Kedro project (e.g., "dev", "prod").
         databricks_args: Additional arguments to be passed to the `databricks` CLI.
     """
-    cli.destroy(metadata, env, *databricks_args)
+    cli.destroy(metadata, env, list(databricks_args))
