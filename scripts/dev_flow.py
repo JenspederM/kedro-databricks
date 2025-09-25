@@ -1,6 +1,8 @@
 import argparse
 import logging
+import shutil
 from importlib.metadata import version
+from pathlib import Path
 
 from kedro_databricks.utils import Command
 
@@ -100,5 +102,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     if args.new:
+        new_project(args.name)
+    elif Path(f"./{args.name}").exists():
+        shutil.rmtree(Path(f"./{args.name}"))
         new_project(args.name)
     run_kedro_databricks_flow(args.name, destroy=args.destroy)
