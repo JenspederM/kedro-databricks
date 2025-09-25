@@ -1,8 +1,8 @@
-new-dev name="develop-eggs":
-    uv run ./scripts/mkdev.py new {{ name }}
+new-dev name="develop-eggs" *args="":
+    uv run ./scripts/mkdev.py new {{ name }} {{ args }}
 
-sync-dev name="develop-eggs":
-    uv run ./scripts/mkdev.py sync {{ name }}
+sync-dev name="develop-eggs" *args="":
+    uv run ./scripts/mkdev.py sync {{ name }} {{ args }}
 
 run-dev *args:
     uv run ./scripts/dev_flow.py {{ args }}
