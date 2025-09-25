@@ -114,12 +114,19 @@ def test_create_pipeline_task(metadata):
     g = PipelineResourceGenerator(metadata, "fake_env")
     pipeline_name = "pipeline_task"
 
+    if require_databricks_run_script():
+        entry_point = "databricks_run"
+        extra_params = ["--package-name", "fake_project"]
+    else:
+        entry_point = "fake-project"
+        extra_params = []
+
     assert g._create_pipeline_task(pipeline_name) == {
         "task_key": pipeline_name,
         "libraries": [{"whl": "../dist/*.whl"}],
         "depends_on": [],
         "python_wheel_task": {
-            "entry_point": "fake-project",
+            "entry_point": entry_point,
             "package_name": "fake_project",
             "parameters": [
                 "--pipeline",
@@ -128,6 +135,7 @@ def test_create_pipeline_task(metadata):
                 "/${workspace.file_path}/conf",
                 "--env",
                 "${var.environment}",
+                *extra_params,
             ],
         },
     }
