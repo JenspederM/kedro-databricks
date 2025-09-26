@@ -37,16 +37,21 @@ jobs:
       - name: Test kedro-databricks
         run: uv run pytest tests/unit
 
+      - name: Rename coverage file
+        run: mv coverage.xml coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
+
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}
-          path: coverage.xml
+          path: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
           if-no-files-found: ignore
   build-pr:
     name: Build PR artifact
     runs-on: ubuntu-latest
     needs: test
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v5
         with:
           pattern: coverage-*
