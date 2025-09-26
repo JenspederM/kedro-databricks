@@ -55,6 +55,7 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           pattern: coverage-*
+          path: coverage
           merge-multiple: true
 
       - name: list files
@@ -70,7 +71,7 @@ jobs:
       - name: Create PR artifact
         run: |
           mkdir -p ./pr
-          cp coverage.xml ./pr/coverage.xml
+          cp -r coverage ./pr/coverage
           cp body.md ./pr/body.md
           echo ${{ github.event.pull_request.number }} > ./pr/NR
 
