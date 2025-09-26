@@ -1,0 +1,66 @@
+name: Post comments
+
+on:
+  workflow_run:
+    workflows: ["Unit tests"]
+    types:
+      - completed
+
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: pr-*
+
+      - name: 'List files'
+        run: ls -la
+
+      - name: 'Unzip artifact'
+        run: unzip pr.zip
+
+      - name: 'Export Issue number'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs');
+            const core = require('@actions/core');
+            var issue_number = Number(fs.readFileSync('./NR'));
+            core.exportVariable('ISSUE_NUMBER', issue_number);
+
+      - name: 'Post coverage comment'
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          github-token: ${{ github.token }}
+          title: "Unit Test Coverage Report"
+          pytest-xml-coverage-path: "coverage.xml"
+          issue-number: ${{ env.ISSUE_NUMBER }}
+
+      - name: 'Post changelog comment'
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs');
+            var issue_number = Number(fs.readFileSync('./NR'));
+            var body = fs.readFileSync('./body.md').toString();
+            if (body.length == 0) {
+              body = "## Changelog\nNo version increment detected.";
+            }
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: body
+            });
