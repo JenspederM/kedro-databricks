@@ -25,7 +25,7 @@ jobs:
            run_id: ${{ github.event.workflow_run.id }}
 
       - name: Export Issue number
-        run: cat ./pr/NR >> $GITHUB_ENV
+        run: echo "PR_NBR=$(cat ./pr/NR)" >> $GITHUB_ENV
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
