@@ -1,0 +1,80 @@
+name: Post comments
+
+on:
+  workflow_run:
+    workflows: ["Unit tests"]
+    types:
+      - completed
+
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: 'Download artifact'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pr"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
+
+      - name: 'Unzip artifact'
+        run: unzip pr.zip
+
+      - name: 'Export Issue number'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs');
+            const core = require('@actions/core');
+            var issue_number = Number(fs.readFileSync('./NR'));
+            core.exportVariable('ISSUE_NUMBER', issue_number);
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: "*/**/coverage-*.xml"
+
+      - name: 'Post changelog comment'
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs');
+            var issue_number = Number(fs.readFileSync('./NR'));
+            var body = fs.readFileSync('./body.md').toString();
+            if (body.length == 0) {
+              body = "## Changelog\nNo version increment detected.";
+            }
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: body
+            });
