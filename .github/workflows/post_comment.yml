@@ -39,4 +39,4 @@ jobs:
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: ./pr/body.md
-          pr-number: ${{ env.NR }}
+          pr-number: ${{ env.PR_NBR }}
