@@ -27,6 +27,14 @@ jobs:
       - name: Export Issue number
         run: echo "PR_NBR=$(cat ./pr/NR)" >> $GITHUB_ENV
 
+      - name: Check if version bump is needed
+        run: |
+          if [ -s ./pr/body.md ]; then
+            echo "BUMP_VERSION=true" >> $GITHUB_ENV
+          else
+            echo "BUMP_VERSION=false" >> $GITHUB_ENV
+          fi
+
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
@@ -35,8 +43,10 @@ jobs:
           event_name: ${{ github.event.workflow_run.event }}
           files: "./pr/**/coverage-*.xml"
 
-      - name: PR comment with file
+      - name: Publish version bump comment
+        if: env.BUMP_VERSION == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: ./pr/body.md
           pr-number: ${{ env.PR_NBR }}
+          comment-tag: version-bump
