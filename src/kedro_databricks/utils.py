@@ -93,10 +93,11 @@ class Command:
             raise RuntimeError(error_msg)
 
 
-def make_workflow_name(package_name, pipeline_name: str) -> str:
+def make_workflow_name(package_name: str, pipeline_name: str) -> str:
     """Create a name for the Databricks workflow.
 
     Args:
+        package_name (str): The name of the Kedro project
         pipeline_name (str): The name of the pipeline
 
     Returns:
