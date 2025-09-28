@@ -57,8 +57,8 @@ packages = ["src/kedro_databricks"]
 addopts = [
     '--log-format="%(asctime)s %(levelname)s %(message)s"',
     '--log-date-format="%Y-%m-%d %H:%M:%S"',
-    '--cov-report=xml:coverage.xml',
     '--cov-report=term-missing',
+    '--junit-xml=coverage.xml',
     '--cov=kedro_databricks',
     '--no-cov-on-fail',
     '--cov-fail-under=70',
