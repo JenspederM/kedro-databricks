@@ -42,7 +42,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}
+          name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
           path: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
           if-no-files-found: ignore
   build-pr:
