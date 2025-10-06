@@ -324,19 +324,79 @@ def _apply_aggregated_updates(
 
 
 def _deep_merge_dicts(base: dict, extra: dict) -> dict:
-    """Deep merge two dictionaries.
+    """Deep merge two override dictionaries.
 
     - Dict values are merged recursively
-    - List values are replaced by the newer list (last wins)
+    - For list-of-dict sections recognized in OVERRIDE_KEY_MAP (e.g., job_clusters, tasks),
+      lists are merged by identifier (last wins) to preserve entries from both sides
+    - Other list values are replaced by the newer list (last wins)
     - Other values are overwritten by the newer value
     """
     result = copy.deepcopy(base)
     for k, v in extra.items():
         if k in result and isinstance(result[k], dict) and isinstance(v, dict):
             result[k] = _deep_merge_dicts(result[k], v)
+        elif (
+            k in result
+            and isinstance(result[k], list)
+            and isinstance(v, list)
+            and k in OVERRIDE_KEY_MAP
+        ):
+            result[k] = _merge_override_lists(result[k], v, k)
         else:
             result[k] = copy.deepcopy(v)
     return result
+
+
+def _merge_override_lists(
+    base_list: list[dict[str, Any]], extra_list: list[dict[str, Any]], key_name: str
+) -> list[dict[str, Any]]:
+    """Merge two override lists of dicts by identifier (last wins).
+
+    This is used when combining default and regex/literal overrides before applying
+    to a specific workflow, so that entries like job_clusters are not lost.
+
+    Args:
+        base_list (list[dict]): Existing list of items.
+        extra_list (list[dict]): Additional items to merge in.
+        key_name (str): Section name used to look up the identifier key.
+
+    Returns:
+        list[dict]: Merged items keyed by the section's identifier.
+    """
+    identifier = _get_lookup_key(key_name)
+    # Preserve order: start with base keys in order, then append new keys
+    base_items = [copy.deepcopy(i) for i in base_list]
+    extra_items = [copy.deepcopy(i) for i in extra_list]
+
+    def to_map(
+        items: list[dict[str, Any]],
+    ) -> tuple[dict[str, dict[str, Any]], list[str]]:
+        order: list[str] = []
+        mapping: dict[str, dict[str, Any]] = {}
+        for it in items:
+            key = it.get(identifier)
+            if key is None:
+                continue
+            order.append(str(key))
+            mapping[str(key)] = it
+        return mapping, order
+
+    base_map, base_order = to_map(base_items)
+    extra_map, extra_order = to_map(extra_items)
+
+    merged_order = base_order[:]
+    for k in extra_order:
+        if k not in merged_order:
+            merged_order.append(k)
+
+    merged_map: dict[str, dict[str, Any]] = {}
+    for k in merged_order:
+        merged_map[k] = copy.deepcopy(base_map.get(k, {}))
+        # overlay with extra (last wins)
+        merged_map[k].update(copy.deepcopy(extra_map.get(k, {})))
+
+    return [merged_map[k] for k in merged_order]
 
 
 def _get_workflow_overrides(overrides, workflow, default_key):

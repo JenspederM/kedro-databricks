@@ -1,0 +1,206 @@
+resources:
+  jobs:
+    country_1:
+      name: country_1
+      tags:
+        base: "yes"
+        country: "country_1"
+        x: "1"
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+              KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            custom_tags:
+              country: "country_1"
+        - job_cluster_key: high-performance
+          new_cluster:
+            custom_tags:
+              performance: "high"
+      tasks:
+        - task_key: node_1
+          job_cluster_key: default
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_1_node_1
+          job_cluster_key: high-performance
+          depends_on:
+            - task_key: node_1
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_1_node_2
+          job_cluster_key: high-performance
+          depends_on:
+            - task_key: node_1
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+    country_1.subpipe1:
+      name: country_1.subpipe1
+      tags:
+        base: "yes"
+        country: "country_1"
+        x: "literal"
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+              KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            custom_tags:
+              country: "country_1"
+        - job_cluster_key: high-performance
+          new_cluster:
+            custom_tags:
+              performance: "high"
+        - job_cluster_key: ultra
+          new_cluster:
+            custom_tags:
+              tier: "ultra"
+      tasks:
+        - task_key: node_1
+          job_cluster_key: default
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_1_node_1
+          job_cluster_key: ultra
+
+    country_1.subpipe2:
+      name: country_1.subpipe2
+      tags:
+        base: "yes"
+        country: "country_1"
+        x: "1"
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+              KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            custom_tags:
+              country: "country_1"
+        - job_cluster_key: high-performance
+          new_cluster:
+            custom_tags:
+              performance: "high"
+      tasks:
+        - task_key: ns_1_node_1
+          job_cluster_key: high-performance
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_1_node_2
+          job_cluster_key: high-performance
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+    country_2.subpipe2:
+      name: country_2.subpipe2
+      tags:
+        base: "yes"
+        country: "country_2"
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+              KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            custom_tags:
+              country: "country_2"
+        - job_cluster_key: high-performance
+          new_cluster:
+            custom_tags:
+              performance: "high"
+      tasks:
+        - task_key: ns_2_node_1
+          job_cluster_key: high-performance
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_2_node_2
+          job_cluster_key: high-performance
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+
+    country_2.subpipe1:
+      name: country_2.subpipe1
+      tags:
+        base: "yes"
+        country: "country_2"
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_env_vars:
+              KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
+            custom_tags:
+              country: "country_2"
+        - job_cluster_key: high-performance
+          new_cluster:
+            custom_tags:
+              performance: "high"
+      tasks:
+        - task_key: node_2
+          job_cluster_key: default
+          depends_on: []
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: ns_0_node_0_1
+          job_cluster_key: high-performance
+          depends_on:
+            - task_key: node0
+          python_wheel_task:
+            package_name: pkg
+            entry_point: entry
+            parameters: []
+          libraries:
+            - whl: ../dist/*.whl

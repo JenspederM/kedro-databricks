@@ -1,0 +1,46 @@
+default:
+  tags:
+    base: "yes"
+    country: "unknown"
+  tasks:
+    - task_key: default
+      job_cluster_key: default
+    - task_key: "re:^ns_.*"
+      job_cluster_key: high-performance
+  job_clusters:
+    - job_cluster_key: high-performance
+      new_cluster:
+        custom_tags:
+          performance: "high"
+
+"re:^country_1(\\..+)?$":
+  tags:
+    country: "country_1"
+    x: "1"
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        custom_tags:
+          country: "country_1"
+
+"re:^country_2(\\..+)?$":
+  tags:
+    country: "country_2"
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        custom_tags:
+          country: "country_2"
+
+# Literal workflow override prevails over regex (for tags and tasks)
+country_1.subpipe1:
+  tags:
+    x: "literal"
+  tasks:
+    - task_key: ns_1_node_1
+      job_cluster_key: ultra
+  job_clusters:
+    - job_cluster_key: ultra
+      new_cluster:
+        custom_tags:
+          tier: "ultra"
