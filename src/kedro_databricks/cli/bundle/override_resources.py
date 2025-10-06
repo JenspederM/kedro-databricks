@@ -1,4 +1,5 @@
 import copy
+import re
 from typing import Any
 
 from kedro_databricks.constants import IGNORED_OVERRIDE_KEYS, OVERRIDE_KEY_MAP
@@ -43,6 +44,20 @@ def override_resources(bundle: dict, overrides: dict, default_key) -> dict[str, 
 
 
 def _get_lookup_key(key: str):
+    """Return the identifier key used to merge lists for a given override section.
+
+    This looks up the appropriate unique key (e.g., ``task_key`` for ``tasks``)
+    from ``OVERRIDE_KEY_MAP``. If the section is unknown, a ``ValueError`` is raised.
+
+    Args:
+        key (str): Top-level section name (e.g., ``tasks``, ``job_clusters``).
+
+    Returns:
+        str: The unique identifier key for items within the section.
+
+    Raises:
+        ValueError: If the section is not recognized in ``OVERRIDE_KEY_MAP``.
+    """
     lookup = OVERRIDE_KEY_MAP.get(key)
     if lookup is None:
         raise ValueError(f"Key {key} not found in OVERRIDE_KEY_MAP")
@@ -85,17 +100,27 @@ def _update_list_by_key(
     """
     _validate_list_by_key(old=old, new=new, lookup_key=lookup_key)
     old_obj = {curr.pop(lookup_key): curr for curr in copy.deepcopy(old)}
-    new_obj = {update.pop(lookup_key): update for update in copy.deepcopy(new)}
-    keys = set(old_obj.keys()).union(set(new_obj.keys()))
 
-    for key in keys:
-        if default and key == default_key:
-            continue
-        update = copy.deepcopy(default)
-        update.pop(lookup_key, None)
-        update.update(new_obj.get(key, {}))
-        new = _override_workflow(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
-        old_obj[key] = new  # type: ignore
+    literal_updates, regex_updates = _split_updates_by_type(new, lookup_key)
+    keys = _collect_target_keys(old_obj, literal_updates)
+    aggregated_updates = _initialize_aggregated_updates(
+        keys, default, lookup_key, default_key
+    )
+    _augment_with_regex_updates(
+        aggregated_updates,
+        regex_updates,
+        keys,
+        default_key,
+        lookup_key,
+        skip_default_literal=bool(default),
+    )
+    _augment_with_literal_updates(
+        aggregated_updates,
+        literal_updates,
+        default_key,
+        skip_default_literal=bool(default),
+    )
+    _apply_aggregated_updates(old_obj, aggregated_updates, default_key)
 
     return sorted(
         [{lookup_key: k, **v} for k, v in old_obj.items()], key=lambda x: x[lookup_key]
@@ -130,6 +155,21 @@ def _validate_list_by_key(
 
 
 def _get_old_value(result: Any, key: Any, value: Any):
+    """Return the current value for ``key`` in ``result`` with a sensible default.
+
+    The default is derived from the shape of ``value`` to keep merge semantics:
+    - dict -> {}
+    - list -> []
+    - other -> None
+
+    Args:
+        result (Any): Current object being merged into.
+        key (Any): Key to fetch from ``result``.
+        value (Any): Incoming value used to infer a default.
+
+    Returns:
+        Any: The existing value for the key or a type-appropriate default.
+    """
     default = None
     if isinstance(value, dict):
         default = {}
@@ -138,14 +178,203 @@ def _get_old_value(result: Any, key: Any, value: Any):
     return result.get(key, default)
 
 
+def _split_updates_by_type(
+    updates: list[dict[str, Any]], lookup_key: str
+) -> tuple[
+    list[tuple[str, dict[str, Any]]], list[tuple[re.Pattern[str], dict[str, Any], str]]
+]:
+    """Split update items into literal and regex-based entries while preserving order.
+
+    The function identifies regex-based entries by the ``re:`` prefix on the
+    ``lookup_key`` value and compiles them for later matching.
+
+    Args:
+        updates (list[dict[str, Any]]): Incoming update items.
+        lookup_key (str): Identifier key used to match items (e.g., ``task_key``).
+
+    Returns:
+        tuple[list[tuple[str, dict]], list[tuple[Pattern, dict, str]]]:
+            - literal updates as ``(key, payload)``
+            - regex updates as ``(compiled_pattern, payload, pattern_str)``
+    """
+    literal_updates: list[tuple[str, dict[str, Any]]] = []
+    regex_updates: list[tuple[re.Pattern[str], dict[str, Any], str]] = []
+    for upd in copy.deepcopy(updates):
+        key_value = upd.pop(lookup_key)
+        if isinstance(key_value, str) and key_value.startswith("re:"):
+            pattern = key_value[3:]
+            try:
+                compiled = re.compile(pattern)
+            except re.error:
+                log.debug(f"Invalid regex pattern for {lookup_key}: {pattern}")
+                continue
+            regex_updates.append((compiled, upd, pattern))
+        else:
+            literal_updates.append((key_value, upd))
+    return literal_updates, regex_updates
+
+
+def _collect_target_keys(
+    old_obj: dict[str, dict[str, Any]],
+    literal_updates: list[tuple[str, dict[str, Any]]],
+) -> set[str]:
+    """Collect all keys that will be updated by combining existing and new keys.
+
+    Args:
+        old_obj (dict[str, dict[str, Any]]): Existing items indexed by key.
+        literal_updates (list[tuple[str, dict[str, Any]]]): New literal updates.
+
+    Returns:
+        set[str]: Union of existing keys and literal update keys.
+    """
+    return set(old_obj.keys()).union({k for k, _ in literal_updates})
+
+
+def _initialize_aggregated_updates(
+    keys: set[str], default: dict[str, Any], lookup_key: str, default_key: str
+) -> dict[str, dict[str, Any]]:
+    """Create a base updates map per key, seeded with the default payload.
+
+    The ``default`` object is deep-copied per target key and the ``lookup_key``
+    is removed so only payload fields remain.
+
+    Args:
+        keys (set[str]): Keys to initialize.
+        default (dict[str, Any]): Default payload to seed per key.
+        lookup_key (str): Identifier to strip from the payload.
+        default_key (str): Reserved key that is skipped if defaults are provided.
+
+    Returns:
+        dict[str, dict[str, Any]]: Aggregated updates initialized per key.
+    """
+    aggregated_updates: dict[str, dict[str, Any]] = {}
+    for key in keys:
+        if default and key == default_key:
+            continue
+        base = copy.deepcopy(default)
+        base.pop(lookup_key, None)
+        aggregated_updates[key] = base
+    return aggregated_updates
+
+
+def _augment_with_regex_updates(
+    aggregated_updates: dict[str, dict[str, Any]],
+    regex_updates: list[tuple[re.Pattern[str], dict[str, Any], str]],
+    keys: set[str],
+    default_key: str,
+    lookup_key: str,
+    skip_default_literal: bool = False,
+) -> None:
+    """Apply regex-based updates to all matching keys, in order.
+
+    Args:
+        aggregated_updates (dict[str, dict[str, Any]]): In-place target updates per key.
+        regex_updates (list[tuple[Pattern, dict, str]]): Ordered list of regex rules.
+        keys (set[str]): Target keys to evaluate matches against.
+        default_key (str): Reserved default key; optionally skipped.
+        lookup_key (str): Identifier used for logging context.
+        skip_default_literal (bool): When True, do not apply updates to ``default``.
+    """
+    for compiled, upd, pattern in regex_updates:
+        for key in keys:
+            if skip_default_literal and key == default_key:
+                continue
+            if compiled.fullmatch(str(key)):
+                log.debug(
+                    f"Applying regex update for {lookup_key} '{key}' matched '{pattern}'"
+                )
+                aggregated_updates[key].update(copy.deepcopy(upd))
+
+
+def _augment_with_literal_updates(
+    aggregated_updates: dict[str, dict[str, Any]],
+    literal_updates: list[tuple[str, dict[str, Any]]],
+    default_key: str,
+    skip_default_literal: bool = False,
+) -> None:
+    """Apply literal key updates with highest precedence.
+
+    Args:
+        aggregated_updates (dict[str, dict[str, Any]]): In-place target updates per key.
+        literal_updates (list[tuple[str, dict[str, Any]]]): Ordered list of literal rules.
+        default_key (str): Reserved default key; optionally skipped.
+        skip_default_literal (bool): When True, do not apply updates to ``default``.
+    """
+    for key, upd in literal_updates:
+        if skip_default_literal and key == default_key:
+            continue
+        aggregated_updates.setdefault(key, {}).update(copy.deepcopy(upd))
+
+
+def _apply_aggregated_updates(
+    old_obj: dict[str, dict[str, Any]],
+    aggregated_updates: dict[str, dict[str, Any]],
+    default_key: str,
+) -> None:
+    """Merge aggregated updates into the existing items using recursive override.
+
+    Args:
+        old_obj (dict[str, dict[str, Any]]): Existing items indexed by key.
+        aggregated_updates (dict[str, dict[str, Any]]): Final updates per key.
+        default_key (str): Reserved default key for list semantics.
+    """
+    for key, update in aggregated_updates.items():
+        new_item = _override_workflow(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
+        old_obj[key] = new_item  # type: ignore
+
+
+def _deep_merge_dicts(base: dict, extra: dict) -> dict:
+    """Deep merge two dictionaries.
+
+    - Dict values are merged recursively
+    - List values are replaced by the newer list (last wins)
+    - Other values are overwritten by the newer value
+    """
+    result = copy.deepcopy(base)
+    for k, v in extra.items():
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = _deep_merge_dicts(result[k], v)
+        else:
+            result[k] = copy.deepcopy(v)
+    return result
+
+
 def _get_workflow_overrides(overrides, workflow, default_key):
+    """Resolve workflow overrides including optional regex-based keys.
+
+    Precedence: default < regex matches (last wins) < exact workflow name
+    """
+    name = workflow.get("name")
+
+    # Defaults
     default_overrides = overrides.copy().pop(default_key, {})
-    workflow_overrides = overrides.copy().pop(workflow.get("name"), {})
-    all_overrides = {**default_overrides, **workflow_overrides}
-    default_task = _get_defaults(
-        all_overrides.get("tasks", []), "task_key", default_key
-    )
-    return all_overrides, default_task
+
+    # Regex-based matches
+    regex_aggregate: dict = {}
+    for key, value in overrides.items():
+        if not isinstance(key, str) or not isinstance(value, dict):
+            continue
+        if key.startswith("re:"):
+            pattern = key[3:]
+            try:
+                compiled = re.compile(pattern)
+            except re.error:
+                log.debug(f"Invalid regex pattern skipped: {pattern}")
+                continue
+            if name is not None and compiled.fullmatch(name):
+                log.debug(f"Workflow '{name}' matched regex '{pattern}'")
+                regex_aggregate = _deep_merge_dicts(regex_aggregate, value)
+
+    # Exact name override
+    workflow_overrides = overrides.copy().pop(name, {})
+
+    merged = {}
+    merged = _deep_merge_dicts(merged, default_overrides)
+    merged = _deep_merge_dicts(merged, regex_aggregate)
+    merged = _deep_merge_dicts(merged, workflow_overrides)
+
+    default_task = _get_defaults(merged.get("tasks", []), "task_key", default_key)
+    return merged, default_task
 
 
 def _override_workflow(
