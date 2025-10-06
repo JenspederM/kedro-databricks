@@ -107,6 +107,33 @@ default: # will be applied to all workflows
       job_cluster_key: high-concurrency
 ```
 
+Regex-based overrides (optional): You can target multiple workflows or tasks using regex selectors. Use the `re:` prefix for workflow keys, and for tasks set `task_key: "re:<pattern>"`. Exact names still take precedence; for multiple regex matches, the last rule wins.
+
+```yaml
+# conf/prod/databricks.yml
+
+default:
+  tasks:
+    - task_key: default
+      job_cluster_key: default
+    - task_key: "re:^ns_.*"  # apply to any task_key starting with ns_
+      job_cluster_key: high-performance
+
+"re:^country_1(\\..+)?$":
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        custom_tags:
+          country: country_1
+
+"re:^country_2(\\..+)?$":
+  job_clusters:
+    - job_cluster_key: default
+      new_cluster:
+        custom_tags:
+          country: country_2
+```
+
 The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
 
 #### Generating bundle resources
