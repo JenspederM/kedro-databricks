@@ -1,3 +1,25 @@
+## 0.13.1 (2025-11-19)
+
+### Fix
+
+-  [`a1ff65a`](https://github.com/JenspederM/kedro-databricks/commit/a1ff65abaa66658d7f652468e4c154ee383e6bee):  update Deployment status check logic
+-  [`4dc98ad`](https://github.com/JenspederM/kedro-databricks/commit/4dc98adfaebafd848b8e5da05cb45da06b01be52):  raise exception when databricks cli deployment fails
+
+### Other Changes
+
+-  [`fbcb793`](https://github.com/JenspederM/kedro-databricks/commit/fbcb793f72e8818e5c92a1de2fe73ad6ae8cd7bb):  update relevant strings in tests
+-  [`f1e6ec0`](https://github.com/JenspederM/kedro-databricks/commit/f1e6ec00a5ca94e061c8ee38afe46e7879a22802):  all inputs should be documented
+-  [`6a9a30a`](https://github.com/JenspederM/kedro-databricks/commit/6a9a30a8d67e7b0f1a03eb0d94c3c63d04227fe1):  commitizen require fetch-depth 0
+-  [`92fd7f0`](https://github.com/JenspederM/kedro-databricks/commit/92fd7f0b9ebff1dda9cd8e799b3820ece2f43e2b):  only post version bump if applicable
+-  [`5cfbfc0`](https://github.com/JenspederM/kedro-databricks/commit/5cfbfc0d04ae59f359e935ee4eb3ab03310dac2d):  keep xml extension
+-  [`06c39e3`](https://github.com/JenspederM/kedro-databricks/commit/06c39e32d53de68b9466512f14851eb5da77fd19):  i called the env var PR_NBR
+-  [`3d69940`](https://github.com/JenspederM/kedro-databricks/commit/3d699402f31b0d845ed2cf67549b0257434d98cb):  coverage action requires junit-xml
+-  [`019f102`](https://github.com/JenspederM/kedro-databricks/commit/019f1022eafc1271d48da73d58334513a326d1c1):  Update event file path in post_comment.yml
+-  [`c8487f9`](https://github.com/JenspederM/kedro-databricks/commit/c8487f91973aede36c28a75597a4cf2d41d103c3):  fix syntax for gh env vars
+-  [`b65dc05`](https://github.com/JenspederM/kedro-databricks/commit/b65dc05bffdd9a8662d91f941c530048a19b5181):  there are actions for adding a pr comment
+-  [`41af4af`](https://github.com/JenspederM/kedro-databricks/commit/41af4af87e0792525bb20e4227c95e7fd6117b80):  there are actions for downloading from a workflow run
+-  [`1e91a8a`](https://github.com/JenspederM/kedro-databricks/commit/1e91a8abc1ed23e2d9b63e711f5fee7bb9125d0a):  external contributors are not allowed to post PR comment in gh actions
+
 ## 0.13.0 (2025-09-25)
 
 ### Feat
