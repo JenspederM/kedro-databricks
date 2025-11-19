@@ -70,7 +70,7 @@ def test_deploy(cli_runner, metadata, custom_username, custom_provider):
 
     deploy_cmd = ["databricks", "deploy", "--bundle"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
-    assert result.exit_code == 0 and "Deployment complete!" in result.stdout, (
+    assert result.exit_code == 0 and "Deployment complete!\n" in result.stdout, (
         result.exit_code,
         result.stdout,
         result.exception,
@@ -113,7 +113,7 @@ def test_deploy_prod(cli_runner, metadata, custom_username, custom_provider):
         "prod",
     ]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
-    assert result.exit_code == 0 and "Deployment complete!" in result.stdout, (
+    assert result.exit_code == 0 and "Deployment complete!\n" in result.stdout, (
         result.exit_code,
         result.stdout,
         result.exception,
@@ -171,7 +171,7 @@ def test_deploy_with_conf(cli_runner, metadata, custom_provider):
 
     deploy_cmd = ["databricks", "deploy", "--bundle", f"--conf-source={CONF_KEY}"]
     result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
-    assert result.exit_code == 0 and "Deployment complete!" in result.stdout, (
+    assert result.exit_code == 0 and "Deployment complete!\n" in result.stdout, (
         result.exit_code,
         result.stdout,
         result.exception,

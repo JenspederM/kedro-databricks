@@ -94,8 +94,8 @@ def test_get_arg_value(args, arg, expected):
     "result, expected",
     [
         (MockResult([], []), False),
-        (MockResult(["Deployment complete!"], []), True),
-        (MockResult([], ["Deployment complete!"]), True),
+        (MockResult(["Deployment complete!\n"], []), True),
+        (MockResult([], ["Deployment complete!\n"]), True),
     ],
 )
 def test_check_deployment_complete(result, expected):
