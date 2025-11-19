@@ -101,6 +101,8 @@ def _deploy_project(
     # databricks bundle deploy logs to stderr for some reason.
     if _check_deployment_complete(result):
         result.returncode = 0
+    else:
+        raise RuntimeError("Deployment failed. Check the logs for more details.")
     log.info("Successfully Deployed Jobs")
     get_deployed_resources(metadata, only_dev=target in ["dev", "local"])
     return result
