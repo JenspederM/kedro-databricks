@@ -109,6 +109,6 @@ def _deploy_project(
 
 
 def _check_deployment_complete(result: CompletedProcess) -> bool:
-    complete_stdout = result.stdout and "Deployment complete!" in result.stdout
-    complete_stderr = result.stderr and "Deployment complete!" in result.stderr
+    complete_stdout = result.stdout and "Deployment complete!\n" in result.stdout
+    complete_stderr = result.stderr and "Deployment complete!\n" in result.stderr
     return complete_stdout is True or complete_stderr is True
