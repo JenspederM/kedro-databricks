@@ -122,9 +122,7 @@ def test_create_target_configs(metadata, monkeypatch):
             },
             f,
         )
-    create_target_configs(
-        metadata, NODE_TYPE_MAP.get("azure", ""), "test", single_user_default=False
-    )
+    create_target_configs(metadata, "test")
 
 
 def test_validate_inputs_unknown_provider(metadata):

@@ -13,7 +13,7 @@ from kedro_databricks.utils import (
     assert_databricks_cli,
     get_bundle_name,
     get_targets,
-    make_workflow_name,
+    make_job_name,
     read_databricks_config,
 )
 
@@ -134,6 +134,6 @@ def test_command(cmd, result_code, warn, raises):
         ("package", "pipeline", "package_pipeline"),
     ],
 )
-def test_make_workflow_name(package_name, pipeline_name, expected):
-    workflow_name = make_workflow_name(package_name, pipeline_name)
-    assert workflow_name == expected, workflow_name
+def test_make_job_name(package_name, pipeline_name, expected):
+    job_name = make_job_name(package_name, pipeline_name)
+    assert job_name == expected, job_name

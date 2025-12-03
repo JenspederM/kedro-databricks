@@ -98,8 +98,8 @@ def new(project_name: str, project_path: Path, overwrite: bool = False):
     with open(project_path / "pyproject.toml", "w") as f:
         tomlkit.dump(project, f)
 
-    Path(project_path / ".tool-versions").write_text("uv 0.7.8\n")
-    Path(project_path / ".python-version").write_text("3.11\n")
+    shutil.copy(root / ".tool-versions", project_path / ".tool-versions")
+    shutil.copy(root / ".python-version", project_path / ".python-version")
     sync(project_path)
 
 

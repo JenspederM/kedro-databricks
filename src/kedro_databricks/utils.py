@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import yaml
+from kedro.framework.startup import ProjectMetadata
 from packaging.version import Version
 
 from kedro_databricks.constants import KEDRO_VERSION, MINIMUM_DATABRICKS_VERSION
@@ -79,9 +80,10 @@ class Command:
             self._handle_error(result)
         return result
 
-    def run(self, *args, **kwargs):
+    def run(self, silent=False, *args, **kwargs):
         cmd = self.command + list(*args)
-        self.log.info(f"Running command: {cmd}")
+        if not silent:
+            self.log.info(f"Running command: {cmd}")
         return self._run_command(cmd, **kwargs)
 
     def _handle_error(self, result: subprocess.CompletedProcess):
@@ -93,15 +95,51 @@ class Command:
             raise RuntimeError(error_msg)
 
 
-def make_workflow_name(package_name: str, pipeline_name: str) -> str:
-    """Create a name for the Databricks workflow.
+def get_env_file_path(metadata: ProjectMetadata, env: str):
+    """Get the file path for the given environment from the catalog.yml file.
+
+    Args:
+        metadata (ProjectMetadata): The project metadata.
+        env (str): The environment to get the file path for.
+
+    Returns:
+        str | None: The file path for the given environment, or None if not found.
+    """
+    target_catalog = metadata.project_path / "conf" / env / "catalog.yml"
+    if not target_catalog.exists():
+        log.warning(
+            f"Catalog file {target_catalog.relative_to(metadata.project_path)} not found"
+        )
+        return
+    yaml_content = yaml.safe_load(target_catalog.read_text())
+    file_path = yaml_content.get("_file_path")
+    if not file_path:
+        return
+    return file_path
+
+
+def make_target_file_path(bundle_name: str, target_name: str) -> str:
+    """Create the file path for the Databricks target.
+
+    Args:
+        bundle_name (str): The name of the Databricks bundle.
+        target_name (str): The name of the target.
+
+    Returns:
+        str: The file path for the target in Databricks.
+    """
+    return f"/Volumes/workspace/default/{bundle_name}/{target_name}"
+
+
+def make_job_name(package_name: str, pipeline_name: str) -> str:
+    """Create a name for the Databricks job.
 
     Args:
         package_name (str): The name of the Kedro project
         pipeline_name (str): The name of the pipeline
 
     Returns:
-        str: The name of the workflow
+        str: The name of the job
     """
     if pipeline_name == "__default__":
         return package_name

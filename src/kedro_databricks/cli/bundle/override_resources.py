@@ -7,39 +7,34 @@ from kedro_databricks.logger import get_logger
 log = get_logger("bundle").getChild(__name__)
 
 
-def override_resources(bundle: dict, overrides: dict, default_key) -> dict[str, Any]:
+def override_job(job: dict, overrides: dict, default_key) -> dict[str, Any]:
     """Override the resources in a Databricks bundle.
 
     This function applies the given overrides to the resources in a Databricks bundle.
 
     Args:
-        bundle (Dict): the Databricks bundle
+        jobs (Dict): the Databricks jobs to override
         overrides (Dict): the overrides to apply
         default_key (str): the default key to use for overrides
 
     Raises:
-        ValueError: if the workflow or overrides are not dictionaries
+        ValueError: if the job or overrides are not dictionaries
         ValueError: if the key in overrides is not found in OVERRIDE_KEY_MAP
 
     Returns:
         Dict[str, Any]: the Databricks bundle with the overrides applied
     """
-    result = {"resources": {"jobs": {}}}
-    for name, workflow in bundle.get("resources", {}).get("jobs", {}).items():
-        if not isinstance(workflow, dict):
-            raise ValueError(f"workflow must be a dictionary not {type(workflow)}")
-        if not isinstance(overrides, dict):
-            raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
-        workflow_overrides, task_overrides = _get_workflow_overrides(
-            overrides, workflow, default_key
-        )
-        result["resources"]["jobs"][name] = _override_workflow(
-            workflow=workflow,
-            workflow_overrides=workflow_overrides,
-            task_overrides=task_overrides,
-            default_key=default_key,
-        )
-    return result
+    if not isinstance(job, dict):
+        raise ValueError(f"job must be a dictionary not {type(job)}")
+    if not isinstance(overrides, dict):
+        raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
+    job_overrides, task_overrides = _get_job_overrides(overrides, job, default_key)
+    return _override_job(
+        job=job,
+        job_overrides=job_overrides,
+        task_overrides=task_overrides,
+        default_key=default_key,
+    )
 
 
 def _get_lookup_key(key: str):
@@ -94,7 +89,7 @@ def _update_list_by_key(
         update = copy.deepcopy(default)
         update.pop(lookup_key, None)
         update.update(new_obj.get(key, {}))
-        new = _override_workflow(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
+        new = _override_job(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
         old_obj[key] = new  # type: ignore
 
     return sorted(
@@ -138,39 +133,39 @@ def _get_old_value(result: Any, key: Any, value: Any):
     return result.get(key, default)
 
 
-def _get_workflow_overrides(overrides, workflow, default_key):
+def _get_job_overrides(overrides, job, default_key):
     default_overrides = overrides.copy().pop(default_key, {})
-    workflow_overrides = overrides.copy().pop(workflow.get("name"), {})
-    all_overrides = {**default_overrides, **workflow_overrides}
+    job_overrides = overrides.copy().pop(job.get("name"), {})
+    all_overrides = {**default_overrides, **job_overrides}
     default_task = _get_defaults(
         all_overrides.get("tasks", []), "task_key", default_key
     )
     return all_overrides, default_task
 
 
-def _override_workflow(
-    workflow: dict,
-    workflow_overrides: dict,
+def _override_job(
+    job: dict,
+    job_overrides: dict,
     task_overrides: dict = {},
     default_key: str = "default",
 ):
-    """Override a Databricks workflow with the given overrides.
+    """Override a Databricks job with the given overrides.
 
     Args:
-        workflow (Dict): the Databricks workflow
+        job (Dict): the Databricks job
         overrides (Dict): the overrides to apply
 
     Returns:
-        Dict: the Databricks workflow with the overrides applied
+        Dict: the Databricks job with the overrides applied
     """
-    result = {**workflow}
+    result = {**job}
 
-    for key, value in workflow_overrides.items():
+    for key, value in job_overrides.items():
         old_value = _get_old_value(result, key, value)
         if isinstance(value, dict) and isinstance(old_value, dict):
-            result[key] = _override_workflow(
-                workflow=old_value,
-                workflow_overrides=value,
+            result[key] = _override_job(
+                job=old_value,
+                job_overrides=value,
                 task_overrides={},
                 default_key=default_key,
             )
@@ -192,5 +187,5 @@ def _override_workflow(
             else:
                 result[key] = value
         else:
-            result[key] = workflow_overrides.get(key, old_value)
+            result[key] = job_overrides.get(key, old_value)
     return result

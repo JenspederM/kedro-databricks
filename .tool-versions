@@ -1,3 +1,4 @@
 just 1.25.2
 pre-commit 3.7.0
-uv 0.8.22
+uv 0.9.15
+databricks-cli 0.278.0

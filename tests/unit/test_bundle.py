@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import shutil
+
 import pytest
+import yaml
 from kedro.pipeline import Pipeline, node
 from packaging.version import Version
 
@@ -11,9 +14,9 @@ from kedro_databricks.cli.bundle import (
 )
 from kedro_databricks.cli.bundle.override_resources import (
     _get_lookup_key,
-    _override_workflow,
+    _override_job,
     _update_list_by_key,
-    override_resources,
+    override_job,
 )
 from kedro_databricks.cli.bundle.resource_generator import (
     NodeResourceGenerator,
@@ -28,16 +31,34 @@ from kedro_databricks.cli.bundle.utils import (
 from kedro_databricks.constants import OVERRIDE_KEY_MAP
 from kedro_databricks.resource_resolver import ResourceNotFoundError
 from kedro_databricks.utils import require_databricks_run_script
-from tests.utils import WORKFLOW, _generate_task, identity, long_identity, pipeline
+from tests.utils import JOB, _generate_task, identity, long_identity, pipeline
 
 
 def test_bundle(metadata):
+    empty_overrides = {"resources": {"jobs": {}}}
+    (metadata.project_path / "conf" / "fake_env").mkdir(parents=True, exist_ok=True)
+    with open(
+        metadata.project_path / "conf" / "fake_env" / "databricks.yml",
+        "w",
+    ) as f:
+        yaml.dump(empty_overrides, f)
     bundle(
         metadata=metadata,
         env="fake_env",
         default_key="default",
         resource_generator_name="node",
     )
+    shutil.rmtree(metadata.project_path / "conf" / "fake_env")
+
+
+def test_bundle_no_overrides(metadata):
+    with pytest.raises(KeyError):
+        bundle(
+            metadata=metadata,
+            env="fake_env",
+            default_key="default",
+            resource_generator_name="node",
+        )
 
 
 def test_bundle_invalid_resource_generator(metadata):
@@ -50,32 +71,19 @@ def test_bundle_invalid_resource_generator(metadata):
         )
 
 
-def test_generate_workflow(metadata):
+def test_create_job(metadata):
     g = NodeResourceGenerator(metadata, "fake_env")
-    assert g._create_workflow("workflow1", pipeline) == WORKFLOW
+    assert g._create_job("job1", pipeline) == JOB
 
 
-def test_generate_workflow_pipeline(metadata):
+def test_create_job_pipeline(metadata):
     g = PipelineResourceGenerator(metadata, "fake_env")
-    assert g._create_workflow("workflow1", pipeline) is not None
+    assert g._create_job("job1", pipeline) is not None
 
 
 @pytest.mark.parametrize(
     "node, expected",
     [
-        (
-            node(
-                long_identity,
-                ["input", "input1", "input2", "input3", "input4", "input5"],
-                ["output", "output1", "output2", "output3", "output4", "output5"],
-            ),
-            "long_identity_input_input1_input2_input3_input4_input5_output_output1_output2_output3_output4_output",
-        ),
-        (
-            node(identity, ["input"], ["output", "another"]),
-            "identity_input_output_another",
-        ),
-        (node(identity, ["input"], ["output"]), "identity_input_output"),
         (node(identity, ["input"], ["output"], name="a"), "a"),
         (node(identity, ["input"], ["output"], name="a", namespace="abc"), "abc_a"),
         (node(identity, ["input"], ["output"], name="a" * 150), "a" * 100),
@@ -83,9 +91,8 @@ def test_generate_workflow_pipeline(metadata):
     ],
 )
 def test_sanitize_name(node, expected):
-    assert (
-        sanitize_name(node) == expected
-    ), f"Expected '{expected}', got '{sanitize_name(node)}'"
+    sanname = sanitize_name(node)
+    assert sanname == expected, f"Expected '{expected}', got '{sanname}'"
 
 
 def test_create_task(metadata):
@@ -123,7 +130,6 @@ def test_create_pipeline_task(metadata):
 
     assert g._create_pipeline_task(pipeline_name) == {
         "task_key": pipeline_name,
-        "libraries": [{"whl": "../dist/*.whl"}],
         "depends_on": [],
         "python_wheel_task": {
             "entry_point": entry_point,
@@ -170,22 +176,16 @@ def test_create_task_with_runtime_params(metadata):
 def test_generate_resources(metadata):
     controller = NodeResourceGenerator(metadata, "fake_env")
     controller.pipelines = {"__default__": Pipeline([])}
-    assert controller.generate_resources(pipeline_name=None) == {}
+    assert controller.generate_jobs(pipeline_name=None) == {}
     controller.pipelines = {
         "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
     }
-    assert controller.generate_resources(pipeline_name=None) == {
+    assert controller.generate_jobs(pipeline_name=None) == {
         "fake_project": {
-            "resources": {
-                "jobs": {
-                    "fake_project": {
-                        "name": "fake_project",
-                        "tasks": [
-                            _generate_task("node"),
-                        ],
-                    },
-                },
-            },
+            "name": "fake_project",
+            "tasks": [
+                _generate_task("node"),
+            ],
         },
     }
 
@@ -196,18 +196,12 @@ def test_generate_resources_another_conf(metadata):
         "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
     }
 
-    assert controller.generate_resources(pipeline_name=None) == {
+    assert controller.generate_jobs(pipeline_name=None) == {
         "fake_project": {
-            "resources": {
-                "jobs": {
-                    "fake_project": {
-                        "name": "fake_project",
-                        "tasks": [
-                            _generate_task("node", conf="sub_conf"),
-                        ],
-                    },
-                },
-            },
+            "name": "fake_project",
+            "tasks": [
+                _generate_task("node", conf="sub_conf"),
+            ],
         },
     }
 
@@ -222,19 +216,13 @@ def test_generate_resources_in_a_sorted_manner(metadata):
             ]
         )
     }
-    assert controller.generate_resources(pipeline_name=None) == {
+    assert controller.generate_jobs(pipeline_name=None) == {
         "fake_project": {
-            "resources": {
-                "jobs": {
-                    "fake_project": {
-                        "name": "fake_project",
-                        "tasks": [
-                            _generate_task("a_node"),
-                            _generate_task("b_node"),
-                        ],
-                    },
-                },
-            },
+            "name": "fake_project",
+            "tasks": [
+                _generate_task("a_node"),
+                _generate_task("b_node"),
+            ],
         },
     }
 
@@ -258,29 +246,23 @@ def test_generate_resources_for_a_single_pipeline(metadata):
             ]
         ),
     }
-    assert controller.generate_resources(pipeline_name="b_pipeline") == {
+    assert controller.generate_jobs(pipeline_name="b_pipeline") == {
         "fake_project_b_pipeline": {
-            "resources": {
-                "jobs": {
-                    "fake_project_b_pipeline": {
-                        "name": "fake_project_b_pipeline",
-                        "tasks": [
-                            _generate_task("b_node"),
-                        ],
-                    },
-                },
-            },
+            "name": "fake_project_b_pipeline",
+            "tasks": [
+                _generate_task("b_node"),
+            ],
         },
     }
 
 
 def test_save_resources(metadata):
     controller = NodeResourceGenerator(metadata, "fake_env")
-    resources = controller.generate_resources()
+    resources = controller.generate_jobs()
     overrides = _load_kedro_env_config(metadata, "conf", "fake_env")
     result = {}
     for name, resource in resources.items():
-        result[name] = override_resources(resource, overrides, "default")
+        result[name] = override_job(resource, overrides, "default")
     _save_bundled_resources(metadata, result, True)
     resource_dir = metadata.project_path.joinpath("resources")
     assert resource_dir.exists(), "Failed to create resources directory"
@@ -313,18 +295,18 @@ def test_get_lookup_key(key, expected):
 @pytest.mark.parametrize(
     ["jobs", "overrides", "expected", "error"],
     [
-        ({"workflow": "not_dict"}, {}, None, ValueError),
-        ({"workflow": {}}, [], None, ValueError),
+        ({"job": "not_dict"}, {}, None, ValueError),
+        ({"job": {}}, [], None, ValueError),
     ],
 )
 def test_override_resources(jobs, overrides, expected, error):
-    resources = {"resources": {"jobs": jobs}}
-    if error:
-        with pytest.raises(error):
-            override_resources(resources, overrides, "default")
-    else:
-        result = override_resources(resources, overrides, "default")
-        assert result == expected
+    for job in jobs.values():
+        if error:
+            with pytest.raises(error):
+                override_job(job, overrides, "default")
+        else:
+            result = override_job(job, overrides, "default")
+            assert result == expected
 
 
 @pytest.mark.parametrize(
@@ -494,8 +476,8 @@ def test_remove_nulls_from_dict(value, expected):
         ),
     ],
 )
-def test_override_workflow(dct, overrides, expected):
-    result = _override_workflow(dct, overrides, {}, "default")
+def test_override_job(dct, overrides, expected):
+    result = _override_job(dct, overrides, {}, "default")
     assert result == expected, result
 
 
@@ -507,6 +489,6 @@ def test_override_workflow(dct, overrides, expected):
         ([{}, None, None], AttributeError),
     ],
 )
-def test_override_workflow_fail(args, error):
+def test_override_job_fail(args, error):
     with pytest.raises(error):
-        _override_workflow(*args)
+        _override_job(*args)

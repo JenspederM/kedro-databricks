@@ -11,11 +11,11 @@ import logging
 import os
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 from dotenv import load_dotenv
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
-from pytest import fixture
 
 load_dotenv()
 logging.basicConfig(
@@ -24,19 +24,19 @@ logging.basicConfig(
 )
 
 
-@fixture(scope="session")
+@pytest.fixture(scope="session")
 def custom_username():
     custom_username = os.getenv("CUSTOM_USERNAME")
     return custom_username
 
 
-@fixture(scope="session")
+@pytest.fixture(scope="session")
 def custom_provider():
     custom_provider = os.getenv("CUSTOM_PROVIDER", "azure")
     return custom_provider
 
 
-@fixture(name="cli_runner", scope="session")
+@pytest.fixture(name="cli_runner", scope="session")
 def cli_runner():
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -56,7 +56,7 @@ def _create_kedro_settings_py(file_name: Path, patterns: list[str]):
     file_name.write_text(content)
 
 
-@fixture(scope="session")
+@pytest.fixture(scope="session")
 def kedro_project(cli_runner):
     cli_runner.invoke(
         # Supply name, tools, and example to skip interactive prompts
@@ -88,9 +88,9 @@ def register_pipelines():
             node(identity, ["intermediate"], ["output2"], name="node2", tags=["tag0"]),
             node(identity, ["intermediate"], ["output3"], name="node3", tags=["tag1", "tag2"]),
             node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
-            node(identity, ["intermediate"], ["output_5.output_5_1"], name="ns_5.node_5_1"),
-            node(identity, ["intermediate"], ["output_6.output_6_1"], name="ns_6.node_6_1"),
-            node(identity, ["intermediate"], ["output_7.output_7_1"], name="ns_7.node_7_1"),
+            node(identity, ["intermediate"], ["output_5_output_5_1"], name="ns_5_node_5_1"),
+            node(identity, ["intermediate"], ["output_6_output_6_1"], name="ns_6_node_6_1"),
+            node(identity, ["intermediate"], ["output_7_output_7_1"], name="ns_7_node_7_1"),
         ],
         tags="pipeline0",
     )
@@ -108,12 +108,11 @@ def register_pipelines():
 
     settings_file = project_path / "src" / "fake_project" / "settings.py"
     _create_kedro_settings_py(settings_file, ["databricks*", "databricks/**"])
-
     os.chdir(project_path)
     return project_path
 
 
-@fixture(scope="session")
+@pytest.fixture(scope="session")
 def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()

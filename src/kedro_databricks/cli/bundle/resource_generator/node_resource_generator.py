@@ -1,6 +1,6 @@
 """Node-level Databricks resource generator.
 
-Creates a Databricks workflow where each Kedro node becomes an individual task
+Creates a Databricks job where each Kedro node becomes an individual task
 with appropriate dependencies derived from the pipeline graph.
 """
 
@@ -16,17 +16,17 @@ from kedro_databricks.cli.bundle.resource_generator.abstract_resource_generator 
 
 
 class NodeResourceGenerator(AbstractResourceGenerator):
-    """Generate a workflow with one Databricks task per Kedro node."""
+    """Generate a job with one Databricks task per Kedro node."""
 
-    def _create_workflow_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
-        """Build the workflow payload for a node-based job.
+    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+        """Build the job payload for a node-based job.
 
         Args:
-            name (str): The workflow/job name.
+            name (str): The job name.
             pipeline (Pipeline): The Kedro pipeline to convert.
 
         Returns:
-            dict[str, Any]: A Databricks workflow payload containing per-node tasks.
+            dict[str, Any]: A Databricks job payload containing per-node tasks.
         """
         return {
             "name": name,

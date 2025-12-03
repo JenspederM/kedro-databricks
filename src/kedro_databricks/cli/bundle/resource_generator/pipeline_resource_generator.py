@@ -1,6 +1,6 @@
 """Pipeline-level Databricks resource generator.
 
-Creates a Databricks workflow with a single task that runs an entire Kedro
+Creates a Databricks job with a single task that runs an entire Kedro
 pipeline in one go.
 """
 
@@ -14,17 +14,17 @@ from kedro_databricks.cli.bundle.resource_generator.abstract_resource_generator 
 
 
 class PipelineResourceGenerator(AbstractResourceGenerator):
-    """Generate a workflow with a single task for the whole pipeline."""
+    """Generate a job with a single task for the whole pipeline."""
 
-    def _create_workflow_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
-        """Build the workflow payload for a pipeline-based job.
+    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+        """Build the job payload for a pipeline-based job.
 
         Args:
-            name (str): The workflow/job name.
+            name (str): The job name.
             pipeline (Pipeline): The Kedro pipeline to run as a single task.
 
         Returns:
-            dict[str, Any]: A Databricks workflow payload containing one task.
+            dict[str, Any]: A Databricks job payload containing one task.
         """
         return {"name": name, "tasks": [self._create_pipeline_task(name)]}
 

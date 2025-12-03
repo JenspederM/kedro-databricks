@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from kedro_databricks.cli.bundle.override_resources import override_resources
+from kedro_databricks.cli.bundle.override_resources import override_job
 
 EXAMPLE_ROOT = Path(__file__).parent.parent.parent / "examples"
 EXAMPLES = [p.name for p in EXAMPLE_ROOT.iterdir() if p.is_dir()]
@@ -31,5 +31,11 @@ def _load_example(name):
 @pytest.mark.parametrize("example_name", EXAMPLES)
 def test_examples(example_name):
     example = _load_example(example_name)
-    result = override_resources(example.resources, example.overrides, "default")
+    result = {"resources": {"jobs": {}}}
+    for job_name, job in example.resources.get("resources", {}).get("jobs", {}).items():
+        result["resources"]["jobs"][job_name] = override_job(
+            job,
+            example.overrides.get("resources", {}).get("jobs", {}),
+            "default",
+        )
     assert result == example.result

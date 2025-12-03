@@ -54,6 +54,7 @@ allow-direct-references = true
 packages = ["src/kedro_databricks"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 addopts = [
     '--log-format="%(asctime)s %(levelname)s %(message)s"',
     '--log-date-format="%Y-%m-%d %H:%M:%S"',

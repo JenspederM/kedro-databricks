@@ -8,7 +8,12 @@ from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.cli.deploy.get_deployed_resources import get_deployed_resources
 from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import Command, _get_arg_value, assert_databricks_cli
+from kedro_databricks.utils import (
+    Command,
+    _get_arg_value,
+    assert_databricks_cli,
+    get_env_file_path,
+)
 
 log = get_logger("deploy")
 
@@ -29,13 +34,11 @@ def deploy(metadata: ProjectMetadata, env: str, *databricks_args: str):
         RuntimeError: If the `databricks` CLI is not installed or the wrong version is used.
     """
     _validate_project(metadata)
-
     os.chdir(metadata.project_path)
-    _build_project(metadata)
-    result = _upload_project_data(metadata, env)
+    _deploy_project(metadata, env, list(databricks_args))
+    result = _upload_project_data(metadata, env, list(databricks_args))
     if result and result.returncode != 0:  # pragma: no cover
         raise RuntimeError("Failed to upload project data to DBFS")
-    _deploy_project(metadata, env, list(databricks_args))
 
 
 def _validate_project(metadata: ProjectMetadata):
@@ -49,25 +52,25 @@ def _validate_project(metadata: ProjectMetadata):
         )
 
 
-def _build_project(metadata: ProjectMetadata):
-    """Build the project."""
-    result = Command(["kedro", "package"], log=log).run(cwd=metadata.project_path)
-    return result
-
-
 # TODO: Add tests
-def _upload_project_data(metadata: ProjectMetadata, env: str):  # pragma: no cover
+def _upload_project_data(
+    metadata: ProjectMetadata, env: str, databricks_args: list[str]
+):  # pragma: no cover
     """Upload the project data to DBFS."""
+
     source_path = metadata.project_path / "data"
-    target_path = f"dbfs:/FileStore/{metadata.package_name}/{env}/data"
     if not source_path.exists():
         log.warning(f"Data path {source_path} does not exist")
         return
-
+    file_path = get_env_file_path(metadata, env)
+    if not file_path:
+        log.warning(f"No file path found for the given environment: '{env}'")
+        return
+    target_path = f"dbfs:{file_path}/data"
     log.info(
         f"Uploading {source_path.relative_to(metadata.project_path)} to {target_path}"
     )
-    cmd = [
+    upload_cmd = [
         "databricks",
         "fs",
         "cp",
@@ -75,8 +78,11 @@ def _upload_project_data(metadata: ProjectMetadata, env: str):  # pragma: no cov
         "--overwrite",
         source_path.as_posix(),
         target_path,
-    ]
-    result = Command(cmd, log=log).run(cwd=metadata.project_path)
+    ] + databricks_args
+    target = _get_arg_value(databricks_args, "--target")
+    if target is None:
+        upload_cmd += ["--target", env]
+    result = Command(upload_cmd, log=log).run(cwd=metadata.project_path)
     log.info(f"Data uploaded to {target_path}")
     return result
 

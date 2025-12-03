@@ -7,6 +7,7 @@ import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.cli.init.create_target_configs import create_target_configs
+from kedro_databricks.cli.init.inject_local_hook import transform_spark_hook
 from kedro_databricks.constants import GITIGNORE, NODE_TYPE_MAP, TEMPLATES
 from kedro_databricks.logger import get_logger
 from kedro_databricks.utils import (
@@ -39,11 +40,14 @@ def init(
     """
     assert_databricks_cli()
     log.info("Initializing Databricks Asset Bundle...")
-    config_path, node_type_id = _validate_inputs(metadata, provider)
+    config_path, _ = _validate_inputs(metadata, provider)
     _databricks_init(metadata, *databricks_args)
     log.info(f"Created {config_path.relative_to(metadata.project_path)}")
-    create_target_configs(metadata, node_type_id=node_type_id, default_key=default_key)
+    create_target_configs(metadata, default_key=default_key)
     _update_gitignore(metadata)
+    hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
+    if hooks_path.exists():
+        transform_spark_hook(hooks_path.as_posix())
     if require_databricks_run_script():  # pragma: no cover - Might be removed in future
         log.warning(
             "Kedro version less than 0.19.8 requires a script to run tasks on Databricks. "

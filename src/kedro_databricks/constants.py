@@ -23,7 +23,7 @@ TASK_KEY_ORDER = [
 ]
 """Order of keys in the task configuration for Databricks jobs."""
 
-WORKFLOW_KEY_ORDER = [
+JOB_KEY_ORDER = [
     "name",
     "tags",
     "access_control_list",
@@ -33,7 +33,7 @@ WORKFLOW_KEY_ORDER = [
     "job_clusters",
     "tasks",
 ]
-"""Order of keys in the workflow configuration for Databricks jobs."""
+"""Order of keys in the job configuration for Databricks jobs."""
 
 DEFAULT_TARGET = "dev"
 """Default target environment for Databricks configurations."""
@@ -50,7 +50,7 @@ DEFAULT_CONFIG_GENERATOR = "node"
 DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 """Help text for the default configuration key option."""
 
-DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a workflow for each node) or 'pipeline' (create a single workflow for the entire pipeline)."
+DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a job for each node) or 'pipeline' (create a single job for the entire pipeline)."
 
 DEFAULT_PROVIDER = "azure"
 """Default cloud provider for Databricks Asset Bundle."""
