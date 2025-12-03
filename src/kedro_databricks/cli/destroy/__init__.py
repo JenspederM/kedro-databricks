@@ -1,7 +1,12 @@
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import Command, _get_arg_value, assert_databricks_cli
+from kedro_databricks.utils import (
+    Command,
+    _get_arg_value,
+    assert_databricks_cli,
+    get_env_file_path,
+)
 
 log = get_logger("destroy")
 
@@ -27,13 +32,17 @@ def destroy(metadata: ProjectMetadata, env: str, databricks_args: list[str]):
     if target is None:
         destroy_cmd += ["--target", env]
     Command(destroy_cmd, log=log, warn=True).run(cwd=metadata.project_path)
+    file_path = get_env_file_path(metadata, env)
+    if not file_path:
+        log.warning(f"No file path found for the given environment: '{env}'")
+        return
     Command(
         [
             "databricks",
             "fs",
             "rm",
             "-r",
-            f"dbfs:/FileStore/{metadata.package_name}/{env}",
+            f"dbfs:{file_path}",
         ],
         log=log,
         warn=True,

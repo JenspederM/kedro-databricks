@@ -1,7 +1,7 @@
 """Base interfaces and helpers for Databricks resource generation.
 
 This module defines the abstract generator responsible for converting Kedro
-pipelines into Databricks jobs/workflows according to the Databricks REST API.
+pipelines into Databricks jobs according to the Databricks REST API.
 Concrete implementations specify how tasks are laid out (e.g., per-node or
 per-pipeline).
 """
@@ -24,11 +24,14 @@ from kedro_databricks.cli.bundle.utils import (
     sort_dict,
 )
 from kedro_databricks.constants import (
+    JOB_KEY_ORDER,
     TASK_KEY_ORDER,
-    WORKFLOW_KEY_ORDER,
 )
 from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import make_workflow_name, require_databricks_run_script
+from kedro_databricks.utils import (
+    make_job_name,
+    require_databricks_run_script,
+)
 
 log = get_logger("bundle").getChild(__name__)
 
@@ -53,7 +56,7 @@ class AbstractResourceGenerator(ABC):
         self.remote_conf_dir = f"/${{workspace.file_path}}/{conf_source}"
         self.params = params
 
-    def generate_resources(
+    def generate_jobs(
         self, pipeline_name: str | None = None
     ) -> dict[str, dict[str, Any]]:
         """Generate Databricks resources for the given pipelines.
@@ -68,13 +71,13 @@ class AbstractResourceGenerator(ABC):
         Returns:
             dict[str, dict[str, Any]]: A dictionary of pipeline names and their Databricks resources
         """
-        workflows = {}
+        jobs = {}
         pipeline = self.pipelines.get(pipeline_name)
         if pipeline_name and pipeline:
             log.info(f"Generating resources for pipeline '{pipeline_name}'")
-            name = make_workflow_name(self.metadata.package_name, pipeline_name)
-            workflows[name] = self._create_workflow(name=name, pipeline=pipeline)
-            return self._workflows_to_resources(workflows)
+            name = make_job_name(self.metadata.package_name, pipeline_name)
+            jobs[name] = self._create_job(name=name, pipeline=pipeline)
+            return jobs
         if pipeline_name:
             raise KeyError(
                 f"Pipeline '{pipeline_name}' not found. Available pipelines: {list(self.pipelines.keys())}"
@@ -83,55 +86,35 @@ class AbstractResourceGenerator(ABC):
         for pipe_name, pipeline in self.pipelines.items():
             if len(pipeline.nodes) == 0:
                 continue
-            name = make_workflow_name(self.metadata.package_name, pipe_name)
-            workflow = self._create_workflow(name=name, pipeline=pipeline)
-            log.debug(f"Workflow '{name}' successfully created.")
-            log.debug(workflow)
-            workflows[name] = workflow
+            name = make_job_name(self.metadata.package_name, pipe_name)
+            job = self._create_job(name=name, pipeline=pipeline)
+            log.debug(f"Job '{name}' successfully created.")
+            log.debug(job)
+            jobs[name] = job
 
-        return self._workflows_to_resources(workflows)
+        return jobs
 
-    def _workflows_to_resources(
-        self, workflows: dict[str, dict[str, Any]]
-    ) -> dict[str, dict[str, Any]]:
-        """Convert Databricks workflows to Databricks resources.
-
-        Args:
-            workflows (Dict[str, Dict[str, Any]]): A dictionary of Databricks workflows
-
-        Returns:
-            Dict[str, Dict[str, Any]]: A dictionary of Databricks resources
-        """
-        resources = {
-            name: {"resources": {"jobs": {name: wf}}} for name, wf in workflows.items()
-        }
-        log.debug(resources)
-        log.info("Databricks resources successfully generated.")
-        return resources
-
-    def _create_workflow(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
-        """Create a Databricks workflow for a given pipeline.
+    def _create_job(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+        """Create a Databricks job for a given pipeline.
 
         Args:
             name (str): name of the pipeline
             pipeline (Pipeline): Kedro pipeline object
-            env (str): name of the env to be used by the tasks of the workflow
+            env (str): name of the env to be used by the tasks of the job
 
         Returns:
-            Dict[str, Any]: a Databricks workflow
+            Dict[str, Any]: a Databricks job
         """
         ## Follows the Databricks REST API schema
         ## https://docs.databricks.com/api/workspace/jobs/create
-        workflow = self._create_workflow_dict(name=name, pipeline=pipeline)
-        non_null = remove_nulls(sort_dict(workflow, WORKFLOW_KEY_ORDER))
+        job = self._create_job_dict(name=name, pipeline=pipeline)
+        non_null = remove_nulls(sort_dict(job, JOB_KEY_ORDER))
         if not isinstance(non_null, dict):  # pragma: no cover - this is a type check
             raise RuntimeError("Expected a dict")
         return non_null
 
     @abstractmethod
-    def _create_workflow_dict(
-        self, name: str, pipeline: Pipeline
-    ) -> dict[str, Any]: ...
+    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]: ...
 
     def _create_task_with_params(
         self,
@@ -162,7 +145,6 @@ class AbstractResourceGenerator(ABC):
 
         task = {
             "task_key": sanitize_name(name),
-            "libraries": [{"whl": "../dist/*.whl"}],
             "depends_on": [
                 {"task_key": sanitize_name(dep)}
                 for dep in sorted(depends_on, key=lambda dep: dep.name)

@@ -66,45 +66,56 @@ This command will create the following files:
 ├── databricks.yml # Databricks Asset Bundle configuration
 ├── conf/
 │   └── dev/
-│       └── databricks.yml # Workflow overrides
+│       └── databricks.yml # Resource overrides
 │       └── catalog.yml    # Catalog overrides
 │   └── prod/
-│       └── databricks.yml # Workflow overrides
+│       └── databricks.yml # Resource overrides
 │       └── catalog.yml    # Catalog overrides
 ```
 
-The `databricks.yml` file is the main configuration file for the Databricks Asset Bundle. The `conf/base/databricks.yml` file is used to override the Kedro workflow configuration for Databricks.
+The `databricks.yml` file is the main configuration file for the Databricks Asset Bundle. The `conf/base/databricks.yml` file is used to override the Kedro resource configuration for Databricks.
 
-Override the Kedro workflow configuration for Databricks in the `conf/<env>/databricks.yml` file:
+Override the Kedro resource configuration for Databricks in the `conf/<env>/databricks.yml` file:
 
 ```yaml
 # conf/dev/databricks.yml
 
-default: # will be applied to all workflows
-  job_clusters:
-    - job_cluster_key: default
-      new_cluster:
-        spark_version: 15.4.x-scala2.12
-        node_type_id: Standard_DS3_v2
-        num_workers: 2
-        spark_env_vars:
-          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-  tasks: # will be applied to all tasks in each workflow
-    - task_key: default
-      job_cluster_key: default
-
-<workflow-name>: # will only be applied to the workflow with the specified name
-  job_clusters:
-    - job_cluster_key: high-concurrency
-      new_cluster:
-        spark_version: 15.4.x-scala2.12
-        node_type_id: Standard_DS3_v2
-        num_workers: 2
-        spark_env_vars:
-          KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-  tasks:
-    - task_key: <my-task> # will only be applied to the specified task in the specified workflow
-      job_cluster_key: high-concurrency
+resources:
+  jobs:
+    default: # will be applied to all jobs
+      environments:
+      - environment_key: default
+        spec:
+          dependencies:
+          - ../dist/*.whl
+          environment_version: '4'
+      tasks:
+      - environment_key: default
+        task_key: default
+      - environment_key: my-task # will only be applied to the task named `my-task`
+        task_key: default
+    my-job: # will only be applied to the job named `my-job`
+      environments:
+      - environment_key: my-job
+        spec:
+          dependencies:
+          - ../dist/*.whl
+          environment_version: '4'
+      tasks:
+      - environment_key: default
+        task_key: default
+  volumes: 
+    my_volume:
+      catalog_name: workspace
+      comment: A volume to store my data
+      grants:
+      - principal: \${workspace.current_user.userName} # We can use Databricks Asset bundle substitutions
+        privileges:
+        - READ_VOLUME
+        - WRITE_VOLUME
+      name: my_volume
+      schema_name: default
+      volume_type: MANAGED
 ```
 
 The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
@@ -121,8 +132,9 @@ This command will generate the following files:
 
 ```
 ├── resources/
-│   ├── <project>.yml            # corresponds to `kedro run`
-│   ├── <project>_<pipeline>.yml # corresponds to `kedro run --pipeline <pipeline>`
+│   ├── <resource-type>.<resource-name>.yml  # We support any databricks resource type
+│   ├── jobs.<project>.yml                   # corresponds to `kedro run`
+│   ├── jobs.<project>_<pipeline>.yml        # corresponds to `kedro run --pipeline <pipeline>`
 ```
 
 The generated files contain the Asset Bundle resources definition for your Kedro project, which is necessary for deploying your project to Databricks.
@@ -131,7 +143,7 @@ The generated files contain the Asset Bundle resources definition for your Kedro
 
 You can choose how resources are generated using `-g/--resource-generator`:
 
-- `node` (default): creates a workflow task for each Kedro node with dependencies.
+- `node` (default): creates a job task for each Kedro node with dependencies.
 - `pipeline`: creates a single task that runs the entire pipeline.
 
 You can also provide a fully-qualified dotted path to a custom generator class
@@ -143,7 +155,7 @@ Examples:
 # Generate per-node tasks (default behavior)
 kedro databricks bundle -g node
 
-# Generate a single-task workflow for the whole pipeline
+# Generate a single-task job for the whole pipeline
 kedro databricks bundle -g pipeline
 
 # Bundle only one pipeline by name
@@ -159,7 +171,7 @@ Tip: The same `-g/--resource-generator`, `-p/--pipeline`, and `-r/--params` opti
 
 You can implement your own generator by subclassing
 `kedro_databricks.cli.bundle.resource_generator.AbstractResourceGenerator` and
-returning a Databricks workflow payload in `_create_workflow_dict`. For example,
+returning a Databricks job payload in `_create_job_dict`. For example,
 the snippet below creates per-node tasks and attaches a custom cluster:
 
 ```python
@@ -176,7 +188,7 @@ from kedro_databricks.cli.bundle.resource_generator.abstract_resource_generator 
 class CustomGenerator(AbstractResourceGenerator):
     """Example generator with a predefined job cluster per task."""
 
-    def _create_workflow_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
         # Your custom logic
         return {"name": name, "tasks": []}
 ```
@@ -195,17 +207,17 @@ With your Kedro project initialized and the Asset Bundle resources generated, yo
 kedro databricks deploy
 ```
 
-That's it! Your pipelines have now been deployed as a workflow to Databricks as `[dev <user>] <project_name>`.
+That's it! Your pipelines have now been deployed as a job to Databricks as `[dev <user>] <project_name>`.
 
-#### Running the workflow
+#### Running the job
 
-To run the workflow on Databricks, you can use the following command:
+To run the job on Databricks, you can use the following command:
 
 ```bash
 kedro databricks run <project_name>
 ```
 
-It might take a few minutes to run the workflow, depending on the size of your dataset and the complexity of your pipelines. While you wait, you can monitor the progress of your workflow in the Databricks UI.
+It might take a few minutes to run the job, depending on the size of your dataset and the complexity of your pipelines. While you wait, you can monitor the progress of your job in the Databricks UI.
 
 #### Cleaning up resources
 

@@ -1,7 +1,7 @@
 """Resource generators for building Databricks bundle resources.
 
 This package exposes concrete generators that transform Kedro pipelines into
-Databricks Asset Bundle resources (jobs/workflows). Select the appropriate
+Databricks Asset Bundle resources (jobs). Select the appropriate
 generator via `RESOURCE_GENERATORS` to produce resources at node or pipeline
 granularity.
 """

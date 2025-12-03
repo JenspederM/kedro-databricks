@@ -47,8 +47,8 @@ resources:
               - local
           libraries:
             - whl: ../dist/*.whl
-    my_workflow:
-      name: my_workflow
+    my_job:
+      name: my_job
       tasks:
         - task_key: make_predictions
           depends_on:

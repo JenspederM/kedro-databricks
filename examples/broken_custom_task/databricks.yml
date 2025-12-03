@@ -1,6 +1,8 @@
-my_pipeline:
-  tasks:
-    - task_key: default
-      package_name: my_package
-    - task_key: taskB
-      run_if: AT_LEAST_ONE_SUCCESS
+resources:
+  jobs:
+    my_pipeline:
+      tasks:
+        - task_key: default
+          package_name: my_package
+        - task_key: taskB
+          run_if: AT_LEAST_ONE_SUCCESS

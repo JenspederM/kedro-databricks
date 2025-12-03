@@ -47,8 +47,8 @@ resources:
               - local
           libraries:
             - whl: ../dist/*.whl
-    my_workflow:
-      name: my_workflow
+    my_job:
+      name: my_job
       job_clusters:
         - job_cluster_key: default
           new_cluster:

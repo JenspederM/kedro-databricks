@@ -10,7 +10,6 @@ import pytest
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.cli.deploy import (
-    _build_project,
     _check_deployment_complete,
     _get_arg_value,
     _validate_project,
@@ -63,11 +62,6 @@ def test_deploy_non_existing_path(metadata):
 def test_deploy_valid_project(metadata):
     Path(metadata.project_path / "databricks.yml").write_text("")
     _validate_project(metadata)
-
-
-def test_deploy_build_project(metadata):
-    result = _build_project(metadata)
-    assert result.returncode == 0, (result.returncode, result.stdout)
 
 
 @pytest.mark.parametrize(

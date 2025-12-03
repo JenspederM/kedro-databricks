@@ -15,7 +15,7 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 
 1. **Initialization**: Transform your local Kedro project into a Databricks Asset Bundle.
 2. **Generation**: Generate Asset Bundle resources definition based from your kedro pipelines.
-3. **Deployment**: Deploy your Kedro pipelines to Databricks as Workflows.
+3. **Deployment**: Deploy your Kedro pipelines to Databricks as Jobs.
 4. **Execution**: Run your Kedro pipelines on Databricks straight from the command line.
 5. **Cleanup**: Remove all Databricks resources created by the plugin.
 
@@ -24,3 +24,47 @@ Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to p
 To learn more about the plugin, please refer to the [documentation](https://kedro-databricks.readthedocs.io/).
 
 Interested in contributing? Check out our [contribution guidelines](docs/contributing.md) to get started!
+
+## Breaking Changes
+
+### Version `0.14.0`
+
+To accommodate using Databricks Free Edition, we had to change the structure of overrides defined in `conf/<env>/databricks.yml`.
+
+Before:
+```
+default:
+    environments:
+        - environment_key: default
+    spec:
+        environment_version: '4'
+        dependencies:
+            - ../dist/*.whl
+    tasks:
+        - task_key: default
+          environment_key: default
+```
+
+After:
+```
+resources:
+    jobs:
+        default:
+            environments:
+                - environment_key: default
+            spec:
+                environment_version: '4'
+                dependencies:
+                    - ../dist/*.whl
+            tasks:
+                - task_key: default
+                environment_key: default
+```
+
+This was done so that we could default to creating a volume in a newly initialized `kedro-databricks` project. 
+
+While this requires users to migrate their databricks configuration, it also extends the ability of `kedro-databricks` beyond that of applying overrides to specific jobs. Now, you can add any type of resource in your `conf/<env>/databricks.yml` and those will be generated as well.
+
+> NOTE: Merges are only applied for `jobs` currently, so any other defined will be generated as defined in the configuration.
+
+In addition to the changes to the structure of `conf/<env>/databricks.yml`, we now also tag the generated resources with their resource type, meaning that newly generated resources will be named like `<resource-type>.<resouce-name>.yml`.

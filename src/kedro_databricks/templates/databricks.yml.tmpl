@@ -6,7 +6,6 @@ bundle:
 variables:
   environment:
     description: The environment to deploy to.
-    type: string
     default: dev
 
 artifacts:
@@ -19,7 +18,6 @@ sync:
   include:
     - conf/logging.yml
     - conf/base/*.yml
-    - conf/base/*.gitkeep
   exclude:
     - conf/local/**/*
 

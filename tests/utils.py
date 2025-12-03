@@ -14,6 +14,12 @@ def reset_init(metadata: ProjectMetadata):
     shutil.rmtree(metadata.project_path / "conf" / "prod", ignore_errors=True)
 
 
+def reset_bundle(metadata):
+    """Reset the bundle to its initial state."""
+    bundle_dir = metadata.project_path / "resources"
+    shutil.rmtree(bundle_dir, ignore_errors=True)
+
+
 def identity(arg):
     return arg
 
@@ -70,9 +76,6 @@ def _generate_task(
 
     task = {
         "task_key": task_key,
-        "libraries": [
-            {"whl": "../dist/*.whl"},
-        ],
         "python_wheel_task": {
             "package_name": "fake_project",
             "entry_point": entry_point,
@@ -86,7 +89,7 @@ def _generate_task(
     return task
 
 
-def generate_workflow(conf="conf"):
+def generate_job(conf="conf"):
     tasks = []
 
     for i in range(5):
@@ -97,9 +100,9 @@ def generate_workflow(conf="conf"):
         tasks.append(_generate_task(f"node{i}", depends_on, conf))
 
     return {
-        "name": "workflow1",
+        "name": "job1",
         "tasks": tasks,
     }
 
 
-WORKFLOW = generate_workflow()
+JOB = generate_job()

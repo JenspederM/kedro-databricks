@@ -9,7 +9,7 @@ from kedro.config import MissingConfigException
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.cli.bundle.override_resources import override_resources
+from kedro_databricks.cli.bundle.override_resources import override_job
 from kedro_databricks.cli.bundle.resource_generator_resolver import (
     RESOURCE_GENERATOR_RESOLVER,
 )
@@ -52,12 +52,34 @@ def bundle(
     ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator_name)
 
     overrides = _load_kedro_env_config(metadata, config_dir=conf_source, env=env)
+    if "resources" not in overrides:
+        raise KeyError(
+            f"'resources' key not found in the 'databricks' configuration for environment '{env}'"
+        )
+
     g = ResourceGenerator(metadata, env, conf_source, params)
-    resources = g.generate_resources(pipeline_name)
-    result = {}
-    for name, resource in resources.items():
-        result[name] = override_resources(resource, overrides, default_key)
-    _save_bundled_resources(metadata, result, overwrite)
+    jobs = g.generate_jobs(pipeline_name)
+    job_overrides = overrides["resources"].pop("jobs", {})
+    resources = {
+        f"{resource_type}.{resource_name}": {
+            "resources": {
+                resource_type: {
+                    resource_name: v,
+                }
+            }
+        }
+        for resource_type, items in overrides["resources"].items()
+        if resource_type != "jobs"
+        for resource_name, v in items.items()
+    }
+    for name, job in jobs.items():
+        resources[f"jobs.{name}"] = {
+            "resources": {
+                "jobs": {name: override_job(job, job_overrides, default_key)},
+            }
+        }
+
+    _save_bundled_resources(metadata, resources, overwrite)
 
 
 def _load_kedro_env_config(
@@ -93,7 +115,7 @@ def _load_kedro_env_config(
                 {"databricks": ["databricks*", "databricks/**"]}
             )
 
-        if "databricks" not in config_loader.config_patterns.keys():  # type: ignore
+        if "databricks" not in config_loader.config_patterns.keys():  # type: ignore # pragma: no cover
             log.warning(
                 "No Databricks configuration found. "
                 "Please ensure that `databricks` is included in your config patterns."
@@ -115,8 +137,8 @@ def _save_bundled_resources(
     """Save the generated resources to the project directory.
 
     Args:
-        resources (Dict[str, Dict[str, Any]]): A dictionary of pipeline names and their Databricks resources
         metadata (ProjectMetadata): The metadata of the project
+        resources (Dict[str, Dict[str, Any]]): A dictionary of pipeline names and their Databricks resources
         overwrite (bool): Whether to overwrite existing resources
     """
     resources_dir = metadata.project_path / "resources"

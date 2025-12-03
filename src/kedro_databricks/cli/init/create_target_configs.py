@@ -3,15 +3,14 @@ import re
 from pathlib import Path
 
 import yaml
-from databricks.sdk import WorkspaceClient
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.constants import DEFAULT_TARGET
 from kedro_databricks.logger import get_logger
 from kedro_databricks.utils import (
     Command,
     get_bundle_name,
     get_targets,
+    make_target_file_path,
     read_databricks_config,
 )
 
@@ -64,7 +63,7 @@ class DatabricksTarget:
             ],
             log=log,
             warn=True,
-        ).run()
+        ).run(silent=True)
         json_start = [
             i for i in range(len(result.stdout)) if result.stdout[i].startswith("{")
         ]
@@ -76,9 +75,7 @@ class DatabricksTarget:
 
 def create_target_configs(
     metadata: ProjectMetadata,
-    node_type_id: str,
     default_key: str,
-    single_user_default: bool = True,
 ):
     """Create target configurations for a Kedro project in Databricks.
 
@@ -110,46 +107,50 @@ def create_target_configs(
         target_conf_dir = conf_dir / target.name
         target_conf_dir.mkdir(exist_ok=True)
         _save_gitkeep_file(target_conf_dir)
-        is_single_user = single_user_default and target.name == DEFAULT_TARGET
-        target_config = _create_target_config(
-            default_key,
-            node_type_id,
-            single_user=is_single_user,
-        )
+        target_config = _create_target_config(default_key, bundle_name)
         _save_target_config(target_config, target_conf_dir)
-        target_file_path = f"/Volumes/<your-volume-name>/{bundle_name}/{target_name}"
-        if target.name == DEFAULT_TARGET:
-            target_file_path = f"/dbfs/FileStore/{bundle_name}/{target_name}"
+        target_file_path = make_target_file_path(bundle_name, target.name)
         _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
         log.info(f"Created target config for {target.name} at {target_conf_dir}")
 
 
-def _create_target_config(
-    default_key: str, node_type_id: str, single_user: bool = False
-):
-    new_cluster = {
-        "spark_version": "15.4.x-scala2.12",
-        "node_type_id": node_type_id,
-        "num_workers": 1,
-        "spark_env_vars": {
-            "KEDRO_LOGGING_CONFIG": "/\\${workspace.file_path}/conf/logging.yml"
-        },
-    }
-
-    if single_user:
-        wc = WorkspaceClient()
-        single_user_opts = {
-            "data_security_mode": "SINGLE_USER",
-            "single_user_name": wc.current_user.me().user_name,
-        }
-        new_cluster.update(single_user_opts)
-
+def _create_target_config(default_key: str, bundle_name: str):
     return {
-        default_key: {
-            "job_clusters": [
-                {"job_cluster_key": default_key, "new_cluster": new_cluster}
-            ],
-            "tasks": [{"task_key": default_key, "job_cluster_key": default_key}],
+        "resources": {
+            "volumes": {
+                f"{bundle_name}_volume": {
+                    "catalog_name": "workspace",
+                    "schema_name": "default",
+                    "name": bundle_name,
+                    "comment": f"Volume for {bundle_name}",
+                    "volume_type": "MANAGED",
+                    "grants": [
+                        {
+                            "principal": "\\${workspace.current_user.userName}",
+                            "privileges": ["READ_VOLUME", "WRITE_VOLUME"],
+                        },
+                    ],
+                }
+            },
+            "jobs": {
+                default_key: {
+                    "environments": [
+                        {
+                            "environment_key": default_key,
+                            "spec": {
+                                "environment_version": "4",
+                                "dependencies": ["../dist/*.whl"],
+                            },
+                        }
+                    ],
+                    "tasks": [
+                        {
+                            "task_key": default_key,
+                            "environment_key": default_key,
+                        }
+                    ],
+                }
+            },
         }
     }
 

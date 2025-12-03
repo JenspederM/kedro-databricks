@@ -9,7 +9,7 @@ from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import ProjectMetadata
 
 from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import make_workflow_name
+from kedro_databricks.utils import make_job_name
 
 JobLink = namedtuple("JobLink", ["name", "url", "is_dev"])
 
@@ -75,7 +75,7 @@ def _is_valid_job(
     metadata: ProjectMetadata, pipelines: MutableMapping, job_name: str
 ) -> bool:
     return any(
-        make_workflow_name(metadata.package_name, pipeline_name) in job_name
+        make_job_name(metadata.package_name, pipeline_name) in job_name
         for pipeline_name in pipelines
     )
 
