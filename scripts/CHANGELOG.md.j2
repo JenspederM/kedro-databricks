@@ -2,10 +2,10 @@
 
 ## {{ entry.version }}{% if entry.date %} ({{ entry.date }}){% endif %}
 
-{% for change_key, changes in entry.changes|dictsort(reverse=True) %}
+{% for change_key, changes in entry.changes|dictsort() %}
 
 {% if change_key %}
-### {{ change_key|trim }}
+### {{ (change_key|trim|title).split(". ")[1] }}
 {% endif %}
 
 {% for change in changes %}
