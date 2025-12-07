@@ -7,10 +7,36 @@ from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
 
-def test_init_arg(cli_runner, metadata):
+def test_bundle_init_already_exists(cli_runner, metadata):
+    # Arrange
     reset_init(metadata)
+    with open(metadata.project_path / "databricks.yml", "w") as f:
+        f.write("")
+
+    # Act
     command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=metadata)
+
+    # Assert
+    assert result.exit_code == 1, (
+        result.exit_code,
+        result.stdout,
+        result.exception,
+    )
+    assert "one or more files already exist: databricks.yml" in result.output
+    with open(metadata.project_path / "databricks.yml") as f:
+        assert f.read() == "", "Databricks config overwritten"
+
+
+def test_init_arg(cli_runner, metadata):
+    # Arrange
+    reset_init(metadata)
+
+    # Act
+    command = ["databricks", "init"]
+    result = cli_runner.invoke(commands, command, obj=metadata)
+
+    # Assert
     assert result.exit_code == 0, (
         result.exit_code,
         result.stdout,

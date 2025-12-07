@@ -11,7 +11,6 @@ from kedro_databricks.cli.init import (
     _prepare_template,
     _update_gitignore,
     _write_databricks_run_script,
-    init,
 )
 from kedro_databricks.cli.init.create_target_configs import (
     _substitute_file_path,
@@ -35,17 +34,6 @@ def test_update_gitignore_does_not_exist(metadata):
     assert gitignore_path.exists(), "Gitignore not written"
     with open(gitignore_path) as f:
         assert ".databricks" in f.read(), ".databricks not in gitignore"
-
-
-def test_bundle_init_already_exists(metadata):
-    with open(metadata.project_path / "databricks.yml", "w") as f:
-        f.write("")
-    with pytest.raises(
-        RuntimeError, match="one or more files already exist: databricks.yml"
-    ):
-        init(metadata, "test")
-    with open(metadata.project_path / "databricks.yml") as f:
-        assert f.read() == "", "Databricks config overwritten"
 
 
 def test_write_databricks_run_script(metadata):
