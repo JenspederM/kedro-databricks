@@ -205,11 +205,11 @@ def deploy(
     cli.deploy(metadata, env, *databricks_args)
 
 
-@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
-@click.argument("pipeline")
+@databricks_commands.command()
+@click.argument("pipeline", default="", nargs=1)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
-def run(metadata: ProjectMetadata, pipeline: str, databricks_args: list[str]):
+def run(metadata: ProjectMetadata, pipeline: str, databricks_args: tuple[str, ...]):
     """Run the project on Databricks
 
     This is a wrapper for the `databricks bundle run` command.
@@ -220,7 +220,15 @@ def run(metadata: ProjectMetadata, pipeline: str, databricks_args: list[str]):
         pipeline: The pipeline to run on Databricks.
         databricks_args: Additional arguments to be passed to the `databricks` CLI.
     """
-    cli.run(metadata, pipeline, *databricks_args)
+    if pipeline.startswith("--"):
+        databricks_args = (pipeline,) + databricks_args
+        pipeline = ""
+
+    if not pipeline:
+        pipeline = metadata.package_name
+
+    print(f"Running pipeline: {pipeline}")  # noqa: T201
+    cli.run(metadata, pipeline, list(databricks_args))
 
 
 @databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
