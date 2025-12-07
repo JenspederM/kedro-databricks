@@ -2,8 +2,8 @@ import shutil
 
 import yaml
 
-from kedro_databricks.cli.deploy import _get_arg_value
-from kedro_databricks.constants import DEFAULT_CONFIG_KEY, DEFAULT_TARGET
+from kedro_databricks.core.constants import DEFAULT_CONFIG_KEY, DEFAULT_TARGET
+from kedro_databricks.core.utils import get_arg_value
 from kedro_databricks.plugin import commands
 
 
@@ -24,9 +24,9 @@ def _validate_bundle(
             resource = yaml.safe_load(f)
         assert "resources" in resource, f"'resources' key not found in {file}"
         if file.name.startswith("jobs."):
-            assert (
-                len(resource["resources"]["jobs"]) == 1
-            ), f"Expected 1 job in {file}, found {len(resource['resources']['jobs'])}"
+            assert len(resource["resources"]["jobs"]) == 1, (
+                f"Expected 1 job in {file}, found {len(resource['resources']['jobs'])}"
+            )
             job_name = file.name.split(".")[1]
             job = resource["resources"]["jobs"].get(job_name)
             assert job is not None, f"Job {job_name} not found in {file}"
@@ -55,7 +55,7 @@ def test_databricks_bundle_with_overrides(kedro_project_with_init):
             assert task.get("environment_key") == DEFAULT_CONFIG_KEY
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
-            env = _get_arg_value(params, "--env")
+            env = get_arg_value(params, "--env")
             assert env is not None
             assert env == "${var.environment}"
 
@@ -92,7 +92,7 @@ def test_databricks_bundle_with_conf(kedro_project_with_init):
             assert task.get("environment_key") == DEFAULT_CONFIG_KEY
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
-            env = _get_arg_value(params, "--env")
+            env = get_arg_value(params, "--env")
             assert env is not None
             assert env == "${var.environment}"
 
@@ -122,7 +122,7 @@ def test_databricks_bundle_without_overrides(kedro_project_with_init):
             assert task.get("environment_key") == DEFAULT_CONFIG_KEY
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
-            env = _get_arg_value(params, "--env")
+            env = get_arg_value(params, "--env")
             assert env is not None
             assert env == "${var.environment}"
 
@@ -160,7 +160,7 @@ def test_databricks_bundle_with_params(kedro_project_with_init):
             assert task.get("environment_key") == DEFAULT_CONFIG_KEY
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
-            value = _get_arg_value(params, "--params")
+            value = get_arg_value(params, "--params")
             assert value is not None
             assert (
                 value
@@ -203,10 +203,10 @@ def test_databricks_bundle_with_pipeline(kedro_project_with_init):
             assert task.get("environment_key") == DEFAULT_CONFIG_KEY
             params = task.get("python_wheel_task").get("parameters")
             assert params is not None
-            env = _get_arg_value(params, "--env")
+            env = get_arg_value(params, "--env")
             assert env is not None
             assert env == "${var.environment}"
-            pipeline = _get_arg_value(params, "--pipeline")
+            pipeline = get_arg_value(params, "--pipeline")
             assert pipeline is None
 
     _validate_bundle(
@@ -236,6 +236,6 @@ def test_databricks_bundle_with_no_nodes(kedro_project_with_init):
     assert isinstance(result.exception, KeyError)
     exception = bytes(str(result.exception), "utf-8").decode("unicode_escape")
     expected = "Pipeline 'non-existing-pipeline' not found."
-    assert (
-        expected in result.exception.args[0]
-    ), f"Expected exception message: {expected} not found in {exception}"
+    assert expected in result.exception.args[0], (
+        f"Expected exception message: {expected} not found in {exception}"
+    )

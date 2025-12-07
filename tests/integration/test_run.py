@@ -8,7 +8,7 @@ import pytest
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
 
-from kedro_databricks.constants import DEFAULT_TARGET
+from kedro_databricks.core.constants import DEFAULT_TARGET
 from kedro_databricks.plugin import commands
 
 PROJECT_NAME = "databricks-iris"
@@ -36,10 +36,10 @@ def iris_meta(databricks_iris_starter):
     return metadata
 
 
-def test_run(cli_runner, iris_meta, custom_provider):
+def test_run(cli_runner, iris_meta):
     """Test the run command."""
     project_path = iris_meta.project_path
-    command = ["databricks", "init", "--provider", custom_provider]
+    command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=iris_meta)  # noqa: F821
     assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     assert (project_path / "databricks.yml").exists(), "Databricks config not created"

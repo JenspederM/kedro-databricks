@@ -1,8 +1,8 @@
 import copy
 from typing import Any
 
-from kedro_databricks.constants import IGNORED_OVERRIDE_KEYS, OVERRIDE_KEY_MAP
-from kedro_databricks.logger import get_logger
+from kedro_databricks.core.constants import IGNORED_OVERRIDE_KEYS, OVERRIDE_KEY_MAP
+from kedro_databricks.core.logger import get_logger
 
 log = get_logger("bundle").getChild(__name__)
 
@@ -110,18 +110,18 @@ def _validate_list_by_key(
     Raises:
         ValueError: if the lookup key is not found in any dictionary
     """
-    assert isinstance(
-        old, list
-    ), f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
-    assert isinstance(
-        new, list
-    ), f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
-    assert all(
-        lookup_key in o for o in old
-    ), f"lookup_key {lookup_key} not found in current: {old}"
-    assert all(
-        lookup_key in n for n in new
-    ), f"lookup_key {lookup_key} not found in updates: {new}"
+    assert isinstance(old, list), (
+        f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
+    )
+    assert isinstance(new, list), (
+        f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
+    )
+    assert all(lookup_key in o for o in old), (
+        f"lookup_key {lookup_key} not found in current: {old}"
+    )
+    assert all(lookup_key in n for n in new), (
+        f"lookup_key {lookup_key} not found in updates: {new}"
+    )
 
 
 def _get_old_value(result: Any, key: Any, value: Any):

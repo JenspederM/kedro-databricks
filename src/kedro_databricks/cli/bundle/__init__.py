@@ -13,7 +13,7 @@ from kedro_databricks.cli.bundle.override_resources import override_job
 from kedro_databricks.cli.bundle.resource_generator_resolver import (
     RESOURCE_GENERATOR_RESOLVER,
 )
-from kedro_databricks.logger import get_logger
+from kedro_databricks.core.logger import get_logger
 
 log = get_logger("bundle")
 

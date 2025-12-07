@@ -1,42 +1,32 @@
 import argparse
 import logging
 import shutil
+import subprocess
 from importlib.metadata import version
 from pathlib import Path
-
-from kedro_databricks.utils import Command
 
 log = logging.getLogger("kedro_databricks")
 
 
 def new_project(name):
     """Create a new Kedro project using the Databricks starter."""
-    Command(
-        ["kedro", "new", "--starter", "databricks-iris", "--name", name], log=log
-    ).run()
+    subprocess.run(
+        ["kedro", "new", "--starter", "databricks-iris", "--name", name], check=True
+    )
 
 
 def run_kedro_databricks_flow(name, destroy=False):
     ver = version("kedro_databricks")
     whl = f"kedro_databricks-{ver}-py3-none-any.whl"
     logging.basicConfig(level=logging.INFO)
-    Command(["uv", "build"], log=log).run()
-    Command(["mv", f"dist/{whl}", name], log=log).run()
-    Command(["uv", "venv"], log=log).run(cwd=f"./{name}")
-    Command(["uv", "pip", "install", whl], log=log).run(cwd=f"./{name}")
-    Command(
-        [
-            "uv",
-            "run",
-            "kedro",
-            "databricks",
-            "init",
-            "--provider",
-            "azure",
-        ],
-        log=log,
-    ).run(cwd=f"./{name}")
-    Command(
+    subprocess.run(["uv", "build"], check=True)
+    subprocess.run(["mv", f"dist/{whl}", name], check=True)
+    subprocess.run(["uv", "venv"], cwd=f"./{name}", check=True)
+    subprocess.run(["uv", "pip", "install", whl], cwd=f"./{name}", check=True)
+    subprocess.run(
+        ["uv", "run", "kedro", "databricks", "init"], cwd=f"./{name}", check=True
+    )
+    subprocess.run(
         [
             "uv",
             "run",
@@ -45,9 +35,10 @@ def run_kedro_databricks_flow(name, destroy=False):
             "bundle",
             "--overwrite",
         ],
-        log=log,
-    ).run(cwd=f"./{name}")
-    Command(
+        cwd=f"./{name}",
+        check=True,
+    )
+    subprocess.run(
         [
             "uv",
             "run",
@@ -55,30 +46,24 @@ def run_kedro_databricks_flow(name, destroy=False):
             "databricks",
             "deploy",
         ],
-        log=log,
-    ).run(cwd=f"./{name}")
-    Command(
+        cwd=f"./{name}",
+        check=True,
+    )
+    subprocess.run(
         [
             "databricks",
             "bundle",
             "run",
             name.replace("-", "_"),
         ],
-        log=log,
-    ).run(cwd=f"./{name}")
+        cwd=f"./{name}",
+        check=True,
+    )
     if destroy:
-        Command(
-            [
-                "databricks",
-                "fs",
-                "rm",
-                "-r",
-                f"dbfs:/FileStore/dev/{name.replace('-', '_')}/",
-            ],
-            log=log,
-        ).run(cwd=f"./{name}")
-        Command(["databricks", "bundle", "destroy", "--auto-approve"], log=log).run(
-            cwd=f"./{name}"
+        subprocess.run(
+            ["databricks", "bundle", "destroy", "--auto-approve"],
+            cwd=f"./{name}",
+            check=True,
         )
 
 

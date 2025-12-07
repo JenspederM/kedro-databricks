@@ -23,15 +23,12 @@ from kedro_databricks.cli.bundle.utils import (
     sanitize_name,
     sort_dict,
 )
-from kedro_databricks.constants import (
+from kedro_databricks.core.constants import (
     JOB_KEY_ORDER,
     TASK_KEY_ORDER,
 )
-from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import (
-    make_job_name,
-    require_databricks_run_script,
-)
+from kedro_databricks.core.logger import get_logger
+from kedro_databricks.core.utils import require_databricks_run_script
 
 log = get_logger("bundle").getChild(__name__)
 
@@ -75,7 +72,7 @@ class AbstractResourceGenerator(ABC):
         pipeline = self.pipelines.get(pipeline_name)
         if pipeline_name and pipeline:
             log.info(f"Generating resources for pipeline '{pipeline_name}'")
-            name = make_job_name(self.metadata.package_name, pipeline_name)
+            name = self._make_job_name(self.metadata.package_name, pipeline_name)
             jobs[name] = self._create_job(name=name, pipeline=pipeline)
             return jobs
         if pipeline_name:
@@ -86,7 +83,7 @@ class AbstractResourceGenerator(ABC):
         for pipe_name, pipeline in self.pipelines.items():
             if len(pipeline.nodes) == 0:
                 continue
-            name = make_job_name(self.metadata.package_name, pipe_name)
+            name = self._make_job_name(self.metadata.package_name, pipe_name)
             job = self._create_job(name=name, pipeline=pipeline)
             log.debug(f"Job '{name}' successfully created.")
             log.debug(job)
@@ -157,3 +154,18 @@ class AbstractResourceGenerator(ABC):
         }
 
         return sort_dict(task, TASK_KEY_ORDER)
+
+    def _make_job_name(self, package_name: str, pipeline_name: str) -> str:
+        """Create a name for the Databricks job.
+
+        Args:
+            package_name (str): The name of the Kedro project
+            pipeline_name (str): The name of the pipeline
+
+        Returns:
+            str: The name of the job
+        """
+        if pipeline_name == "__default__":
+            return package_name
+        sanitised_pipeline_name = pipeline_name.replace(".", "_")
+        return f"{package_name}_{sanitised_pipeline_name}"

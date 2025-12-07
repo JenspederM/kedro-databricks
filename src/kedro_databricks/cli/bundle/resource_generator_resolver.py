@@ -25,7 +25,7 @@ from kedro_databricks.cli.bundle.resource_generator import (
     NodeResourceGenerator,
     PipelineResourceGenerator,
 )
-from kedro_databricks.resource_resolver import (
+from kedro_databricks.core.resource_resolver import (
     CompositeResourceResolver,
     ModuleResourceResolver,
     RegistryResourceResolver,

@@ -1,6 +1,6 @@
 import pytest
 
-from kedro_databricks.resource_resolver import (
+from kedro_databricks.core.resource_resolver import (
     CompositeResourceResolver,
     ModuleResourceResolver,
     RegistryResourceResolver,
@@ -113,7 +113,7 @@ def test_module_resolver_validate_fn_accepts():
 def test_module_resolver_validate_fn_rejects():
     # Accept only callables; TEST_STR is not callable -> rejected
     resolver = ModuleResourceResolver(validate_fn=lambda obj: callable(obj))
-    with pytest.raises(ResourceInvalidError) as excinfo:
+    with pytest.raises(ResourceInvalidError, match="is invalid") as excinfo:
         resolver.resolve("tests.unit.test_resource_resolver.TEST_STR")
     msg = str(excinfo.value)
     assert "is invalid" in msg

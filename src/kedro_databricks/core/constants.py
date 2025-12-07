@@ -52,8 +52,6 @@ DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
 
 DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a job for each node) or 'pipeline' (create a single job for the entire pipeline)."
 
-DEFAULT_PROVIDER = "azure"
-"""Default cloud provider for Databricks Asset Bundle."""
 
 OVERRIDE_KEY_MAP = {
     "job_clusters": "job_cluster_key",
@@ -74,21 +72,6 @@ OVERRIDE_KEY_MAP = {
 
 IGNORED_OVERRIDE_KEYS = ["init_scripts", "access_control_list"]
 """Keys that should be ignored when overriding the Databricks configuration."""
-
-NODE_TYPE_MAP = {
-    "aws": "i3.xlarge",
-    "azure": "Standard_DS3_v2",
-    "gcp": "n1-standard-4",
-}
-"""Map of node types for different cloud providers."""
-
-PROVIDER_PROMPT = """
-Please select your cloud provider:
-- azure
-- aws
-- gcp
-"""
-"""Prompt for selecting the cloud provider for Databricks Asset Bundle."""
 
 INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?

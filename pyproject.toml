@@ -66,6 +66,7 @@ addopts = [
     '--ignore-glob="develop-eggs/*"',
     '-ra',
     '-vv',
+    '-x',
 ]
 
 

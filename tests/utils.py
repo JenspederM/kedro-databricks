@@ -5,7 +5,7 @@ import shutil
 from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
-from kedro_databricks.utils import require_databricks_run_script
+from kedro_databricks.core.utils import require_databricks_run_script
 
 
 def reset_init(metadata: ProjectMetadata):

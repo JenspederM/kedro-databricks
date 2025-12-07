@@ -30,12 +30,6 @@ def custom_username():
     return custom_username
 
 
-@pytest.fixture(scope="session")
-def custom_provider():
-    custom_provider = os.getenv("CUSTOM_PROVIDER", "azure")
-    return custom_provider
-
-
 @pytest.fixture(name="cli_runner", scope="session")
 def cli_runner():
     runner = CliRunner()
