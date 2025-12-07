@@ -1,14 +1,15 @@
-import pytest
-
+from kedro_databricks.cli.init.create_target_configs import (
+    _get_bundle_name,
+    _get_targets,
+    _read_databricks_config,
+)
 from kedro_databricks.plugin import commands
-from kedro_databricks.utils import get_bundle_name, get_targets, read_databricks_config
 from tests.utils import reset_init
 
 
-@pytest.mark.parametrize("provider", ["azure", "aws", "gcp"])
-def test_init_arg(cli_runner, metadata, provider):
+def test_init_arg(cli_runner, metadata):
     reset_init(metadata)
-    command = ["databricks", "init", "--provider", provider]
+    command = ["databricks", "init"]
     result = cli_runner.invoke(commands, command, obj=metadata)
     assert result.exit_code == 0, (
         result.exit_code,
@@ -21,22 +22,14 @@ def test_init_arg(cli_runner, metadata, provider):
     config_path = metadata.project_path / "databricks.yml"
     assert config_path.exists(), f"Configuration at {config_path} does not exist"
 
-    databricks_config = read_databricks_config(metadata.project_path)
+    databricks_config = _read_databricks_config(metadata.project_path)
     assert databricks_config is not None, "Databricks config not read"
-    name = get_bundle_name(databricks_config)
+    name = _get_bundle_name(databricks_config)
     assert name == metadata.package_name, f"Bundle name not set: {name}"
 
-    targets = get_targets(databricks_config)
+    targets = _get_targets(databricks_config)
     for target in targets:
         override_path = metadata.project_path / "conf" / target / "databricks.yml"
         assert override_path.exists(), (
             f"Resource Overrides at {override_path} does not exist"
         )
-
-
-def test_init_fail(cli_runner, metadata):
-    """Test the `init` command failure"""
-    reset_init(metadata)
-    init_fail = ["databricks", "init", "--provider", "invalid_provider"]
-    result = cli_runner.invoke(commands, init_fail, obj=metadata)
-    assert result.exit_code == 1, (result.exit_code, result.stdout, result.exception)

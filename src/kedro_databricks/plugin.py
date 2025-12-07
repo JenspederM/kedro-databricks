@@ -7,15 +7,13 @@ from kedro.framework.startup import ProjectMetadata
 
 import kedro_databricks
 from kedro_databricks import cli
-from kedro_databricks.constants import (
+from kedro_databricks.core.constants import (
     DEFAULT_CONF_FOLDER,
     DEFAULT_CONFIG_GENERATOR,
     DEFAULT_CONFIG_GENERATOR_HELP,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
-    DEFAULT_PROVIDER,
     DEFAULT_TARGET,
-    PROVIDER_PROMPT,
 )
 
 
@@ -49,20 +47,17 @@ def version():
 @click.option(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
-@click.option("--provider", prompt=PROVIDER_PROMPT, default=DEFAULT_PROVIDER)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def init(
     metadata: ProjectMetadata,
     default_key: str,
-    provider: str,
     databricks_args: list[str],
 ):
     """Initialize Databricks Asset Bundle configuration
 
     This command initializes the Databricks Asset Bundle configuration in the Kedro project.
-    The `default_key` is the configuration key to use for Databricks, and the `provider`
-    specifies the cloud provider for the Databricks Asset Bundle (e.g., "aws", "azure").
+    The `default_key` is the configuration key to use for Databricks.
 
     This command will create a `databricks.yml` file in the `conf/<env>` directory
     and set up the necessary configuration for the Databricks Asset Bundle.
@@ -72,10 +67,9 @@ def init(
     Args:
         metadata: Project metadata containing project path and other information.
         default_key: The default configuration key to use for Databricks.
-        provider: The provider for the Databricks Asset Bundle (e.g., "aws", "azure").
         databricks_args: Additional arguments to pass to the `databricks` CLI.
     """
-    cli.init(metadata, provider, default_key, *databricks_args)
+    cli.init(metadata, default_key, *databricks_args)
 
 
 @databricks_commands.command()

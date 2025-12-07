@@ -39,7 +39,7 @@ jobs:
       - name: Test kedro-databricks
         run: uv run pytest tests
         env:
-          CUSTOM_USERNAME: "github"
+          CUSTOM_USERNAME: "kedro_databricks"
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}

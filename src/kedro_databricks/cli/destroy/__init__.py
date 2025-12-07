@@ -1,12 +1,7 @@
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import (
-    Command,
-    _get_arg_value,
-    assert_databricks_cli,
-    get_env_file_path,
-)
+from kedro_databricks.core import DatabricksCli
+from kedro_databricks.core.logger import get_logger
 
 log = get_logger("destroy")
 
@@ -26,24 +21,6 @@ def destroy(metadata: ProjectMetadata, env: str, databricks_args: list[str]):
     Raises:
         RuntimeError: If the `databricks` CLI is not installed or the wrong version is used.
     """
-    assert_databricks_cli()
-    destroy_cmd = ["databricks", "bundle", "destroy"] + databricks_args
-    target = _get_arg_value(databricks_args, "--target")
-    if target is None:
-        destroy_cmd += ["--target", env]
-    Command(destroy_cmd, log=log, warn=True).run(cwd=metadata.project_path)
-    file_path = get_env_file_path(metadata, env)
-    if not file_path:
-        log.warning(f"No file path found for the given environment: '{env}'")
-        return
-    Command(
-        [
-            "databricks",
-            "fs",
-            "rm",
-            "-r",
-            f"dbfs:{file_path}",
-        ],
-        log=log,
-        warn=True,
-    ).run()
+    dbcli = DatabricksCli(metadata, env, databricks_args)
+    dbcli.destroy()
+    log.info(f"Destroyed Databricks Asset Bundle in {metadata.project_path}")

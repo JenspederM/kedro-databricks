@@ -28,9 +28,9 @@ from kedro_databricks.cli.bundle.utils import (
     sanitize_name,
     sort_dict,
 )
-from kedro_databricks.constants import OVERRIDE_KEY_MAP
-from kedro_databricks.resource_resolver import ResourceNotFoundError
-from kedro_databricks.utils import require_databricks_run_script
+from kedro_databricks.core.constants import OVERRIDE_KEY_MAP
+from kedro_databricks.core.resource_resolver import ResourceNotFoundError
+from kedro_databricks.core.utils import require_databricks_run_script
 from tests.utils import JOB, _generate_task, identity, long_identity, pipeline
 
 
@@ -270,9 +270,9 @@ def test_save_resources(metadata):
 
     project_resources = resource_dir.joinpath(f"{metadata.package_name}.yml")
     project_files = ",".join([str(p) for p in resource_dir.iterdir()])
-    assert (
-        project_resources.exists()
-    ), f"Failed to save project resources, {project_files}"
+    assert project_resources.exists(), (
+        f"Failed to save project resources, {project_files}"
+    )
 
 
 @pytest.mark.parametrize(

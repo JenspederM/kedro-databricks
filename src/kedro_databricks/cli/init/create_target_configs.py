@@ -1,76 +1,12 @@
-import json
 import re
 from pathlib import Path
 
 import yaml
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import (
-    Command,
-    get_bundle_name,
-    get_targets,
-    make_target_file_path,
-    read_databricks_config,
-)
+from kedro_databricks.core.logger import get_logger
 
 log = get_logger("init")
-
-
-class DatabricksTarget:
-    """Represents a Databricks target for a Kedro project.
-
-    This class is used to create a target configuration for a Databricks Asset Bundle.
-    It retrieves metadata about the target from the Databricks CLI and stores
-    relevant information such as the bundle name, target name, mode, host, and file path.
-
-    Attributes:
-        bundle (str): The name of the Databricks bundle.
-        name (str): The name of the target.
-        mode (str): The mode of the target (e.g., "development").
-        host (str): The host of the Databricks workspace.
-        file_path (str): The file path in the Databricks workspace.
-
-    Args:
-        bundle (str): The name of the Databricks bundle.
-        name (str): The name of the target.
-        conf (dict): The configuration dictionary for the target, which may include
-            mode and workspace information.
-
-    Raises:
-        ValueError: If the metadata for the target cannot be retrieved.
-    """
-
-    def __init__(self, bundle: str, name: str, conf: dict):
-        self.bundle = bundle
-        self.name = name
-        self.mode = conf.get("mode", "development")
-        workspace_conf = conf.get("workspace", {})
-        self.host = workspace_conf.get("host")
-        metadata = self._get_metadata()
-        self.file_path = metadata.get("workspace", {}).get("file_path")
-
-    def _get_metadata(self):
-        result = Command(
-            [
-                "databricks",
-                "bundle",
-                "validate",
-                "--target",
-                self.name,
-                "--output",
-                "json",
-            ],
-            log=log,
-            warn=True,
-        ).run(silent=True)
-        json_start = [
-            i for i in range(len(result.stdout)) if result.stdout[i].startswith("{")
-        ]
-        if not json_start:  # pragma: no cover
-            raise ValueError(f"Could not get metadata for target {self.name}")
-        json_output = "\n".join(result.stdout[json_start[0] :])
-        return json.loads(json_output)
 
 
 def create_target_configs(
@@ -99,19 +35,18 @@ def create_target_configs(
         ValueError: If the Databricks configuration is invalid or missing required fields.
     """
     conf_dir = metadata.project_path / "conf"
-    databricks_config = read_databricks_config(metadata.project_path)
-    bundle_name = get_bundle_name(databricks_config)
-    targets = get_targets(databricks_config)
-    for target_name, target_conf in targets.items():
-        target = DatabricksTarget(bundle_name, target_name, target_conf)
-        target_conf_dir = conf_dir / target.name
+    databricks_config = _read_databricks_config(metadata.project_path)
+    bundle_name = _get_bundle_name(databricks_config)
+    targets = _get_targets(databricks_config)
+    for target_name in targets.keys():
+        target_conf_dir = conf_dir / target_name
         target_conf_dir.mkdir(exist_ok=True)
         _save_gitkeep_file(target_conf_dir)
         target_config = _create_target_config(default_key, bundle_name)
         _save_target_config(target_config, target_conf_dir)
-        target_file_path = make_target_file_path(bundle_name, target.name)
+        target_file_path = make_target_file_path(bundle_name, target_name)
         _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
-        log.info(f"Created target config for {target.name} at {target_conf_dir}")
+        log.info(f"Created target config for {target_name} at {target_conf_dir}")
 
 
 def _create_target_config(default_key: str, bundle_name: str):
@@ -155,6 +90,19 @@ def _create_target_config(default_key: str, bundle_name: str):
     }
 
 
+def make_target_file_path(bundle_name: str, target_name: str) -> str:
+    """Create the file path for the Databricks target.
+
+    Args:
+        bundle_name (str): The name of the Databricks bundle.
+        target_name (str): The name of the target.
+
+    Returns:
+        str: The file path for the target in Databricks.
+    """
+    return f"/Volumes/workspace/default/{bundle_name}/{target_name}"
+
+
 def _substitute_file_path(string: str) -> str:
     """Substitute the file path in the catalog"""
     match = re.sub(
@@ -184,3 +132,53 @@ def _save_gitkeep_file(target_conf_dir: Path):
     if not (target_conf_dir / ".gitkeep").exists():
         with open(target_conf_dir / ".gitkeep", "w") as f:
             f.write("")
+
+
+def _read_databricks_config(project_path: Path) -> dict:
+    """Read the databricks.yml configuration file.
+
+    Args:
+        project_path (Path): The path to the Kedro project.
+
+    Returns:
+        dict: The configuration as a dictionary.
+    """
+    with open(project_path / "databricks.yml") as f:
+        conf = yaml.safe_load(f)
+    return conf
+
+
+def _get_bundle_name(config: dict) -> str:
+    """Get the bundle name from the databricks.yml configuration.
+
+    Args:
+        config (dict): The configuration as a dictionary.
+
+    Returns:
+        str: The bundle name.
+
+    Raises:
+        ValueError: If the bundle name is not found.
+    """
+    bundle_name = config.get("bundle", {}).get("name")
+    if bundle_name is None:
+        raise ValueError("No `bundle.name` found in databricks.yml")
+    return bundle_name
+
+
+def _get_targets(config: dict) -> dict:
+    """Get the targets from the databricks.yml configuration.
+
+    Args:
+        config (dict): The configuration as a dictionary.
+
+    Returns:
+        dict: The targets as a dictionary.
+
+    Raises:
+        ValueError: If the targets are not found.
+    """
+    targets = config.get("targets")
+    if targets is None:
+        raise ValueError("No `targets` found in databricks.yml")
+    return targets

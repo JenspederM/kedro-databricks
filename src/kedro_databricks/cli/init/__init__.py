@@ -6,22 +6,17 @@ from pathlib import Path
 import tomlkit
 from kedro.framework.startup import ProjectMetadata
 
+from kedro_databricks.cli.deploy import DatabricksCli
 from kedro_databricks.cli.init.create_target_configs import create_target_configs
 from kedro_databricks.cli.init.inject_local_hook import transform_spark_hook
-from kedro_databricks.constants import GITIGNORE, NODE_TYPE_MAP, TEMPLATES
-from kedro_databricks.logger import get_logger
-from kedro_databricks.utils import (
-    Command,
-    assert_databricks_cli,
-    require_databricks_run_script,
-)
+from kedro_databricks.core.constants import GITIGNORE, TEMPLATES
+from kedro_databricks.core.logger import get_logger
+from kedro_databricks.core.utils import require_databricks_run_script
 
 log = get_logger("init")
 
 
-def init(
-    metadata: ProjectMetadata, provider: str, default_key: str, *databricks_args: str
-):
+def init(metadata: ProjectMetadata, default_key: str, *databricks_args: str):
     """Initialize a Databricks Asset Bundle.
 
     This function creates a Databricks Asset Bundle in the current project
@@ -30,19 +25,17 @@ def init(
 
     Args:
         metadata (ProjectMetadata): The project metadata.
-        provider (str): The provider to use. Valid providers are "azure", "aws", or "gcp".
         default_key (str): The default key to use for the Databricks target.
         *databricks_args: Additional arguments to be passed to the `databricks` CLI.
 
     Raises:
         RuntimeError: If the `databricks` CLI is not installed or the wrong version is used.
-        ValueError: If the provider is not valid.
     """
-    assert_databricks_cli()
     log.info("Initializing Databricks Asset Bundle...")
-    config_path, _ = _validate_inputs(metadata, provider)
-    _databricks_init(metadata, *databricks_args)
-    log.info(f"Created {config_path.relative_to(metadata.project_path)}")
+    dbcli = DatabricksCli(metadata, additional_args=list(databricks_args))
+    assets_dir, template_params = _prepare_template(metadata)
+    dbcli.init(assets_dir, template_params)
+    log.info(f"Initialized Databricks Asset Bundle in {metadata.project_path}")
     create_target_configs(metadata, default_key=default_key)
     _update_gitignore(metadata)
     hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
@@ -56,38 +49,6 @@ def init(
     log.info(
         f"Successfully initialized Databricks Asset Bundle in {metadata.project_path}"
     )
-
-
-def _validate_inputs(metadata: ProjectMetadata, provider: str):
-    if provider not in NODE_TYPE_MAP:
-        raise ValueError(
-            f"Invalid provider '{provider}'. Valid providers are: {', '.join(NODE_TYPE_MAP.keys())}"
-        )
-    config_path = metadata.project_path / "databricks.yml"
-    if config_path.exists():
-        raise RuntimeError(
-            f"{config_path.relative_to(metadata.project_path)} already exists."
-        )
-    return config_path, NODE_TYPE_MAP[provider]
-
-
-def _databricks_init(metadata: ProjectMetadata, *databricks_args):
-    assets_dir, template_params = _prepare_template(metadata)
-    init_cmd = [
-        "databricks",
-        "bundle",
-        "init",
-        assets_dir.as_posix(),
-        "--config-file",
-        template_params.as_posix(),
-        "--output-dir",
-        metadata.project_path.as_posix(),
-    ] + list(databricks_args)
-    result = Command(init_cmd, log=log, warn=True).run()
-    if result.returncode != 0:  # pragma: no cover
-        err = "\n".join(result.stdout)
-        raise RuntimeError(f"Failed to initialize Databricks Asset Bundle\n{err}")
-    shutil.rmtree(assets_dir)
 
 
 def _prepare_template(metadata: ProjectMetadata):

@@ -6,8 +6,8 @@ from typing import Any
 
 from kedro.pipeline.node import Node
 
-from kedro_databricks.constants import MAX_TASK_KEY_LENGTH
-from kedro_databricks.logger import get_logger
+from kedro_databricks.core.constants import MAX_TASK_KEY_LENGTH
+from kedro_databricks.core.logger import get_logger
 
 log = get_logger("bundle").getChild(__name__)
 
