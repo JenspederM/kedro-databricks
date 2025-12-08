@@ -8,11 +8,13 @@ from kedro.framework.startup import ProjectMetadata
 import kedro_databricks
 from kedro_databricks import cli
 from kedro_databricks.core.constants import (
+    DEFAULT_CATALOG,
     DEFAULT_CONF_FOLDER,
     DEFAULT_CONFIG_GENERATOR,
     DEFAULT_CONFIG_GENERATOR_HELP,
     DEFAULT_CONFIG_HELP,
     DEFAULT_CONFIG_KEY,
+    DEFAULT_SCHEMA,
     DEFAULT_TARGET,
 )
 
@@ -45,14 +47,31 @@ def version():
 
 @databricks_commands.command()
 @click.option(
-    "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
+    "-d",
+    "--default-key",
+    default=DEFAULT_CONFIG_KEY,
+    help=DEFAULT_CONFIG_HELP,
+)
+@click.option(
+    "-c",
+    "--default-catalog",
+    default=DEFAULT_CATALOG,
+    help="The default catalog to use for the Databricks target.",
+)
+@click.option(
+    "-s",
+    "--default-schema",
+    default=DEFAULT_SCHEMA,
+    help="The default schema to use for the Databricks target.",
 )
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
 def init(
     metadata: ProjectMetadata,
     default_key: str,
-    databricks_args: list[str],
+    default_catalog: str,
+    default_schema: str,
+    databricks_args: tuple[str, ...],
 ):
     """Initialize Databricks Asset Bundle configuration
 
@@ -67,9 +86,19 @@ def init(
     Args:
         metadata: Project metadata containing project path and other information.
         default_key: The default configuration key to use for Databricks.
+        default_catalog: The default catalog to use for the Databricks target.
+        default_schema: The default schema to use for the Databricks target.
         databricks_args: Additional arguments to pass to the `databricks` CLI.
     """
-    cli.init(metadata, default_key, *databricks_args)
+    cli.init(
+        metadata,
+        options={
+            "default_key": default_key,
+            "default_catalog": default_catalog,
+            "default_schema": default_schema,
+            "databricks_args": list(databricks_args),
+        },
+    )
 
 
 @databricks_commands.command()

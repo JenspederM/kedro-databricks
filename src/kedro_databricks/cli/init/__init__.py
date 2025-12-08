@@ -16,7 +16,18 @@ from kedro_databricks.core.utils import require_databricks_run_script
 log = get_logger("init")
 
 
-def init(metadata: ProjectMetadata, default_key: str, *databricks_args: str):
+class InitOptions(TypedDict):
+    default_key: str
+    "The default key to use for the Databricks target."
+    default_catalog: str
+    "The default catalog to use for the Databricks target."
+    default_schema: str
+    "The default schema to use for the Databricks target."
+    databricks_args: list[str]
+    "Additional arguments to be passed to the `databricks` CLI."
+
+
+def init(metadata: ProjectMetadata, options: InitOptions):
     """Initialize a Databricks Asset Bundle.
 
     This function creates a Databricks Asset Bundle in the current project
@@ -36,7 +47,12 @@ def init(metadata: ProjectMetadata, default_key: str, *databricks_args: str):
     assets_dir, template_params = _prepare_template(metadata)
     dbcli.init(assets_dir, template_params)
     log.info(f"Initialized Databricks Asset Bundle in {metadata.project_path}")
-    create_target_configs(metadata, default_key=default_key)
+    create_target_configs(
+        metadata,
+        default_key=options["default_key"],
+        default_catalog=options["default_catalog"],
+        default_schema=options["default_schema"],
+    )
     _update_gitignore(metadata)
     hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
     if hooks_path.exists():

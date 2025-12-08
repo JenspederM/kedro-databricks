@@ -16,6 +16,7 @@ from kedro_databricks.cli.init.create_target_configs import (
     _substitute_file_path,
     create_target_configs,
 )
+from kedro_databricks.core.constants import DEFAULT_CATALOG, DEFAULT_SCHEMA
 
 
 def test_update_gitignore(metadata):
@@ -100,7 +101,7 @@ def test_create_target_configs(metadata, monkeypatch):
             },
             f,
         )
-    create_target_configs(metadata, "test")
+    create_target_configs(metadata, "test", DEFAULT_CATALOG, DEFAULT_SCHEMA)
 
 
 def test_prepare_template(metadata):

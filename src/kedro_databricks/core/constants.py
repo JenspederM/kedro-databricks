@@ -35,6 +35,12 @@ JOB_KEY_ORDER = [
 ]
 """Order of keys in the job configuration for Databricks jobs."""
 
+DEFAULT_CATALOG = "workspace"
+"""Default catalog for Databricks targets."""
+
+DEFAULT_SCHEMA = "default"
+"""Default schema for Databricks targets."""
+
 DEFAULT_TARGET = "dev"
 """Default target environment for Databricks configurations."""
 

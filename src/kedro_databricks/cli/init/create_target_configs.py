@@ -12,6 +12,8 @@ log = get_logger("init")
 def create_target_configs(
     metadata: ProjectMetadata,
     default_key: str,
+    default_catalog: str,
+    default_schema: str,
 ):
     """Create target configurations for a Kedro project in Databricks.
 
@@ -25,10 +27,9 @@ def create_target_configs(
 
     Args:
         metadata (ProjectMetadata): The project metadata containing the project path.
-        node_type_id (str): The node type ID for the target configuration.
         default_key (str): The default key to use for the target configuration.
-        single_user_default (bool, optional): Whether to set the target as single user by default.
-            Defaults to True.
+        default_catalog (str): The default catalog to use for the Databricks target.
+        default_schema (str): The default schema to use for the Databricks target.
 
     Raises:
         FileNotFoundError: If the Databricks configuration file does not exist.
@@ -44,7 +45,12 @@ def create_target_configs(
         _save_gitkeep_file(target_conf_dir)
         target_config = _create_target_config(default_key, bundle_name)
         _save_target_config(target_config, target_conf_dir)
-        target_file_path = make_target_file_path(bundle_name, target_name)
+        target_file_path = make_target_file_path(
+            default_catalog,
+            default_schema,
+            bundle_name,
+            target_name,
+        )
         _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
         log.info(f"Created target config for {target_name} at {target_conf_dir}")
 
@@ -90,17 +96,24 @@ def _create_target_config(default_key: str, bundle_name: str):
     }
 
 
-def make_target_file_path(bundle_name: str, target_name: str) -> str:
+def make_target_file_path(
+    catalog_name: str,
+    schema_name: str,
+    bundle_name: str,
+    target_name: str,
+) -> str:
     """Create the file path for the Databricks target.
 
     Args:
+        catalog_name (str): The name of the catalog.
+        schema_name (str): The name of the schema.
         bundle_name (str): The name of the Databricks bundle.
         target_name (str): The name of the target.
 
     Returns:
         str: The file path for the target in Databricks.
     """
-    return f"/Volumes/workspace/default/{bundle_name}/{target_name}"
+    return f"/Volumes/{catalog_name}/{schema_name}/{bundle_name}/{target_name}"
 
 
 def _substitute_file_path(string: str) -> str:
