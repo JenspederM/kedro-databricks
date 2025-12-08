@@ -214,6 +214,9 @@ def run(metadata: ProjectMetadata, pipeline: str, databricks_args: tuple[str, ..
         pipeline: The pipeline to run on Databricks.
         databricks_args: Additional arguments to be passed to the `databricks` CLI.
     """
+    # If the first argument starts with '--', it means no pipeline was provided
+    # This is to handle the case where the user wants to pass only options to the CLI
+    # e.g. `databricks bundle run -- --profile prod` will run the default pipeline with the prod profile
     if pipeline.startswith("--"):
         databricks_args = (pipeline,) + databricks_args
         pipeline = ""
