@@ -290,3 +290,32 @@ def generate_job(conf="conf"):
 
 
 JOB = generate_job()
+
+DEFAULT_PIPELINE_REGISTRY = """
+from kedro.pipeline import Pipeline, node
+
+
+def identity(arg):
+    return arg
+
+
+def register_pipelines():
+    pipeline = Pipeline(
+        [
+            node(identity, ["input"], ["intermediate"], name="node0", tags=["tag0", "tag1"]),
+            node(identity, ["intermediate"], ["output"], name="node1"),
+            node(identity, ["intermediate"], ["output2"], name="node2", tags=["tag0"]),
+            node(identity, ["intermediate"], ["output3"], name="node3", tags=["tag1", "tag2"]),
+            node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
+            node(identity, ["intermediate"], ["output_5_output_5_1"], name="ns_5_node_5_1"),
+            node(identity, ["intermediate"], ["output_6_output_6_1"], name="ns_6_node_6_1"),
+            node(identity, ["intermediate"], ["output_7_output_7_1"], name="ns_7_node_7_1"),
+        ],
+        tags="pipeline0",
+    )
+    return {
+        "__default__": pipeline,
+        "ds": pipeline,
+        "namespaced.pipeline": pipeline,
+    }
+"""
