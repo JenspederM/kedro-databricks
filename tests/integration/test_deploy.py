@@ -1,53 +1,16 @@
 import shutil
 
 from click.testing import Result
-from kedro.pipeline import Pipeline, node
 
-from kedro_databricks.core.constants import DEFAULT_TARGET
-from kedro_databricks.plugin import commands
-from tests.utils import identity, reset_init
-
-pipeline = Pipeline(
-    [
-        node(
-            identity,
-            ["input"],
-            ["intermediate"],
-            name="node0",
-            tags=["tag0", "tag1"],
-        ),
-        node(identity, ["intermediate"], ["output"], name="node1"),
-        node(identity, ["intermediate"], ["output2"], name="node2", tags=["tag0"]),
-        node(
-            identity,
-            ["intermediate"],
-            ["output3"],
-            name="node3",
-            tags=["tag1", "tag2"],
-        ),
-        node(identity, ["intermediate"], ["output4"], name="node4", tags=["tag2"]),
-        node(
-            identity,
-            ["intermediate"],
-            ["outputs.output_1.output_1_1"],
-            name="outputs.output_1.output_1_1",
-        ),
-        node(
-            identity,
-            ["intermediate"],
-            ["outputs.output_1.output_1_2"],
-            name="outputs.output_1.output_1_2",
-        ),
-        node(identity, ["intermediate"], ["outputs.output_2"], name="outputs.output_2"),
-    ],
-    tags="pipeline0",
+from kedro_databricks.commands.deploy import command
+from kedro_databricks.constants import DEFAULT_ENV
+from tests.utils import (
+    bundle_project,
+    destroy_project,
+    init_project,
+    reset_init,
+    reset_project,
 )
-
-pipelines = {
-    "__default__": pipeline,
-    "ds": pipeline,
-    "namespaced.pipeline": pipeline,
-}
 
 
 def _validate_deploy(
@@ -63,70 +26,111 @@ def _validate_deploy(
 def test_deploy_fail(cli_runner, metadata):
     """Test the `deploy` command"""
     reset_init(metadata)
-    deploy_fail = ["databricks", "deploy"]
-    result = cli_runner.invoke(commands, deploy_fail, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
     assert result.exit_code == 1, (result.exit_code, result.stdout, result.exception)
 
 
-def test_bundled_deploy(kedro_project_with_init_destroy):
+def test_bundled_deploy(metadata, cli_runner):
     """Test the `deploy` command"""
     # Arrange
-    metadata, cli_runner = kedro_project_with_init_destroy
+    reset_project(metadata)
+    init_project(metadata, cli_runner)
 
     # Act
-    deploy_cmd = ["databricks", "deploy", "--bundle"]
-    result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [
+            "--bundle",
+        ],
+        obj=metadata,
+    )
 
     # Assert
     _validate_deploy(result=result)
 
+    # Cleanup
+    destroy_project(metadata, cli_runner)
 
-def test_deploy(kedro_project_with_init_bundle_destroy):
+
+def test_deploy(metadata, cli_runner):
     """Test the `deploy` command"""
     # Arrange
-    metadata, cli_runner = kedro_project_with_init_bundle_destroy
+    reset_project(metadata)
+    init_project(metadata, cli_runner)
+    bundle_project(metadata, cli_runner)
 
     # Act
-    deploy_cmd = ["databricks", "deploy"]
-    result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
 
     # Assert
     _validate_deploy(result=result)
 
+    # Cleanup
+    destroy_project(metadata, cli_runner)
 
-def test_deploy_prod(kedro_project_with_init_destroy_prod):
+
+def test_deploy_prod(metadata, cli_runner):
     """Test the `deploy` command"""
     # Arrange
-    metadata, cli_runner = kedro_project_with_init_destroy_prod
+    reset_project(metadata)
+    init_project(metadata, cli_runner)
+    bundle_project(metadata, cli_runner)
 
     # Act
-    deploy_cmd = ["databricks", "deploy", "--env", "prod"]
-    result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [
+            "--env",
+            "prod",
+        ],
+        obj=metadata,
+    )
 
     # Assert
     _validate_deploy(result=result)
 
+    # Cleanup
+    destroy_project(metadata, cli_runner)
 
-def test_deploy_with_conf(kedro_project_with_init_bundle_destroy):
+
+def test_deploy_with_conf(metadata, cli_runner):
     """Test the `deploy` command"""
     # Arrange
-    metadata, cli_runner = kedro_project_with_init_bundle_destroy
+    reset_project(metadata)
+    init_project(metadata, cli_runner)
+    bundle_project(metadata, cli_runner)
     CONF_KEY = "custom_conf"
-
-    # Act
-    default_path = metadata.project_path / "conf" / "dev" / "databricks.yml"
-    override_path = metadata.project_path / CONF_KEY / DEFAULT_TARGET / "databricks.yml"
+    default_path = metadata.project_path / "conf" / DEFAULT_ENV / "databricks.yml"
+    override_path = metadata.project_path / CONF_KEY / DEFAULT_ENV / "databricks.yml"
     override_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(default_path, override_path)
     settings = metadata.project_path / "src" / metadata.package_name / "settings.py"
     original_settings = settings.read_text()
     with open(settings, "a") as f:
         f.write(f"\nCONF_SOURCE = '{CONF_KEY}'")
-    deploy_cmd = ["databricks", "deploy", "--bundle", f"--conf-source={CONF_KEY}"]
-    result = cli_runner.invoke(commands, deploy_cmd, obj=metadata)
+
+    # Act
+    result = cli_runner.invoke(
+        command,
+        [
+            "--bundle",
+            "--conf-source",
+            CONF_KEY,
+        ],
+        obj=metadata,
+    )
 
     # Assert
     _validate_deploy(result=result)
 
     # Revert
     settings.write_text(original_settings)
+    destroy_project(metadata, cli_runner)

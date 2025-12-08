@@ -153,14 +153,17 @@ class ResourceResolver(ABC, Generic[ResourceType]):
 @dataclass
 class RegistryResourceResolver(Generic[ResourceType], ResourceResolver[ResourceType]):
     registry: dict[str, ResourceType]
+    default: ResourceType | None = None
 
     def resolve(self, value: str) -> ResourceType:
         """Resolve using a static registry mapping.
 
         Raises ``ResourceNotFoundError`` when the key is missing.
         """
-        if value not in self.registry:
+        if value not in self.registry and self.default is None:
             raise ResourceNotFoundError.for_value(value)
+        elif value not in self.registry and self.default is not None:
+            return self.default
         return self.registry[value]
 
 

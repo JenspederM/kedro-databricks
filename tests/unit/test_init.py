@@ -7,16 +7,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from kedro_databricks.cli.init import (
+from kedro_databricks.commands.init import (
+    _create_target_configs,
     _prepare_template,
+    _substitute_file_path,
     _update_gitignore,
     _write_databricks_run_script,
 )
-from kedro_databricks.cli.init.create_target_configs import (
-    _substitute_file_path,
-    create_target_configs,
-)
-from kedro_databricks.core.constants import DEFAULT_CATALOG, DEFAULT_SCHEMA
+from kedro_databricks.constants import DEFAULT_CATALOG, DEFAULT_SCHEMA
 
 
 def test_update_gitignore(metadata):
@@ -101,7 +99,7 @@ def test_create_target_configs(metadata, monkeypatch):
             },
             f,
         )
-    create_target_configs(metadata, "test", DEFAULT_CATALOG, DEFAULT_SCHEMA)
+    _create_target_configs(metadata, "test", DEFAULT_CATALOG, DEFAULT_SCHEMA)
 
 
 def test_prepare_template(metadata):

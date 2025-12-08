@@ -17,18 +17,18 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from kedro_databricks.cli.bundle.utils import (
-    get_entry_point,
-    remove_nulls,
-    sanitize_name,
-    sort_dict,
-)
-from kedro_databricks.core.constants import (
+from kedro_databricks.constants import (
     JOB_KEY_ORDER,
     TASK_KEY_ORDER,
 )
-from kedro_databricks.core.logger import get_logger
-from kedro_databricks.core.utils import require_databricks_run_script
+from kedro_databricks.utilities.common import (
+    get_entry_point,
+    remove_nulls,
+    require_databricks_run_script,
+    sanitize_name,
+    sort_dict,
+)
+from kedro_databricks.utilities.logger import get_logger
 
 log = get_logger("bundle").getChild(__name__)
 

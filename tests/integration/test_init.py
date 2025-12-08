@@ -1,9 +1,9 @@
-from kedro_databricks.cli.init.create_target_configs import (
+from kedro_databricks.commands.init import (
     _get_bundle_name,
     _get_targets,
     _read_databricks_config,
+    command,
 )
-from kedro_databricks.plugin import commands
 from tests.utils import reset_init
 
 
@@ -14,8 +14,11 @@ def test_bundle_init_already_exists(cli_runner, metadata):
         f.write("")
 
     # Act
-    command = ["databricks", "init"]
-    result = cli_runner.invoke(commands, command, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
 
     # Assert
     assert result.exit_code == 1, (
@@ -33,8 +36,11 @@ def test_init_arg(cli_runner, metadata):
     reset_init(metadata)
 
     # Act
-    command = ["databricks", "init"]
-    result = cli_runner.invoke(commands, command, obj=metadata)
+    result = cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
 
     # Assert
     assert result.exit_code == 0, (

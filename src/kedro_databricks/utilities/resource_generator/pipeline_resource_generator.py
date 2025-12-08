@@ -8,7 +8,7 @@ from typing import Any
 
 from kedro.pipeline import Pipeline
 
-from kedro_databricks.cli.bundle.resource_generator.abstract_resource_generator import (
+from kedro_databricks.utilities.resource_generator.abstract_resource_generator import (
     AbstractResourceGenerator,
 )
 
