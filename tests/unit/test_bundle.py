@@ -29,7 +29,7 @@ def task_validator(tasks):
         assert env == "${var.environment}"
 
 
-def test_bundle(metadata, cli_runner):
+def test_bundle(cli_runner, metadata):
     # Arrange
     reset_project(metadata)
     empty_overrides = {"resources": {"jobs": {}}}
@@ -75,7 +75,7 @@ def test_bundle(metadata, cli_runner):
     shutil.rmtree(metadata.project_path / "conf" / "fake_env")
 
 
-def test_bundle_no_overrides(metadata, cli_runner):
+def test_bundle_no_overrides(cli_runner, metadata):
     # Act
     result = cli_runner.invoke(
         commands,
@@ -96,7 +96,7 @@ def test_bundle_no_overrides(metadata, cli_runner):
     assert result.exit_code == 1, (result.exit_code, result.stdout, result.exception)
 
 
-def test_bundle_invalid_resource_generator(metadata, cli_runner):
+def test_bundle_invalid_resource_generator(cli_runner, metadata):
     # Act
     result = cli_runner.invoke(
         commands,
