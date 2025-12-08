@@ -25,7 +25,18 @@ repos:
       - id: lint-code
         name: Lint code
         language: system
-        entry: bash ./scripts/run_lint.sh
+        entry: bash -c "uv run ruff check --fix"
+        files: \.py$
+      - id: format-code
+        name: Format code
+        language: system
+        entry: bash -c "uv run ruff format --check || uv run ruff format"
+        files: \.py$
+      - id: type-check-code
+        name: Type check code
+        language: system
+        entry: bash -c "uvx ty check"
+        files: \.py$
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
     hooks:
