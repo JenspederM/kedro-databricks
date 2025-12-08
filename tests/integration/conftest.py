@@ -103,7 +103,10 @@ def wait_for_job_deletion(args) -> None:
             capture_output=True,
             text=True,
         )
-        job_list = jobs.stdout and json.loads(jobs.stdout) or []
+        if jobs.stdout:
+            job_list = json.loads(jobs.stdout)
+        else:
+            job_list = []
         return [
             {
                 "job_id": job["job_id"],

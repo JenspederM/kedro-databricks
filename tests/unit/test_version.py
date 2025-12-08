@@ -11,6 +11,6 @@ def test_version(cli_runner):
     result = cli_runner.invoke(commands, ["databricks", "version"])
     expected = project["project"]["version"]  # type: ignore
     assert result.exit_code == 0, (result.exit_code, result.stdout)
-    assert (
-        expected in result.stdout
-    ), f"Expected version {expected} not found in output: {result.stdout}"
+    assert expected in result.stdout, (
+        f"Expected version {expected} not found in output: {result.stdout}"
+    )
