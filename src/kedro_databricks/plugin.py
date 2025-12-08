@@ -1,22 +1,9 @@
 from __future__ import annotations
 
-import click
-from kedro.framework.cli.project import CONF_SOURCE_HELP, PIPELINE_ARG_HELP
-from kedro.framework.cli.utils import ENV_HELP
-from kedro.framework.startup import ProjectMetadata
+import importlib.util
+from pathlib import Path
 
-import kedro_databricks
-from kedro_databricks import cli
-from kedro_databricks.core.constants import (
-    DEFAULT_CATALOG,
-    DEFAULT_CONF_FOLDER,
-    DEFAULT_CONFIG_GENERATOR,
-    DEFAULT_CONFIG_GENERATOR_HELP,
-    DEFAULT_CONFIG_HELP,
-    DEFAULT_CONFIG_KEY,
-    DEFAULT_SCHEMA,
-    DEFAULT_TARGET,
-)
+import click
 
 
 @click.group(name="Kedro-Databricks")
@@ -25,7 +12,38 @@ def commands():
     pass
 
 
-@commands.group(name="databricks")
+class Plugin(click.Group):
+    """Kedro-Databricks plugin for Kedro CLI"""
+
+    def __init__(self, commands_dir: Path, **kwargs):
+        super().__init__(**kwargs)
+        self.commands_dir = commands_dir
+
+    def list_commands(self, ctx):
+        cmds = []
+        for cmd_file in self.commands_dir.glob("*.py"):
+            if cmd_file.stem != "__init__":
+                cmds.append(cmd_file.stem)
+        cmds.sort()
+        return cmds
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+        cmd_path = self.commands_dir / f"{cmd_name}.py"
+        if not cmd_path.exists():
+            return None
+        spec = importlib.util.spec_from_file_location(cmd_name, cmd_path)
+        if not spec or not spec.loader:
+            raise ImportError(f"Cannot find spec for module {cmd_name}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.command
+
+
+@commands.group(
+    cls=Plugin,
+    commands_dir=Path(__file__).parent / "commands",
+    name="databricks",
+)
 def databricks_commands():
     """Databricks Asset Bundle commands
 
@@ -33,243 +51,3 @@ def databricks_commands():
     They allow you to initialize, bundle, deploy, run, and destroy Databricks asset bundles.
     """
     pass
-
-
-@databricks_commands.command()
-def version():
-    """Display the version of Kedro-Databricks
-
-    This command prints the version of the Kedro-Databricks plugin.
-    It is useful for checking the installed version of the plugin in your Kedro project.
-    """
-    print(f"Kedro-Databricks version: {kedro_databricks.__version__}")  # noqa: T201
-
-
-@databricks_commands.command()
-@click.option(
-    "-d",
-    "--default-key",
-    default=DEFAULT_CONFIG_KEY,
-    help=DEFAULT_CONFIG_HELP,
-)
-@click.option(
-    "-c",
-    "--default-catalog",
-    default=DEFAULT_CATALOG,
-    help="The default catalog to use for the Databricks target.",
-)
-@click.option(
-    "-s",
-    "--default-schema",
-    default=DEFAULT_SCHEMA,
-    help="The default schema to use for the Databricks target.",
-)
-@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
-@click.pass_obj
-def init(
-    metadata: ProjectMetadata,
-    default_key: str,
-    default_catalog: str,
-    default_schema: str,
-    databricks_args: tuple[str, ...],
-):
-    """Initialize Databricks Asset Bundle configuration
-
-    This command initializes the Databricks Asset Bundle configuration in the Kedro project.
-    The `default_key` is the configuration key to use for Databricks.
-
-    This command will create a `databricks.yml` file in the `conf/<env>` directory
-    and set up the necessary configuration for the Databricks Asset Bundle.
-
-    To see additional options, run `databricks bundle init --help`.
-
-    Args:
-        metadata: Project metadata containing project path and other information.
-        default_key: The default configuration key to use for Databricks.
-        default_catalog: The default catalog to use for the Databricks target.
-        default_schema: The default schema to use for the Databricks target.
-        databricks_args: Additional arguments to pass to the `databricks` CLI.
-    """
-    cli.init(
-        metadata,
-        options={
-            "default_key": default_key,
-            "default_catalog": default_catalog,
-            "default_schema": default_schema,
-            "databricks_args": list(databricks_args),
-        },
-    )
-
-
-@databricks_commands.command()
-@click.option(
-    "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
-)
-@click.option(
-    "-g",
-    "--resource-generator",
-    default=DEFAULT_CONFIG_GENERATOR,
-    help=DEFAULT_CONFIG_GENERATOR_HELP,
-)
-@click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
-@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
-@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
-@click.option(
-    "-r",
-    "--params",
-    default=None,
-    help="Kedro run time params in `key1=value1,key2=value2` format",
-)
-@click.option(
-    "--overwrite",
-    default=False,
-    is_flag=True,
-    show_default=True,
-    help="Overwrite the existing resources",
-)
-@click.pass_obj
-def bundle(
-    metadata: ProjectMetadata,
-    default_key: str,
-    resource_generator: str,
-    env: str,
-    conf_source: str,
-    pipeline: str | None,
-    params: str | None,
-    overwrite: bool,
-):
-    """Convert kedro pipelines into Databricks asset bundle resources
-
-    This command generates asset bundle resources for the specified Kedro pipeline
-    and saves them in the `resources` directory.
-    To validate the generated resources, you can run the `databricks bundle validate` command.
-
-    Args:
-        metadata: Project metadata containing project path and other information.
-        default_key: The default configuration key to use for Databricks.
-        env: The environment for the Kedro project (e.g., "dev", "prod").
-        conf_source: The source of the Kedro configuration files.
-        pipeline: The pipeline to bundle (optional).
-        params: Kedro run time parameters in `key1=value1,key2=value2` format (optional).
-        overwrite: Whether to overwrite existing resources.
-    """
-    cli.bundle(
-        metadata=metadata,
-        env=env,
-        conf_source=conf_source,
-        pipeline_name=pipeline,
-        default_key=default_key,
-        resource_generator_name=resource_generator,
-        params=params,
-        overwrite=overwrite,
-    )
-
-
-@databricks_commands.command()
-@click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
-@click.option(
-    "-b",
-    "--bundle/--no-bundle",
-    default=False,
-    help="Bundle the project before deploying",
-)
-@click.option("-c", "--conf-source", default=DEFAULT_CONF_FOLDER, help=CONF_SOURCE_HELP)
-@click.option(
-    "-g",
-    "--resource-generator",
-    default=DEFAULT_CONFIG_GENERATOR,
-    help=DEFAULT_CONFIG_GENERATOR_HELP,
-)
-@click.option("-p", "--pipeline", default=None, help=PIPELINE_ARG_HELP)
-@click.option(
-    "-r",
-    "--runtime-params",
-    default=None,
-    help="Kedro run time params in `key1=value1,key2=value2` format",
-)
-@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
-@click.pass_obj
-def deploy(
-    metadata: ProjectMetadata,
-    env: str,
-    bundle: bool,
-    conf_source: str,
-    resource_generator: str,
-    pipeline: str,
-    runtime_params: str | None,
-    databricks_args: list[str],
-):
-    """Deploy the asset bundle to Databricks
-
-    This command deploys the Databricks asset bundle to the specified environment.
-    If `--bundle` is specified, it will first bundle the project into resources.
-    To see additional options, run `databricks bundle deploy --help`.
-
-    Args:
-        metadata: Project metadata containing project path and other information.
-        env: The environment for the Kedro project (e.g., "dev", "prod").
-        bundle: Whether to bundle the project before deploying.
-        conf_source: The source of the Kedro configuration files.
-        pipeline: The pipeline to deploy (optional).
-        runtime_params: Kedro run time parameters in `key1=value1,key2=value2` format (optional).
-        databricks_args: Additional arguments to pass to the `databricks` CLI.
-    """
-    if bundle:
-        cli.bundle(
-            metadata=metadata,
-            env=env,
-            pipeline_name=pipeline,
-            conf_source=conf_source,
-            default_key=DEFAULT_CONFIG_KEY,
-            resource_generator_name=resource_generator,
-            params=runtime_params,
-            overwrite=True,
-        )
-    cli.deploy(metadata, env, *databricks_args)
-
-
-@databricks_commands.command()
-@click.argument("pipeline", default="", nargs=1)
-@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
-@click.pass_obj
-def run(metadata: ProjectMetadata, pipeline: str, databricks_args: tuple[str, ...]):
-    """Run the project on Databricks
-
-    This is a wrapper for the `databricks bundle run` command.
-    To see additional options, run `databricks bundle run --help`.
-
-    Args:
-        metadata: Project metadata containing project path and other information.
-        pipeline: The pipeline to run on Databricks.
-        databricks_args: Additional arguments to be passed to the `databricks` CLI.
-    """
-    # If the first argument starts with '--', it means no pipeline was provided
-    # This is to handle the case where the user wants to pass only options to the CLI
-    # e.g. `databricks bundle run -- --profile prod` will run the default pipeline with the prod profile
-    if pipeline.startswith("--"):
-        databricks_args = (pipeline,) + databricks_args
-        pipeline = ""
-
-    if not pipeline:
-        pipeline = metadata.package_name
-
-    print(f"Running pipeline: {pipeline}")  # noqa: T201
-    cli.run(metadata, pipeline, list(databricks_args))
-
-
-@databricks_commands.command()
-@click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
-@click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
-@click.pass_obj
-def destroy(metadata: ProjectMetadata, env: str, databricks_args: list[str]):
-    """Destroy the Databricks asset bundle
-
-    This is a wrapper for the `databricks bundle destroy` command.
-    To see additional options, run `databricks bundle destroy --help`.
-
-    Args:
-        metadata: Project metadata containing project path and other information.
-        env: The environment for the Kedro project (e.g., "dev", "prod").
-        databricks_args: Additional arguments to be passed to the `databricks` CLI.
-    """
-    cli.destroy(metadata, env, list(databricks_args))

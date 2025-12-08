@@ -1,6 +1,6 @@
 import pytest
 
-from kedro_databricks.core.resource_resolver import (
+from kedro_databricks.utilities.resolver_generics import (
     CompositeResourceResolver,
     ModuleResourceResolver,
     RegistryResourceResolver,
@@ -31,10 +31,7 @@ def test_registry_resolver_found(resource_resolver, registry):
 
 
 def test_module_resolver_found(resource_resolver):
-    assert (
-        resource_resolver.resolve("tests.unit.test_resource_resolver.TEST_STR")
-        == TEST_STR
-    )
+    assert resource_resolver.resolve(f"{__name__}.TEST_STR") == TEST_STR
 
 
 def test_resolver_not_found(resource_resolver):
@@ -70,10 +67,10 @@ def test_module_resolver_module_not_found_message():
 def test_module_resolver_attribute_not_found_message():
     resolver = ModuleResourceResolver()
     with pytest.raises(ResourceNotFoundError) as excinfo:
-        resolver.resolve("tests.unit.test_resource_resolver.NOT_THERE")
+        resolver.resolve(f"{__name__}.NOT_THERE")
     msg = str(excinfo.value)
     assert "Attribute 'NOT_THERE' not found" in msg
-    assert "tests.unit.test_resource_resolver" in msg
+    assert __name__ in msg
 
 
 def test_module_resolver_returns_builtin_type():
@@ -83,7 +80,7 @@ def test_module_resolver_returns_builtin_type():
 
 def test_composite_prefers_first_resolver_over_module(registry):
     # Shadow a valid module path with a registry entry to ensure order is respected
-    shadow_key = "tests.unit.test_resource_resolver.TEST_STR"
+    shadow_key = f"{__name__}.TEST_STR"
     shadow_registry = {**registry, shadow_key: "shadowed"}
     resolver = CompositeResourceResolver[str](
         [RegistryResourceResolver(shadow_registry), ModuleResourceResolver()]
@@ -114,6 +111,6 @@ def test_module_resolver_validate_fn_rejects():
     # Accept only callables; TEST_STR is not callable -> rejected
     resolver = ModuleResourceResolver(validate_fn=lambda obj: callable(obj))
     with pytest.raises(ResourceInvalidError, match="is invalid") as excinfo:
-        resolver.resolve("tests.unit.test_resource_resolver.TEST_STR")
+        resolver.resolve(f"{__name__}.TEST_STR")
     msg = str(excinfo.value)
     assert "is invalid" in msg

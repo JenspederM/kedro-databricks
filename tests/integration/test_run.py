@@ -5,21 +5,35 @@ import shutil
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
 
-from kedro_databricks.core.constants import DEFAULT_TARGET
-from kedro_databricks.plugin import commands
+from kedro_databricks.commands.run import command as run_command
+from tests.utils import (
+    bundle_project,
+    deploy_project,
+    destroy_project,
+    init_project,
+    reset_project,
+)
 
 PROJECT_NAME = "databricks-iris"
 
 
 @pytest.fixture
-def databricks_iris_starter(cli_runner):
+def run_cli_runner():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        yield runner
+
+
+@pytest.fixture
+def databricks_iris_starter(run_cli_runner):
     project_path = Path().cwd() / PROJECT_NAME
     if project_path.exists():
         shutil.rmtree(project_path)
-    cli_runner.invoke(
+    run_cli_runner.invoke(
         kedro_cli,
         ["new", "-v", "--starter", "databricks-iris", "--name", PROJECT_NAME],
     )
@@ -36,23 +50,18 @@ def iris_meta(databricks_iris_starter):
     return metadata
 
 
-def test_run(cli_runner, iris_meta):
+def test_run(run_cli_runner, iris_meta):
     """Test the run command."""
-    project_path = iris_meta.project_path
-    command = ["databricks", "init"]
-    result = cli_runner.invoke(commands, command, obj=iris_meta)  # noqa: F821
+    # Arrange
+    reset_project(iris_meta)
+    init_project(iris_meta, run_cli_runner)
+    bundle_project(iris_meta, run_cli_runner)
+    deploy_project(iris_meta, run_cli_runner)
+
+    # Act
+    result = run_cli_runner.invoke(run_command, [], obj=iris_meta)
+    # Assert
     assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
-    assert (project_path / "databricks.yml").exists(), "Databricks config not created"
-    command = ["databricks", "bundle", "--env", DEFAULT_TARGET]
-    result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
-    assert (project_path / "resources").exists(), "Resources directory not created"
-    deploy_cmd = ["databricks", "deploy", "--bundle"]
-    result = cli_runner.invoke(commands, deploy_cmd, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
-    command = ["databricks", "run", iris_meta.package_name]
-    result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
-    command = ["databricks", "destroy", "--auto-approve"]
-    result = cli_runner.invoke(commands, command, obj=iris_meta)
-    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
+
+    # Cleanup
+    destroy_project(iris_meta, run_cli_runner)

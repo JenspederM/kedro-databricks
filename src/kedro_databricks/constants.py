@@ -38,10 +38,16 @@ JOB_KEY_ORDER = [
 DEFAULT_CATALOG = "workspace"
 """Default catalog for Databricks targets."""
 
+DEFAULT_CATALOG_HELP = "Set the catalog for Databricks targets"
+"""Help text for the default catalog option."""
+
 DEFAULT_SCHEMA = "default"
 """Default schema for Databricks targets."""
 
-DEFAULT_TARGET = "dev"
+DEFAULT_SCHEMA_HELP = "Set the schema for Databricks targets"
+"""Help text for the default schema option."""
+
+DEFAULT_ENV = "dev"
 """Default target environment for Databricks configurations."""
 
 DEFAULT_CONF_FOLDER = "conf"
@@ -50,13 +56,14 @@ DEFAULT_CONF_FOLDER = "conf"
 DEFAULT_CONFIG_KEY = "default"
 """Default configuration key for Databricks jobs."""
 
+DEFAULT_CONFIG_KEY_HELP = "Set the key for the default configuration"
+"""Help text for the default configuration key option."""
+
 DEFAULT_CONFIG_GENERATOR = "node"
 """Default resource generator for Databricks Asset Bundle."""
 
-DEFAULT_CONFIG_HELP = "Set the key for the default configuration"
-"""Help text for the default configuration key option."""
-
 DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a job for each node) or 'pipeline' (create a single job for the entire pipeline)."
+"""Help text for the resource generator option."""
 
 
 OVERRIDE_KEY_MAP = {
@@ -93,7 +100,7 @@ kedro databricks init
 GITIGNORE = f"""
 # Kedro Databricks
 .databricks
-conf/{DEFAULT_TARGET}/**
-!conf/{DEFAULT_TARGET}/.gitkeep
+conf/{DEFAULT_ENV}/**
+!conf/{DEFAULT_ENV}/.gitkeep
 """.strip()
 """Content to be added to `.gitignore` for Kedro Databricks configurations."""
