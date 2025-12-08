@@ -33,7 +33,7 @@ def databricks_commands():
     pass
 
 
-@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@databricks_commands.command()
 def version():
     """Display the version of Kedro-Databricks
 
@@ -43,7 +43,7 @@ def version():
     print(f"Kedro-Databricks version: {kedro_databricks.__version__}")  # noqa: T201
 
 
-@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@databricks_commands.command()
 @click.option(
     "-d", "--default-key", default=DEFAULT_CONFIG_KEY, help=DEFAULT_CONFIG_HELP
 )
@@ -136,7 +136,7 @@ def bundle(
     )
 
 
-@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.option(
     "-b",
@@ -228,7 +228,7 @@ def run(metadata: ProjectMetadata, pipeline: str, databricks_args: tuple[str, ..
     cli.run(metadata, pipeline, list(databricks_args))
 
 
-@databricks_commands.command(context_settings=dict(ignore_unknown_options=True))
+@databricks_commands.command()
 @click.option("-e", "--env", default=DEFAULT_TARGET, help=ENV_HELP)
 @click.argument("databricks_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_obj
