@@ -1,3 +1,38 @@
+## 0.14.0 (2025-12-11)
+
+### Feat
+
+-  [`f0310e9`](https://github.com/JenspederM/kedro-databricks/commit/f0310e993e279045541de379a913d73c53b3e599):  generated resources are now environment specific
+-  [`34fb869`](https://github.com/JenspederM/kedro-databricks/commit/34fb8691af44b681134aef8e7cb66ea81a751591):  add support for Databricks Free Edition
+
+### Fix
+
+-  [`985c4b2`](https://github.com/JenspederM/kedro-databricks/commit/985c4b281cd668913e78c5780d5805d7d5674c18):  DEFAULT_TARGET volume resource should be named with variable
+-  [`5cc8ead`](https://github.com/JenspederM/kedro-databricks/commit/5cc8ead8702f3c594ba41fbcb465c9f9648e2736):  create a user-specific volume for dev targets
+-  [`93b6916`](https://github.com/JenspederM/kedro-databricks/commit/93b69168d9606edce7e43a433132030a6789e9d5):  add cli options for catalog and schema in `kedro databricks init`
+-  [`c382f51`](https://github.com/JenspederM/kedro-databricks/commit/c382f51cdd96991e0099c8608b105f50248879b0):  forwarded arguments to the `databricks cli` should be passed following '--'
+-  [`a12f3a3`](https://github.com/JenspederM/kedro-databricks/commit/a12f3a3d0d17fb0faf0094fb6fdc33c25a4a6691):  run default pipeline when no pipeline is specified in `kedro databricks run`
+
+### Refactor
+
+-  [`42f6421`](https://github.com/JenspederM/kedro-databricks/commit/42f64217cf28a99a62347e7be57aef75266885dc):  discover commands from files to avoid duplicating command options
+-  [`04dfe5d`](https://github.com/JenspederM/kedro-databricks/commit/04dfe5d3782ba90ff04b2f5082cb021fb0c0521a):  encapsulate calls to the `databricks cli` in a single class
+
+### Docs
+
+-  [`4f5a592`](https://github.com/JenspederM/kedro-databricks/commit/4f5a59245471ce31859e63dd2a920d00b9a5f87f):  we now add the target environment to the name of generated files
+
+### Ci
+
+-  [`1b52276`](https://github.com/JenspederM/kedro-databricks/commit/1b5227607fc3f12a2b91ee215da11292367f2e7b):  fix codecov coverage report + we are only concerned with project coverage
+
+### Other Changes
+
+-  [`85dcea8`](https://github.com/JenspederM/kedro-databricks/commit/85dcea8aba339b9d737a50f35f92ffe79686537c):  remove junit coverage file
+-  [`1be6f84`](https://github.com/JenspederM/kedro-databricks/commit/1be6f8416b7d34691abbcd053b4ceab75e011818):  ignore all coverage files
+-  [`2f87864`](https://github.com/JenspederM/kedro-databricks/commit/2f8786416bbaea461734262a7c1f7ebd6cf1a4a4):  add type-checking pre-commit hook
+-  [`40167ce`](https://github.com/JenspederM/kedro-databricks/commit/40167ce0e899713535329f83f2d0962b6287d120):  add comment on argument parsing in `kedro databricks run`
+
 ## 0.13.1 (2025-11-19)
 
 ### Fix
