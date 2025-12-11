@@ -161,7 +161,6 @@ def _create_target_configs(
             default_key=default_key,
             bundle_name=bundle_name,
             target_name=target_name,
-            validated_conf=validated_conf,
         )
         _save_target_config(target_config, target_conf_dir)
         target_file_path = _make_target_file_path(
@@ -269,19 +268,19 @@ def _create_target_config(
     default_key: str,
     bundle_name: str,
     target_name: str,
-    validated_conf: dict,
 ) -> dict:
+    volume_name = (
+        "\\${workspace.current_user.short_name}"
+        if target_name == DEFAULT_ENV
+        else bundle_name
+    )
     return {
         "resources": {
             "volumes": {
                 f"{bundle_name}_volume": {
                     "catalog_name": "workspace",
                     "schema_name": "default",
-                    "name": _create_volume_name(
-                        target_name=target_name,
-                        bundle_name=bundle_name,
-                        validated_conf=validated_conf,
-                    ),
+                    "name": volume_name,
                     "comment": f"Created by kedro-databricks for target {target_name}",
                     "volume_type": "MANAGED",
                     "grants": [
