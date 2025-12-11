@@ -61,10 +61,10 @@ resources:
                 environment_key: default
 ```
 
-This was done so that we could default to creating a volume in a newly initialized `kedro-databricks` project. 
+This was done so that we could default to creating a volume in a newly initialized `kedro-databricks` project.
 
 While this requires users to migrate their databricks configuration, it also extends the ability of `kedro-databricks` beyond that of applying overrides to specific jobs. Now, you can add any type of resource in your `conf/<env>/databricks.yml` and those will be generated as well.
 
 > NOTE: Merges are only applied for `jobs` currently, so any other defined will be generated as defined in the configuration.
 
-In addition to the changes to the structure of `conf/<env>/databricks.yml`, we now also tag the generated resources with their resource type, meaning that newly generated resources will be named like `<resource-type>.<resouce-name>.yml`.
+In addition to the changes to the structure of `conf/<env>/databricks.yml`, we now also tag the generated resources with their resource type and target environment, meaning that newly generated resources will be named like `target.<env>.<resource-type>.<resouce-name>.yml`.
