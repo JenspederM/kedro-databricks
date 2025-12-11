@@ -280,6 +280,8 @@ def get_old_value(result: Any, key: Any, value: Any):
 
 
 def get_value_from_dotpath(validated_conf, dotpath):
+    if not isinstance(validated_conf, dict):
+        return None
     keys = dotpath.split(".")
     key = keys.pop(0)
     current_level = validated_conf.get(key)
