@@ -104,7 +104,7 @@ resources:
       tasks:
       - environment_key: default
         task_key: default
-  volumes: 
+  volumes:
     my_volume:
       catalog_name: workspace
       comment: A volume to store my data
@@ -132,9 +132,9 @@ This command will generate the following files:
 
 ```
 ├── resources/
-│   ├── <resource-type>.<resource-name>.yml  # We support any databricks resource type
-│   ├── jobs.<project>.yml                   # corresponds to `kedro run`
-│   ├── jobs.<project>_<pipeline>.yml        # corresponds to `kedro run --pipeline <pipeline>`
+│   ├── target.<env>.<resource-type>.<resource-name>.yml  # We support any databricks resource type
+│   ├── target.<env>.jobs.<project>.yml                   # corresponds to `kedro run`
+│   ├── target.<env>.jobs.<project>_<pipeline>.yml        # corresponds to `kedro run --pipeline <pipeline>`
 ```
 
 The generated files contain the Asset Bundle resources definition for your Kedro project, which is necessary for deploying your project to Databricks.
