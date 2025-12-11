@@ -2005,7 +2005,7 @@ wheels = [
 
 [[package]]
 name = "kedro-databricks"
-version = "0.13.1"
+version = "0.14.0"
 source = { editable = "." }
 dependencies = [
     { name = "databricks-sdk" },
@@ -2045,7 +2045,7 @@ requires-dist = [
     { name = "kedro", specifier = ">=0.19.8" },
     { name = "packaging", specifier = ">=21.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "tomlkit", specifier = ">=0.13.1" },
+    { name = "tomlkit", specifier = ">=0.13.0" },
 ]
 
 [package.metadata.requires-dev]
