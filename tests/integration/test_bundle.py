@@ -55,11 +55,12 @@ def test_databricks_bundle_with_overrides(metadata, cli_runner):
 
     validate_bundle(
         metadata=metadata,
+        env=DEFAULT_ENV,
         required_files=[
-            f"jobs.{metadata.package_name}.yml",
-            f"jobs.{metadata.package_name}_ds.yml",
-            f"jobs.{metadata.package_name}_namespaced_pipeline.yml",
-            f"volumes.{metadata.package_name}_volume.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_ds.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_namespaced_pipeline.yml",
+            f"target.{DEFAULT_ENV}.volumes.{metadata.package_name}_volume.yml",
         ],
         task_validator=task_validator,
     )
@@ -111,11 +112,12 @@ def test_databricks_bundle_with_conf(metadata, cli_runner):
 
     validate_bundle(
         metadata=metadata,
+        env=DEFAULT_ENV,
         required_files=[
-            f"jobs.{metadata.package_name}.yml",
-            f"jobs.{metadata.package_name}_ds.yml",
-            f"jobs.{metadata.package_name}_namespaced_pipeline.yml",
-            f"volumes.{metadata.package_name}_volume.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_ds.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_namespaced_pipeline.yml",
+            f"target.{DEFAULT_ENV}.volumes.{metadata.package_name}_volume.yml",
         ],
         task_validator=task_validator,
     )
@@ -212,11 +214,12 @@ def test_databricks_bundle_with_params(metadata, cli_runner):
 
     validate_bundle(
         metadata=metadata,
+        env=DEFAULT_ENV,
         required_files=[
-            f"jobs.{metadata.package_name}.yml",
-            f"jobs.{metadata.package_name}_ds.yml",
-            f"jobs.{metadata.package_name}_namespaced_pipeline.yml",
-            f"volumes.{metadata.package_name}_volume.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_ds.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_namespaced_pipeline.yml",
+            f"target.{DEFAULT_ENV}.volumes.{metadata.package_name}_volume.yml",
         ],
         task_validator=task_validator,
     )
@@ -259,9 +262,10 @@ def test_databricks_bundle_with_pipeline(metadata, cli_runner):
 
     validate_bundle(
         metadata=metadata,
+        env=DEFAULT_ENV,
         required_files=[
-            f"jobs.{metadata.package_name}_ds.yml",
-            f"volumes.{metadata.package_name}_volume.yml",
+            f"target.{DEFAULT_ENV}.jobs.{metadata.package_name}_ds.yml",
+            f"target.{DEFAULT_ENV}.volumes.{metadata.package_name}_volume.yml",
         ],
         task_validator=task_validator,
     )

@@ -125,16 +125,25 @@ def command(
                     key: resource_overrides,
                 },
             )
-    save_resources(metadata, overridden_resources, overwrite)
+    save_resources(
+        metadata=metadata,
+        env=env,
+        resources=overridden_resources,
+        overwrite=overwrite,
+    )
 
 
 def save_resources(
-    metadata: ProjectMetadata, resources: dict[str, dict[str, Any]], overwrite: bool
+    metadata: ProjectMetadata,
+    env: str,
+    resources: dict[str, dict[str, Any]],
+    overwrite: bool,
 ) -> None:
     """Save the given resources to the project directory.
 
     Args:
         metadata (ProjectMetadata): The metadata of the project
+        env (str): The kedro environment
         resources (dict[str, dict[str, Any]]): The resources to save
         overwrite (bool): Whether to overwrite existing resources
     """
@@ -142,7 +151,7 @@ def save_resources(
     resources_dir.mkdir(exist_ok=True, parents=True)
     for resource_type, items in resources.items():
         for resource_name, resource in items.items():
-            file_name = f"{resource_type}.{resource_name}"
+            file_name = f"target.{env}.{resource_type}.{resource_name}"
             file_path = resources_dir / f"{file_name}.yml"
             relative_path = file_path.relative_to(metadata.project_path)
 
@@ -154,7 +163,13 @@ def save_resources(
 
             with open(file_path, "w") as f:
                 yaml.dump(
-                    {"resources": {resource_type: {resource_name: resource}}},
+                    {
+                        "targets": {
+                            env: {
+                                "resources": {resource_type: {resource_name: resource}}
+                            }
+                        }
+                    },
                     f,
                     default_flow_style=False,
                     indent=4,
