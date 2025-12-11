@@ -277,3 +277,15 @@ def get_old_value(result: Any, key: Any, value: Any):
     elif isinstance(value, list):
         default = []
     return result.get(key, default)
+
+
+def get_value_from_dotpath(validated_conf, dotpath):
+    keys = dotpath.split(".")
+    key = keys.pop(0)
+    current_level = validated_conf.get(key)
+    if current_level is None:
+        return None
+    elif len(keys) > 0:
+        return get_value_from_dotpath(current_level, ".".join(keys))
+    else:
+        return current_level

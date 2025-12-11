@@ -2,6 +2,7 @@ import json
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 import yaml
@@ -51,9 +52,24 @@ class DatabricksCli:
 
     def validate(self):
         cmd = ["databricks", "bundle", "validate", "--output", "json"] + self.args
-        result = self._run_command(cmd, warn=True, cwd=self.metadata.project_path)
+        result = self._run_command(
+            cmd, warn=True, cwd=self.metadata.project_path, silent=True
+        )
         self._check_result(result, "Failed to validate Databricks Asset Bundle")
-        return json.loads("".join(result.stdout))
+        try:
+            # Skip any warnings before the JSON output
+            first_bracket = next(
+                i
+                for i, line in enumerate(result.stdout)
+                if line.strip().startswith("{")
+            )
+
+            result.stdout = result.stdout[first_bracket:]
+            return json.loads("".join(result.stdout))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"Failed to parse Databricks Asset Bundle validation output\n{''.join(result.stdout)}"
+            ) from exc
 
     def init(self, assets_dir: Path, template_params: Path):
         cmd = [
@@ -69,6 +85,13 @@ class DatabricksCli:
         result = self._run_command(cmd, warn=True, cwd=self.metadata.project_path)
         self._check_result(result, "Failed to initialize Databricks Asset Bundle")
         shutil.rmtree(assets_dir)
+        max_wait_seconds = 10
+        while not (self.metadata.project_path / "databricks.yml").exists():
+            max_wait_seconds -= 1
+            if max_wait_seconds <= 0:
+                raise RuntimeError("Databricks Asset Bundle initialization timed out.")
+            time.sleep(1)
+        return self.validate()
 
     def deploy(self):
         cmd = (
@@ -180,15 +203,16 @@ class DatabricksCli:
             and pass_when_includes in "".join(result.stdout)
         ):  # pragma: no cover
             err = "\n".join(result.stdout)
-            raise RuntimeError(f"{msg}\n{err}")
+            raise RuntimeError(f"({result.returncode}) {msg}\n{err}")
 
-    def _read_stdout(self, process: subprocess.Popen):
+    def _read_stdout(self, process: subprocess.Popen, silent=False):
         stdout = []
         while True:
             line = process.stdout.readline()  # type: ignore - we know it's there
             if not line and process.poll() is not None:
                 break
-            print(line, end="")  # noqa: T201
+            if not silent:
+                print(line, end="")  # noqa: T201
             stdout.append(line)
         return stdout
 
@@ -201,10 +225,7 @@ class DatabricksCli:
             universal_newlines=True,
             **kwargs,
         )
-        if not silent:
-            stdout = self._read_stdout(process)
-        else:
-            stdout = process.stdout.readlines()  # type: ignore - we know it's there
+        stdout = self._read_stdout(process, silent=silent)
         process.stdout.close()  # type: ignore - we know it's there
         result = subprocess.CompletedProcess(
             args=command,
