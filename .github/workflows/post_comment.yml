@@ -6,7 +6,6 @@ on:
     types:
       - completed
 
-
 permissions:
   checks: write
   pull-requests: write
@@ -22,7 +21,7 @@ jobs:
       - name: Download and Extract Artifacts
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         with:
-           run_id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ github.event.workflow_run.id }}
 
       - name: Export Issue number
         run: echo "PR_NBR=$(cat ./pr/NR)" >> $GITHUB_ENV
@@ -41,7 +40,7 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: ./pr/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          files: "./pr/**/coverage-*.xml"
+          files: "./pr/**/coverage-*.junit.xml"
 
       - name: Publish version bump comment
         if: env.BUMP_VERSION == 'true'

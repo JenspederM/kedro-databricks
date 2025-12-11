@@ -37,12 +37,17 @@ jobs:
       - name: Lint kedro-databricks
         run: uv run ruff check
       - name: Test kedro-databricks
-        run: uv run pytest tests
+        run: uv run pytest tests --cov kedro_databricks
         env:
           CUSTOM_USERNAME: "kedro_databricks"
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:

@@ -38,12 +38,12 @@ jobs:
         run: uv run pytest tests/unit
 
       - name: Rename coverage file
-        run: mv coverage.xml coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
+        run: mv coverage.junit.xml coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
 
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
-          path: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.xml
+          name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
+          path: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
           if-no-files-found: ignore
   build-pr:
     name: Build PR artifact
