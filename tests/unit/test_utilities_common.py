@@ -6,6 +6,7 @@ from kedro_databricks.utilities.common import (
     get_arg_value,
     get_entry_point,
     get_lookup_key,
+    get_value_from_dotpath,
     remove_nulls,
     sanitize_name,
     sort_dict,
@@ -231,3 +232,20 @@ def test_update_list(old, new, key, default, expected):
         callback=_cb,
     )
     assert result == expected, result
+
+
+@pytest.mark.parametrize(
+    ["dotpath", "conf", "expected"],
+    [
+        ("a.b.c", {"a": {"b": {"c": 1}}}, 1),
+        ("a.b.c", {"a": {"b": {"c": {"d": 2}}}}, {"d": 2}),
+        ("a.b.c.d", {"a": {"b": {"c": {"d": 2}}}}, 2),
+        ("a.b.x", {"a": {"b": {"c": 1}}}, None),
+        ("a.b.c", {}, None),
+        ("a.b.c", [], None),
+        ("a.b.c", None, None),
+    ],
+)
+def test_get_value_from_dotpath(dotpath, conf, expected):
+    value = get_value_from_dotpath(conf, dotpath)
+    assert value == expected, f"Expected {expected}, got {value}"
