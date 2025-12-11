@@ -99,7 +99,7 @@ def test_create_target_configs(metadata, monkeypatch):
             },
             f,
         )
-    _create_target_configs(metadata, "test", DEFAULT_CATALOG, DEFAULT_SCHEMA)
+    _create_target_configs(metadata, "test", DEFAULT_CATALOG, DEFAULT_SCHEMA, {})
 
 
 def test_prepare_template(metadata):

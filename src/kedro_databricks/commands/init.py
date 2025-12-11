@@ -15,12 +15,16 @@ from kedro_databricks.constants import (
     DEFAULT_CATALOG_HELP,
     DEFAULT_CONFIG_KEY,
     DEFAULT_CONFIG_KEY_HELP,
+    DEFAULT_ENV,
     DEFAULT_SCHEMA,
     DEFAULT_SCHEMA_HELP,
     GITIGNORE,
     TEMPLATES,
 )
-from kedro_databricks.utilities.common import require_databricks_run_script
+from kedro_databricks.utilities.common import (
+    get_value_from_dotpath,
+    require_databricks_run_script,
+)
 from kedro_databricks.utilities.databricks_cli import DatabricksCli
 from kedro_databricks.utilities.logger import get_logger
 
@@ -63,13 +67,14 @@ def command(
     log.info("Initializing Databricks Asset Bundle...")
     dbcli = DatabricksCli(metadata, additional_args=list(databricks_args))
     assets_dir, template_params = _prepare_template(metadata)
-    dbcli.init(assets_dir, template_params)
+    validated_conf = dbcli.init(assets_dir, template_params)
     log.info(f"Initialized Databricks Asset Bundle in {metadata.project_path}")
     _create_target_configs(
         metadata,
         default_key=default_key,
         default_catalog=catalog,
         default_schema=schema,
+        validated_conf=validated_conf,
     )
     _update_gitignore(metadata)
     hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
@@ -142,6 +147,7 @@ def _create_target_configs(
     default_key: str,
     default_catalog: str,
     default_schema: str,
+    validated_conf: dict,
 ):
     conf_dir = metadata.project_path / "conf"
     databricks_config = _read_databricks_config(metadata.project_path)
@@ -151,13 +157,18 @@ def _create_target_configs(
         target_conf_dir = conf_dir / target_name
         target_conf_dir.mkdir(exist_ok=True)
         _save_gitkeep_file(target_conf_dir)
-        target_config = _create_target_config(default_key, bundle_name)
+        target_config = _create_target_config(
+            default_key=default_key,
+            bundle_name=bundle_name,
+            target_name=target_name,
+            validated_conf=validated_conf,
+        )
         _save_target_config(target_config, target_conf_dir)
         target_file_path = _make_target_file_path(
-            default_catalog,
-            default_schema,
-            bundle_name,
-            target_name,
+            catalog_name=default_catalog,
+            schema_name=default_schema,
+            volume_name=_create_volume_name(target_name, bundle_name, validated_conf),
+            target_name=target_name if target_name != DEFAULT_ENV else bundle_name,
         )
         _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
         log.info(f"Created target config for {target_name} at {target_conf_dir}")
@@ -238,15 +249,40 @@ def _transform_spark_hook(path: str):
     return new_source
 
 
-def _create_target_config(default_key: str, bundle_name: str):
+def _create_volume_name(
+    target_name: str, bundle_name: str, validated_conf: dict
+) -> str:
+    if target_name == DEFAULT_ENV:
+        short_name = get_value_from_dotpath(
+            validated_conf, "workspace.current_user.short_name"
+        )
+        if not short_name:
+            raise ValueError(
+                "Could not determine the current user's short name from the configuration."
+            )
+        return short_name
+    else:
+        return bundle_name
+
+
+def _create_target_config(
+    default_key: str,
+    bundle_name: str,
+    target_name: str,
+    validated_conf: dict,
+) -> dict:
     return {
         "resources": {
             "volumes": {
                 f"{bundle_name}_volume": {
                     "catalog_name": "workspace",
                     "schema_name": "default",
-                    "name": bundle_name,
-                    "comment": f"Volume for {bundle_name}",
+                    "name": _create_volume_name(
+                        target_name=target_name,
+                        bundle_name=bundle_name,
+                        validated_conf=validated_conf,
+                    ),
+                    "comment": f"Created by kedro-databricks for target {target_name}",
                     "volume_type": "MANAGED",
                     "grants": [
                         {
@@ -282,10 +318,10 @@ def _create_target_config(default_key: str, bundle_name: str):
 def _make_target_file_path(
     catalog_name: str,
     schema_name: str,
-    bundle_name: str,
+    volume_name: str,
     target_name: str,
 ) -> str:
-    return f"/Volumes/{catalog_name}/{schema_name}/{bundle_name}/{target_name}"
+    return f"/Volumes/{catalog_name}/{schema_name}/{volume_name}/{target_name}"
 
 
 def _substitute_file_path(string: str) -> str:
