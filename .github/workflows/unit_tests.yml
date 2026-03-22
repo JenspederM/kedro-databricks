@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        kedro_version: ["0.19.7", "0.19.8"]
+        kedro_version: ["0.19.7", "0.19.8", "latest"]
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +28,11 @@ jobs:
 
       - name: Sync kedro-databricks
         run: |
-          uv add "kedro==${{ matrix.kedro_version }}"
+          if [ "${{ matrix.kedro_version }}" = "latest" ]; then
+            uv add "kedro"
+          else
+            uv add "kedro==${{ matrix.kedro_version }}"
+          fi
           uv sync --no-group test
 
       - name: Lint kedro-databricks
