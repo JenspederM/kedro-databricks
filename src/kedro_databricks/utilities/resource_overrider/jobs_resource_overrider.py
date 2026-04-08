@@ -88,7 +88,6 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                             old=old_value,
                             new=value,
                             lookup_key=lookup_key,
-                            callback=self._override_job,
                             default=task_overrides if key == "tasks" else {},
                             default_key=default_key,
                         )
