@@ -53,6 +53,7 @@ coverage.*
 .pytest_cache/
 cover/
 
+
 # Translations
 *.mo
 *.pot
