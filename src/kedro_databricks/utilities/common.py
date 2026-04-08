@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import copy
 import re
-from collections.abc import Callable
 from typing import Any
 
 from kedro.pipeline.node import Node
 from packaging.version import Version
 
-from kedro_databricks.constants import KEDRO_VERSION, MAX_TASK_KEY_LENGTH, OVERRIDE_KEY_MAP
+from kedro_databricks.constants import KEDRO_VERSION, MAX_TASK_KEY_LENGTH, OVERRIDE_KEY_MAP, IGNORED_OVERRIDE_KEYS
 from kedro_databricks.utilities.logger import get_logger
 
 log = get_logger("utilities.common")
@@ -487,7 +486,7 @@ def _merge_override_lists(
     Returns:
         list[dict]: Merged items keyed by the section's identifier.
     """
-    identifier = get_lookup_key(key_name)
+    identifier = get_lookup_key(key_name, OVERRIDE_KEY_MAP)
     # Preserve order: start with base keys in order, then append new keys
     base_items = [copy.deepcopy(i) for i in base_list]
     extra_items = [copy.deepcopy(i) for i in extra_list]
@@ -558,3 +557,50 @@ def _get_workflow_overrides(overrides, workflow, default_key):
 
     default_task = get_defaults(merged.get("tasks", []), "task_key", default_key)
     return merged, default_task
+
+def _override_workflow(
+    workflow: dict,
+    workflow_overrides: dict,
+    task_overrides: dict = {},
+    default_key: str = "default",
+):
+    """Override a Databricks workflow with the given overrides.
+
+    Args:
+        workflow (Dict): the Databricks workflow
+        overrides (Dict): the overrides to apply
+
+    Returns:
+        Dict: the Databricks workflow with the overrides applied
+    """
+    result = {**workflow}
+
+    for key, value in workflow_overrides.items():
+        old_value = get_old_value(result, key, value)
+        if isinstance(value, dict) and isinstance(old_value, dict):
+            result[key] = _override_workflow(
+                workflow=old_value,
+                workflow_overrides=value,
+                task_overrides={},
+                default_key=default_key,
+            )
+        elif isinstance(value, list) and isinstance(old_value, list):
+            if isinstance(value[0], dict) and key not in IGNORED_OVERRIDE_KEYS:
+                lookup_key = get_lookup_key(key, OVERRIDE_KEY_MAP)
+                if lookup_key:
+                    result[key] = update_list_by_key(
+                        old=old_value,
+                        new=value,
+                        lookup_key=lookup_key,
+                        default=task_overrides if key == "tasks" else {},
+                        default_key=default_key,
+                    )
+            elif key == "parameters":
+                # Special case for parameters, which can be a list of strings
+                log.debug(f"Overriding parameters for key {key} with value {value}")
+                result[key] = old_value + value
+            else:
+                result[key] = value
+        else:
+            result[key] = workflow_overrides.get(key, old_value)
+    return result

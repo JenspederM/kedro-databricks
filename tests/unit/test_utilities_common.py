@@ -229,7 +229,6 @@ def test_update_list(old, new, key, default, expected):
         new=new,
         lookup_key=key,
         default=default,
-        callback=_cb,
     )
     assert result == expected, result
 
