@@ -26,6 +26,10 @@ class DefaultResourceOverrider(AbstractResourceOverrider):
         Returns:
             dict[str, Any]: resource with overrides applied (unchanged).
         """
+        if not isinstance(resource, dict):
+            raise ValueError(f"resource must be a dictionary not {type(resource)}")
+        if not isinstance(overrides, dict):
+            raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
         default_overrides = overrides.pop(default_key, None)
         specific_overrides = overrides.pop(resource_key, None)
         all_overrides = {**(default_overrides or {}), **(specific_overrides or {})}
