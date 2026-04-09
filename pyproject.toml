@@ -11,6 +11,7 @@ dependencies = [
     "databricks-sdk>=0.36.0",
     "python-dotenv>=1.0.1",
     "packaging>=21.2",
+    "fuso>=0.2.4",
 ]
 
 [dependency-groups]
@@ -66,10 +67,9 @@ addopts = [
     '--cov-fail-under=70',
     '--ignore-glob="develop-eggs/*"',
     '-ra',
-    '-vv',
+    '-v',
     '-x',
 ]
-
 
 [tool.black]
 exclude = ".*template.py"
@@ -140,3 +140,6 @@ commit_parser = "^(?P<change_type>feat|feature|bug fix|fix|hotfix|refactor|docs|
 "project" = "6. Other Changes"
 "chore" = "6. Other Changes"
 "Merge pull request" = "7. Pull Requests"
+
+[tool.ty.src]
+include = ["src", "tests"]

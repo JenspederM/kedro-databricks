@@ -65,27 +65,6 @@ DEFAULT_CONFIG_GENERATOR = "node"
 DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a job for each node) or 'pipeline' (create a single job for the entire pipeline)."
 """Help text for the resource generator option."""
 
-
-OVERRIDE_KEY_MAP = {
-    "job_clusters": "job_cluster_key",
-    "tasks": "task_key",
-    "depends_on": "task_key",
-    "environments": "environment_key",
-    "on_start": "id",
-    "on_success": "id",
-    "on_failure": "id",
-    "on_duration_warning_threshold_exceeded": "id",
-    "on_streaming_backlog_exceeded": "id",
-    "rules": "metric",
-    "parameters": "name",
-    "libraries": "whl",
-    "subscriptions": "user_name",
-}
-"""Map of keys that should be overridden in the Databricks configuration."""
-
-IGNORED_OVERRIDE_KEYS = ["init_scripts", "access_control_list"]
-"""Keys that should be ignored when overriding the Databricks configuration."""
-
 INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
 

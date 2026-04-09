@@ -5,6 +5,7 @@ resources:
       description: "Default job cluster configuration"
       email_notifications:
         on_start:
+          - resource@email_notifications.com
           - on_start@email_notifications.com
         on_success:
           - on_success@email_notifications.com
@@ -17,8 +18,8 @@ resources:
         no_alert_for_skipped_runs: true
       webhook_notifications:
         on_start:
-          - id: on_start@webhook_notifications.com
           - id: resource@webhook_notifications.com
+          - id: on_start@webhook_notifications.com
         on_success:
           - id: on_success@webhook_notifications.com
         on_failure:

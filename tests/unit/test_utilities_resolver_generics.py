@@ -103,13 +103,13 @@ def test_composite_aggregates_errors_from_all_resolvers():
 
 def test_module_resolver_validate_fn_accepts():
     # Accept only callables; builtins.str is callable
-    resolver = ModuleResourceResolver(validate_fn=lambda obj: callable(obj))
+    resolver = ModuleResourceResolver(validate_fn=callable)
     assert resolver.resolve("builtins.str") is str
 
 
 def test_module_resolver_validate_fn_rejects():
     # Accept only callables; TEST_STR is not callable -> rejected
-    resolver = ModuleResourceResolver(validate_fn=lambda obj: callable(obj))
+    resolver = ModuleResourceResolver(validate_fn=callable)
     with pytest.raises(ResourceInvalidError, match="is invalid") as excinfo:
         resolver.resolve(f"{__name__}.TEST_STR")
     msg = str(excinfo.value)

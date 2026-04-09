@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import re
-from collections.abc import Callable
 from typing import Any
 
 from kedro.pipeline.node import Node
@@ -160,123 +159,6 @@ def sanitize_name(node: Node | str) -> str:
         _name = _name[:MAX_TASK_KEY_LENGTH]
 
     return _name
-
-
-def get_lookup_key(key: str, lookup_map: dict):
-    """Get the lookup key for a given key.
-
-    Args:
-        key (str): key to get the lookup key for
-        lookup_map (Dict): map of keys to lookup keys
-
-    Returns:
-        str: lookup key for the given key
-    """
-    lookup = lookup_map.get(key)
-    if lookup is None:
-        raise ValueError(f"Key {key} not found in OVERRIDE_KEY_MAP")
-    return lookup
-
-
-def get_defaults(lst: list, lookup_key: str, default_key):
-    """Get the default dictionary from a list of dictionaries.
-
-    Args:
-        lst (List[Dict]): list of dictionaries
-        lookup_key (str): key to use for looking up dictionaries
-
-    Returns:
-        Dict: the default dictionary
-    """
-    for d in lst:
-        if isinstance(d, dict) and d.get(lookup_key, "") == default_key:
-            return d
-    return {}
-
-
-def update_list_by_key(
-    old: list[dict[str, Any]],
-    new: list[dict[str, Any]],
-    lookup_key: str,
-    callback: Callable[[Any, Any, dict[str, Any], str], Any],
-    default: dict[str, Any] = {},
-    default_key: str = "default",
-):
-    """Update a list of dictionaries with another list of dictionaries.
-
-    Args:
-        old (List[Dict[str, Any]]): list of dictionaries to update
-        new (List[Dict[str, Any]]): list of dictionaries to update with
-        lookup_key (str): key to use for looking up dictionaries
-        default (Dict[str, Any], optional): default dictionary to use for updating
-
-    Returns:
-        List[Dict[str, Any]]: updated list of dictionaries
-    """
-    validate_list_by_key(old=old, new=new, lookup_key=lookup_key)
-    old_obj = {curr.pop(lookup_key): curr for curr in copy.deepcopy(old)}
-    new_obj = {update.pop(lookup_key): update for update in copy.deepcopy(new)}
-    keys = set(old_obj.keys()).union(set(new_obj.keys()))
-
-    for key in keys:
-        if default and key == default_key:
-            continue
-        update = copy.deepcopy(default)
-        update.pop(lookup_key, None)
-        update.update(new_obj.get(key, {}))
-        new = callback(old_obj.get(key, {}), update, {}, default_key)  # type: ignore
-        old_obj[key] = new  # type: ignore
-
-    return sorted(
-        [{lookup_key: k, **v} for k, v in old_obj.items()],
-        key=lambda x: x[lookup_key],
-    )
-
-
-def validate_list_by_key(
-    old: list[dict[str, Any]], new: list[dict[str, Any]], lookup_key: str
-):
-    """Validate that a list of dictionaries contains the lookup key.
-
-    Args:
-        old (List[Dict[str, Any]]): list of dictionaries to validate
-        new (List[Dict[str, Any]]): list of dictionaries to validate
-        lookup_key (str): key to use for looking up dictionaries
-
-    Raises:
-        ValueError: if the lookup key is not found in any dictionary
-    """
-    assert isinstance(old, list), (
-        f"old must be a list not {type(old)} for key: {lookup_key} - {old}"
-    )
-    assert isinstance(new, list), (
-        f"new must be a list not {type(new)} for key: {lookup_key} - {new}"
-    )
-    assert all(lookup_key in o for o in old), (
-        f"lookup_key {lookup_key} not found in current: {old}"
-    )
-    assert all(lookup_key in n for n in new), (
-        f"lookup_key {lookup_key} not found in updates: {new}"
-    )
-
-
-def get_old_value(result: Any, key: Any, value: Any):
-    """Get the old value from a dictionary with a default based on the type of value.
-
-    Args:
-        result (Any): dictionary to get the old value from
-        key (Any): key to get the old value for
-        value (Any): value to determine the default type
-
-    Returns:
-        Any: old value from the dictionary or default value
-    """
-    default = None
-    if isinstance(value, dict):
-        default = {}
-    elif isinstance(value, list):
-        default = []
-    return result.get(key, default)
 
 
 def get_value_from_dotpath(validated_conf, dotpath):
