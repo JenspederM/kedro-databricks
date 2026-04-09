@@ -172,7 +172,9 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
         default_overrides = overrides.pop(default_key, {})
         job_overrides = overrides.pop(resource_key, {})
-        all_overrides = {**default_overrides, **job_overrides}
+        regex_overrides = self.get_regex_overrides(resource_key, overrides)
+        all_overrides = {**default_overrides, **regex_overrides, **job_overrides}
+
         default_task = [
             t
             for t in all_overrides.get("tasks", [])
