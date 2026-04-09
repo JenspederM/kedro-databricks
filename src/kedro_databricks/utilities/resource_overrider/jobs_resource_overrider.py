@@ -52,18 +52,6 @@ def _access_control_list_overrider(old: list[dict], new: list[dict]) -> list[dic
     return merged_groups + merged_users + merged_spns
 
 
-def _environments_overrider(old: list[dict], new: list[dict]) -> list[dict]:
-    return merge_list_of_dicts_by_key(old or [], new or [], key="environment_key")
-
-
-def _job_clusters_overrider(old: list[dict], new: list[dict]) -> list[dict]:
-    return merge_list_of_dicts_by_key(old or [], new or [], key="job_cluster_key")
-
-
-def _depends_on_overrider(old: list[dict], new: list[dict]) -> list[dict]:
-    return merge_list_of_dicts_by_key(old or [], new or [], key="task_key")
-
-
 def _libraries_overrider(old: list[dict], new: list[dict]) -> list[dict]:
     old = old or []
     new = new or []
@@ -115,7 +103,9 @@ def _tasks_overrider(old: list[dict], new: list[dict], defaults: dict) -> list[d
             old_task,
             new_task,
             merge_functions={
-                "depends_on": _depends_on_overrider,
+                "depends_on": lambda old, new: merge_list_of_dicts_by_key(
+                    old or [], new or [], key="task_key"
+                ),
                 "email_notifications": _notification_overrider,
                 "webhook_notifications": _notification_overrider,
                 "health.rules": lambda old, new: merge_list_of_dicts_by_key(
@@ -187,8 +177,12 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                 "tasks": lambda old, new: _tasks_overrider(
                     old, new, defaults=default_task
                 ),
-                "environments": _environments_overrider,
-                "job_clusters": _job_clusters_overrider,
+                "environments": lambda old, new: merge_list_of_dicts_by_key(
+                    old or [], new or [], key="environment_key"
+                ),
+                "job_clusters": lambda old, new: merge_list_of_dicts_by_key(
+                    old or [], new or [], key="job_cluster_key"
+                ),
                 "access_control_list": _access_control_list_overrider,
                 "email_notifications": _notification_overrider,
                 "webhook_notifications": _notification_overrider,
