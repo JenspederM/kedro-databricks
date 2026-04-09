@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from fuso import merge_dict, merge_list_of_dicts_by_key, to_dotpath
 from fuso.merge import create_merge_factory
@@ -115,7 +115,7 @@ def _tasks_overrider(old: list[dict], new: list[dict], defaults: dict) -> list[d
             old_task,
             new_task,
             merge_functions={
-                "depends_on": cast(Any, _depends_on_overrider),
+                "depends_on": _depends_on_overrider,
                 "email_notifications": _notification_overrider,
                 "webhook_notifications": _notification_overrider,
                 "health.rules": lambda old, new: merge_list_of_dicts_by_key(
@@ -184,9 +184,8 @@ class JobsResourceOverrider(AbstractResourceOverrider):
         default_task.pop("task_key", None)
         overrider = create_merge_factory(
             merge_functions={
-                "tasks": cast(
-                    Any,
-                    lambda old, new: _tasks_overrider(old, new, defaults=default_task),
+                "tasks": lambda old, new: _tasks_overrider(
+                    old, new, defaults=default_task
                 ),
                 "environments": _environments_overrider,
                 "job_clusters": _job_clusters_overrider,
