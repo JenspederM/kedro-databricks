@@ -67,7 +67,7 @@ addopts = [
     '--cov-fail-under=70',
     '--ignore-glob="develop-eggs/*"',
     '-ra',
-    '-v',
+    '-vv',
     '-x',
 ]
 
