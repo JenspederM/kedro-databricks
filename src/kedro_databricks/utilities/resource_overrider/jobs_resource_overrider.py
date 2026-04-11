@@ -133,6 +133,19 @@ def _post_processor(resource: dict[str, Any]) -> dict[str, Any]:
 class JobsResourceOverrider(AbstractResourceOverrider):
     """Override a Databricks jobs resource with the default key."""
 
+    def _get_default_task(self, overrides, default_key):
+        if "tasks" not in overrides:
+            return {}
+        default_task = [
+            t for t in overrides.get("tasks", []) if t.get("task_key") == default_key
+        ]
+        default_task = default_task[0] if default_task else {}
+        default_task.pop("task_key", None)
+        overrides["tasks"] = [
+            t for t in overrides.get("tasks", []) if t.get("task_key") != default_key
+        ]
+        return default_task
+
     def override(
         self,
         resource_key: str,
@@ -165,13 +178,9 @@ class JobsResourceOverrider(AbstractResourceOverrider):
         default_overrides = copied_overrides.pop(default_key, {})
         job_overrides = copied_overrides.pop(resource_key, {})
         regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
-        default_task = [
-            t
-            for t in default_overrides.get("tasks", [])
-            if t.get("task_key") == default_key
-        ]
-        default_task = default_task[0] if default_task else {}
-        default_task.pop("task_key", None)
+        default_task = self._get_default_task(job_overrides, default_key)
+        if not default_task:
+            default_task = self._get_default_task(default_overrides, default_key)
         overrider = create_merge_factory(
             merge_functions={
                 "tasks": lambda old, new: _tasks_overrider(
@@ -196,7 +205,5 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             key_order=[],
             post_processor=_post_processor,
         )
-        all_overrides = overrider(
-            overrider(default_overrides, regex_overrides), job_overrides
-        )
+        all_overrides = {**default_overrides, **regex_overrides, **job_overrides}
         return overrider(resource, all_overrides)
