@@ -180,6 +180,8 @@ class JobsResourceOverrider(AbstractResourceOverrider):
         regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
         default_task = self._get_default_task(job_overrides, default_key)
         if not default_task:
+            default_task = self._get_default_task(regex_overrides, default_key)
+        if not default_task:
             default_task = self._get_default_task(default_overrides, default_key)
         overrider = create_merge_factory(
             merge_functions={
