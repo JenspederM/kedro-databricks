@@ -1,3 +1,4 @@
+import copy
 from typing import Any
 
 from fuso import merge_dict, merge_list_of_dicts_by_key, to_dotpath
@@ -160,14 +161,13 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             raise ValueError(f"resource must be a dictionary not {type(resource)}")
         if not isinstance(overrides, dict):
             raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
-        default_overrides = overrides.pop(default_key, {})
-        job_overrides = overrides.pop(resource_key, {})
-        regex_overrides = self.get_regex_overrides(resource_key, overrides)
-        all_overrides = {**default_overrides, **regex_overrides, **job_overrides}
-
+        copied_overrides = copy.deepcopy(overrides)
+        default_overrides = copied_overrides.pop(default_key, {})
+        job_overrides = copied_overrides.pop(resource_key, {})
+        regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
         default_task = [
             t
-            for t in all_overrides.get("tasks", [])
+            for t in default_overrides.get("tasks", [])
             if t.get("task_key") == default_key
         ]
         default_task = default_task[0] if default_task else {}
@@ -195,5 +195,8 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             },
             key_order=[],
             post_processor=_post_processor,
+        )
+        all_overrides = overrider(
+            overrider(default_overrides, regex_overrides), job_overrides
         )
         return overrider(resource, all_overrides)
