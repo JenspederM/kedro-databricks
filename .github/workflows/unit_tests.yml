@@ -1,7 +1,9 @@
 name: Unit tests
 
 on:
-  pull_request: {}
+  pull_request:
+    branches-ignore:
+      - release-please--branches--main
 
 permissions:
   checks: write
