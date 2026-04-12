@@ -28,12 +28,31 @@ def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
 
 
 def version_to_str(version: list[int]) -> str:
+    """Convert a version list to a string.
+
+    Requires version to follow semantic versioning (3 parts: major, minor, patch).
+
+    Args:
+        version (List[int]): version list to convert
+
+    Returns:
+        str: version string
+    """
     if len(version) != 3:  # noqa: PLR2004 - Semantic versioning requires 3 parts
         raise ValueError(f"Invalid version: {version}")
     return ".".join(str(x) for x in version)
 
 
 def get_arg_value(args: list[str], arg_name: str) -> str | None:
+    """Get the value of an argument from a list of arguments.
+
+    Args:
+        args (List[str]): list of arguments
+        arg_name (str): name of the argument to get the value for
+
+    Returns:
+        str | None: value of the argument or None if not found
+    """
     for i, arg in enumerate(args):
         if "=" in arg:
             _arg, value = arg.split("=", 1)
@@ -161,12 +180,21 @@ def sanitize_name(node: Node | str) -> str:
     return _name
 
 
-def get_value_from_dotpath(validated_conf, dotpath):
-    if not isinstance(validated_conf, dict):
+def get_value_from_dotpath(ddict, dotpath):
+    """Get a value from a dictionary using a dotpath.
+
+    Args:
+        ddict (Any): dictionary to get the value from
+        dotpath (str): dotpath to get the value for
+
+    Returns:
+        Any: value from the dictionary or None if not found
+    """
+    if not isinstance(ddict, dict):
         return None
     keys = dotpath.split(".")
     key = keys.pop(0)
-    current_level = validated_conf.get(key)
+    current_level = ddict.get(key)
     if current_level is None:
         return None
     elif len(keys) > 0:
