@@ -243,7 +243,7 @@ pipeline = Pipeline(
 
 def _generate_task(
     task_key: int | str,
-    depends_on: list[str] = [],
+    dependencies: list[str] = [],
     conf: str = "conf",
     runtime_params: str = "",
 ):
@@ -273,8 +273,8 @@ def _generate_task(
         },
     }
 
-    if len(depends_on) > 0:
-        task["depends_on"] = [{"task_key": dep} for dep in depends_on]
+    if len(dependencies) > 0:
+        task["depends_on"] = [{"task_key": dep} for dep in dependencies]
 
     return task
 

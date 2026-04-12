@@ -107,24 +107,32 @@ def command(
     overridden_resources = {}
     for resource_type, resource_override_items in overrides["resources"].items():
         overridden_resources[resource_type] = {}
-
         resource_items = all_resources.get(resource_type, {})
-        default_overrides = resource_override_items.pop(default_key, {})
-
         overrider = RESOURCE_OVERRIDER_RESOLVER.resolve(resource_type)()
-        all_keys = set(resource_items.keys()).union(set(resource_override_items.keys()))
+        default_overrides = resource_override_items.pop(default_key, {})
+        regex_overrides = overrider.get_regex_overrides(
+            resource_key=default_key, overrides=resource_override_items
+        )
+        resource_overrides = {
+            k: v
+            for k, v in resource_override_items.items()
+            if not k.startswith("re:") and k != default_key
+        }
+        all_keys = set(resource_items.keys()).union(set(resource_overrides.keys()))
         for key in all_keys:
             resource = resource_items.get(key, {})
-            resource_overrides = resource_override_items.get(key, {})
+            overrides = {
+                default_key: default_overrides,
+                **regex_overrides,
+                **resource_overrides,
+            }
             overridden_resources[resource_type][key] = overrider.override(
                 resource_key=key,
                 default_key=default_key,
                 resource=resource,
-                overrides={
-                    default_key: default_overrides,
-                    key: resource_overrides,
-                },
+                overrides=overrides,
             )
+
     save_resources(
         metadata=metadata,
         env=env,

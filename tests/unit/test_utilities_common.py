@@ -1,16 +1,13 @@
 import pytest
 from packaging.version import Version
 
-from kedro_databricks.constants import OVERRIDE_KEY_MAP
 from kedro_databricks.utilities.common import (
     get_arg_value,
     get_entry_point,
-    get_lookup_key,
     get_value_from_dotpath,
     remove_nulls,
     sanitize_name,
     sort_dict,
-    update_list_by_key,
     version_to_str,
 )
 from tests.utils import identity, node, require_databricks_run_script
@@ -148,90 +145,6 @@ def test_get_arg_value(args, arg, expected):
     """Test the function to get the value of a specific argument from a list of arguments."""
     result = get_arg_value(args, arg)
     assert result == expected, f"Expected {expected}, but got {result}"
-
-
-@pytest.mark.parametrize(
-    ["key", "lookup_map", "expected"],
-    [
-        ("unknown", {}, None),
-        (123, {}, None),
-        *[(key, OVERRIDE_KEY_MAP, value) for key, value in OVERRIDE_KEY_MAP.items()],
-    ],
-)
-def test_get_lookup_key(key, lookup_map, expected):
-    if expected is None:
-        with pytest.raises(ValueError):
-            get_lookup_key(key, lookup_map)
-        return
-    result = get_lookup_key(key, lookup_map)
-    assert result == expected
-
-
-@pytest.mark.parametrize(
-    ["old", "new", "key", "default", "expected"],
-    [
-        (
-            [],
-            [],
-            "task_key",
-            {},
-            [],
-        ),
-        (
-            [],
-            [],
-            "task_key",
-            {"job_cluster_key": "cluster1"},
-            [],
-        ),
-        (
-            [
-                {"task_key": "task1", "job_cluster_key": "cluster1"},
-                {"task_key": "task2", "job_cluster_key": "cluster2"},
-                {"task_key": "task3", "job_cluster_key": "cluster3"},
-            ],
-            [
-                {"task_key": "task1", "job_cluster_key": "cluster4"},
-            ],
-            "task_key",
-            {},
-            [
-                {"task_key": "task1", "job_cluster_key": "cluster4"},
-                {"task_key": "task2", "job_cluster_key": "cluster2"},
-                {"task_key": "task3", "job_cluster_key": "cluster3"},
-            ],
-        ),
-        (
-            [
-                {"task_key": "task1"},
-                {"task_key": "task2"},
-                {"task_key": "task3"},
-            ],
-            [
-                {"task_key": "task1", "job_cluster_key": "cluster4"},
-            ],
-            "task_key",
-            {"job_cluster_key": "cluster1"},
-            [
-                {"task_key": "task1", "job_cluster_key": "cluster4"},
-                {"task_key": "task2", "job_cluster_key": "cluster1"},
-                {"task_key": "task3", "job_cluster_key": "cluster1"},
-            ],
-        ),
-    ],
-)
-def test_update_list(old, new, key, default, expected):
-    def _cb(old, new, default, key):
-        return {**old, **new, **default}
-
-    result = update_list_by_key(
-        old=old,
-        new=new,
-        lookup_key=key,
-        default=default,
-        callback=_cb,
-    )
-    assert result == expected, result
 
 
 @pytest.mark.parametrize(

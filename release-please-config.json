@@ -1,0 +1,10 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "signoff": "Jens Peder Meldgaard <JensPederM@gmail.com>",
+    "packages": {
+        ".": {
+            "release-type": "python",
+            "changelog-path": "docs/changelog.md"
+        }
+    }
+}

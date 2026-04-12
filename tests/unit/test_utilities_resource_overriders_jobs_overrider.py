@@ -49,51 +49,6 @@ def test_job_overrider(example_name):
 
 
 @pytest.mark.parametrize(
-    ["dct", "overrides", "expected"],
-    [
-        (
-            {"a": 1, "b": 2},
-            {"a": 3},
-            {"a": 3, "b": 2},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"c": 3},
-            {"a": 1, "b": 2, "c": 3},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"a": 3, "b": 4},
-            {"a": 3, "b": 4},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"a": 3, "b": {"c": 4}},
-            {"a": 3, "b": {"c": 4}},
-        ),
-        (
-            {"a": 1, "b": 2},
-            {"a": 3, "job_clusters": [{"job_cluster_key": "cluster1"}]},
-            {"a": 3, "b": 2, "job_clusters": [{"job_cluster_key": "cluster1"}]},
-        ),
-        (
-            {"a": 1, "b": {"c": 2}},
-            {
-                "a": 3,
-                "b": {"c": 3},
-                "job_clusters": [{"job_cluster_key": "cluster1"}],
-            },
-            {"a": 3, "b": {"c": 3}, "job_clusters": [{"job_cluster_key": "cluster1"}]},
-        ),
-    ],
-)
-def test_override_job_internal(dct, overrides, expected):
-    job_overrider = JobsResourceOverrider()
-    result = job_overrider._override_job(dct, overrides, {}, "default")
-    assert result == expected, result
-
-
-@pytest.mark.parametrize(
     ["args", "error", "match"],
     [
         ([None, None, {}], ValueError, "resource must be a dictionary"),

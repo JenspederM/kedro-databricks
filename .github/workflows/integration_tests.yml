@@ -1,54 +1,17 @@
 name: Integration Tests
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/integration_tests.yml"
-      - "tests/integration/**"
-  workflow_call:
-    secrets:
-      DATABRICKS_HOST:
-        required: true
-        description: The hostname of the Databricks workspace.
-      DATABRICKS_CLIENT_ID:
-        required: true
-        description: The client ID a service principal.
-      DATABRICKS_CLIENT_SECRET:
-        required: true
-        description: The client secret of a service principal.
-      CODECOV_TOKEN:
-        required: true
-        description: The token to upload coverage reports to Codecov.
+  push:
+    branches:
+      - release-please--branches--main
 
 jobs:
-  test:
-    name: Run tests
-    if: ${{ !startsWith(github.event.head_commit.message, 'bump:') && github.repository_owner_id == github.actor_id }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: databricks/setup-cli@main
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version: 3.11 # default on Databricks
-      - name: Sync kedro-databricks
-        run: uv sync --all-groups
-      - name: Lint kedro-databricks
-        run: uv run ruff check
-      - name: Test kedro-databricks
-        run: uv run pytest tests --cov kedro_databricks
-        env:
-          CUSTOM_USERNAME: "kedro_databricks"
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+  integration:
+    name: Run integration tests
+    uses: ./.github/workflows/reusable_integration_tests.yml
+    with:
+      codecov: false
+    secrets:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}

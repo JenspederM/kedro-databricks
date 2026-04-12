@@ -1,0 +1,48 @@
+name: Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      codecov:
+        type: boolean
+        required: false
+        default: false
+    secrets:
+      DATABRICKS_HOST:
+        required: true
+      DATABRICKS_CLIENT_ID:
+        required: true
+      DATABRICKS_CLIENT_SECRET:
+        required: true
+      CODECOV_TOKEN:
+        required: false
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        uses: jdx/mise-action@v3
+      - name: Sync kedro-databricks
+        run: uv sync --all-groups
+      - name: Check kedro-databricks
+        run: just check
+      - name: Test kedro-databricks
+        run: just test
+        env:
+          CUSTOM_USERNAME: "kedro_databricks"
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && inputs.codecov }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        if: ${{ inputs.codecov }}
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
