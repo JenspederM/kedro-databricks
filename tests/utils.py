@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import time
 from collections.abc import Callable
+from typing import Any
 
 import yaml
 from click.testing import CliRunner
@@ -263,7 +264,7 @@ def _generate_task(
     if runtime_params:
         params = params + ["--params", runtime_params]
 
-    task = {
+    task: dict[str, Any] = {
         "task_key": task_key,
         "python_wheel_task": {
             "package_name": "fake_project",
@@ -273,7 +274,7 @@ def _generate_task(
     }
 
     if len(dependencies) > 0:
-        task["depends_on"] = [{"task_key": dep} for dep in dependencies]  # ty: ignore
+        task["depends_on"] = [{"task_key": dep} for dep in dependencies]
 
     return task
 
