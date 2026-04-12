@@ -13,8 +13,14 @@ unittest:
 test:
     uv run --group test pytest tests
 
+[parallel]
+check: lint format types
+
 lint:
     uv run --group dev ruff check --fix
 
 format:
     uv run --group dev ruff format
+
+types:
+    uv run ty check
