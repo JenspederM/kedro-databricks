@@ -7,7 +7,7 @@ root = Path(__file__).parent.parent
 examples_dir = root / "examples"
 
 
-def gen():
+def main():
     """Generate the code reference pages."""
     for p in sorted(examples_dir.iterdir()):
         if not p.is_dir() or p.name.startswith("."):
@@ -84,4 +84,4 @@ def _add_padding(lines: list[str], leftpad: int = 4) -> list[str]:
     return [padding + line for line in lines]
 
 
-gen()
+main()

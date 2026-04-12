@@ -21,6 +21,7 @@ dev = [
     "pre-commit>=4.0.1",
     "ruff>=0.7.2",
     "commitizen>=3.30.0",
+    "ty>=0.0.29",
 ]
 test = [
     "ipython>=8.10",
