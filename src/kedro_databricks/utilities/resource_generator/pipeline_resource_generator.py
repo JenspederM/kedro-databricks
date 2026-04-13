@@ -16,17 +16,30 @@ from kedro_databricks.utilities.resource_generator.abstract_resource_generator i
 class PipelineResourceGenerator(AbstractResourceGenerator):
     """Generate a job with a single task for the whole pipeline."""
 
-    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+    def _create_job_dict(
+        self,
+        name: str,
+        pipeline: Pipeline,
+        pipeline_name: str,  # noqa: ARG002
+    ) -> dict[str, Any]:
         """Build the job payload for a pipeline-based job.
 
         Args:
             name (str): The job name.
-            pipeline (Pipeline): The Kedro pipeline to run as a single task.
+            pipeline (Pipeline): Unused parameter for compatibility with the abstract method.
+            pipeline_name (str): The name of the pipeline.
 
         Returns:
             dict[str, Any]: A Databricks job payload containing one task.
         """
-        return {"name": name, "tasks": [self._create_pipeline_task(name)]}
+        if pipeline_name is None:
+            raise ValueError(
+                "Pipeline name must be provided to create a job dict when --pipeline is used."
+            )
+        return {
+            "name": name,
+            "tasks": [self._create_pipeline_task(pipeline_name)],
+        }
 
     def _create_pipeline_task(self, name: str) -> dict[str, Any]:
         """Create the single task that executes the full pipeline.

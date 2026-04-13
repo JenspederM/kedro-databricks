@@ -18,12 +18,15 @@ from kedro_databricks.utilities.resource_generator.abstract_resource_generator i
 class NodeResourceGenerator(AbstractResourceGenerator):
     """Generate a job with one Databricks task per Kedro node."""
 
-    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+    def _create_job_dict(
+        self, name: str, pipeline: Pipeline, pipeline_name: str
+    ) -> dict[str, Any]:  # noqa: ARG002
         """Build the job payload for a node-based job.
 
         Args:
             name (str): The job name.
             pipeline (Pipeline): The Kedro pipeline to convert.
+            pipeline_name (str): Unused parameter for compatibility with the abstract method.
 
         Returns:
             dict[str, Any]: A Databricks job payload containing per-node tasks.

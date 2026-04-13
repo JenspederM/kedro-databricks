@@ -10,12 +10,12 @@ from tests.utils import JOB, _generate_task, identity, long_identity, node, pipe
 
 def test_create_job(metadata):
     g = NodeResourceGenerator(metadata, "fake_env")
-    assert g._create_job("job1", pipeline) == JOB
+    assert g._create_job("job1", pipeline, "__default__") == JOB
 
 
 def test_create_job_pipeline(metadata):
     g = PipelineResourceGenerator(metadata, "fake_env")
-    assert g._create_job("job1", pipeline) is not None
+    assert g._create_job("job1", pipeline, "__default__") is not None
 
 
 def test_create_task(metadata):
