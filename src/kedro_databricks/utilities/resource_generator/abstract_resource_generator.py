@@ -40,6 +40,11 @@ class AbstractResourceGenerator(ABC):
     for each according to the Databricks REST API
     """
 
+    @abstractmethod
+    def _create_job_dict(
+        self, name: str, pipeline: Pipeline, pipeline_name: str
+    ) -> dict[str, Any]: ...
+
     def __init__(
         self,
         metadata: ProjectMetadata,
@@ -73,45 +78,56 @@ class AbstractResourceGenerator(ABC):
         if pipeline_name and pipeline:
             log.info(f"Generating resources for pipeline '{pipeline_name}'")
             name = self._make_job_name(self.metadata.package_name, pipeline_name)
-            jobs[name] = self._create_job(name=name, pipeline=pipeline)
+            jobs[name] = self._create_job(
+                name=name,
+                pipeline=pipeline,
+                pipeline_name=pipeline_name,
+            )
             return jobs
         if pipeline_name:
             raise KeyError(
                 f"Pipeline '{pipeline_name}' not found. Available pipelines: {list(self.pipelines.keys())}"
             )
 
-        for pipe_name, pipeline in self.pipelines.items():
-            if len(pipeline.nodes) == 0:
+        for registered_pipeline_name, registered_pipeline in self.pipelines.items():
+            if len(registered_pipeline.nodes) == 0:
                 continue
-            name = self._make_job_name(self.metadata.package_name, pipe_name)
-            job = self._create_job(name=name, pipeline=pipeline)
+            name = self._make_job_name(
+                self.metadata.package_name, registered_pipeline_name
+            )
+            job = self._create_job(
+                name=name,
+                pipeline=registered_pipeline,
+                pipeline_name=registered_pipeline_name,
+            )
             log.debug(f"Job '{name}' successfully created.")
             log.debug(job)
             jobs[name] = job
 
         return jobs
 
-    def _create_job(self, name: str, pipeline: Pipeline) -> dict[str, Any]:
+    def _create_job(
+        self, name: str, pipeline: Pipeline, pipeline_name: str
+    ) -> dict[str, Any]:
         """Create a Databricks job for a given pipeline.
 
         Args:
             name (str): name of the pipeline
             pipeline (Pipeline): Kedro pipeline object
-            env (str): name of the env to be used by the tasks of the job
+            pipeline_name (str): name of the pipeline
 
         Returns:
             Dict[str, Any]: a Databricks job
         """
         ## Follows the Databricks REST API schema
         ## https://docs.databricks.com/api/workspace/jobs/create
-        job = self._create_job_dict(name=name, pipeline=pipeline)
+        job = self._create_job_dict(
+            name=name, pipeline=pipeline, pipeline_name=pipeline_name
+        )
         non_null = remove_nulls(sort_dict(job, JOB_KEY_ORDER))
         if not isinstance(non_null, dict):  # pragma: no cover - this is a type check
             raise RuntimeError("Expected a dict")
         return non_null
-
-    @abstractmethod
-    def _create_job_dict(self, name: str, pipeline: Pipeline) -> dict[str, Any]: ...
 
     def _create_task_with_params(
         self,
