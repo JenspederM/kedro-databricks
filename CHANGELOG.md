@@ -12,6 +12,29 @@
 
 -  [`dbb82ea`](https://github.com/JenspederM/kedro-databricks/commit/dbb82eac2c9371390d84f354f2cb7eaecf4a9ddf):  update uv lock to latest
 
+## [0.15.0](https://github.com/JenspederM/kedro-databricks/compare/0.14.1...v0.15.0) (2026-04-15)
+
+
+### Features
+
+* allows users to use regexes to apply overrides to multiple resources ([ecadf2c](https://github.com/JenspederM/kedro-databricks/commit/ecadf2c73bfc943746774d0b28d7b187a45a0ba9))
+* replace custom merging logic with fuso ([d9d3e0f](https://github.com/JenspederM/kedro-databricks/commit/d9d3e0f0562c800eb0e0da706f2ef6dd3b7dbe50))
+
+
+### Bug Fixes
+
+* a single resource might have its own default task ([c6d9d31](https://github.com/JenspederM/kedro-databricks/commit/c6d9d31d14fc26506c597f852b1549fce4f2e14c))
+* only apply overrides to real resources ([b21075a](https://github.com/JenspederM/kedro-databricks/commit/b21075a09e4f91243ffe965c2aba859f947d042f))
+* package name should not be prefixed when using --pipeline ([b62184c](https://github.com/JenspederM/kedro-databricks/commit/b62184cd5bbafe28f4b8aac62effac1b4e778273))
+* regex overrides trumphs defaults ([45ac07a](https://github.com/JenspederM/kedro-databricks/commit/45ac07a0e9b2d14e118d6f2b7b2723367dad89da))
+* types has been fixed downstream ([8b18f8c](https://github.com/JenspederM/kedro-databricks/commit/8b18f8c3d8eeb66d7cabc18528d4243d0cb0aa03))
+
+
+### Documentation
+
+* add docstrings to common ([c4fc48e](https://github.com/JenspederM/kedro-databricks/commit/c4fc48e58e6cfd7836756e80ca5a14c37c794f60))
+* we no longer have gen_changelog ([4fdac03](https://github.com/JenspederM/kedro-databricks/commit/4fdac03ac87386a1fbcef4f694371d70635c4147))
+
 ## 0.14.0 (2025-12-11)
 
 ### Feat
