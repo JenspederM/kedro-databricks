@@ -25,9 +25,19 @@ def test_run():
         project_path = Path().cwd() / PROJECT_NAME
         if project_path.exists():
             shutil.rmtree(project_path)
+        # TODO: Remove the --checkout argument once kedro-starters has new release
         runner.invoke(
             kedro_cli,
-            ["new", "-v", "--starter", "databricks-iris", "--name", PROJECT_NAME],
+            [
+                "new",
+                "-v",
+                "--starter",
+                "databricks-iris",
+                "--name",
+                PROJECT_NAME,
+                "--checkout",
+                "main",
+            ],
         )
         assert project_path.exists(), "Project path not created"
         assert project_path.is_dir(), "Project path is not a directory"
