@@ -1,3 +1,4 @@
+import pytest
 from kedro.pipeline import Pipeline
 
 from kedro_databricks.utilities.common import require_databricks_run_script
@@ -16,6 +17,15 @@ def test_create_job(metadata):
 def test_create_job_pipeline(metadata):
     g = PipelineResourceGenerator(metadata, "fake_env")
     assert g._create_job("job1", pipeline, "__default__") is not None
+
+
+def test_create_job_pipeline_fails(metadata):
+    g = PipelineResourceGenerator(metadata, "fake_env")
+    with pytest.raises(
+        ValueError,
+        match="Pipeline name must be provided to create a job dict when --pipeline is used.",
+    ):
+        g._create_job("job1", pipeline, None)  # type: ignore
 
 
 def test_create_task(metadata):
@@ -111,6 +121,20 @@ def test_generate_resources(metadata):
             ],
         },
     }
+
+
+def test_generate_resources_non_existent_pipeline(metadata):
+    controller = NodeResourceGenerator(metadata, "fake_env")
+    controller.pipelines = {"__default__": Pipeline([])}
+    assert controller.generate_jobs(pipeline_name=None) == {}
+    controller.pipelines = {
+        "__default__": Pipeline([node(identity, ["input"], ["output"], name="node")])
+    }
+    with pytest.raises(
+        KeyError,
+        match="Pipeline 'non_existent_pipeline' not found. Available pipelines:",
+    ):
+        controller.generate_jobs(pipeline_name="non_existent_pipeline")
 
 
 def test_generate_resources_another_conf(metadata):
