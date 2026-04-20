@@ -12,6 +12,13 @@
 
 -  [`dbb82ea`](https://github.com/JenspederM/kedro-databricks/commit/dbb82eac2c9371390d84f354f2cb7eaecf4a9ddf):  update uv lock to latest
 
+## [0.15.1](https://github.com/JenspederM/kedro-databricks/compare/v0.15.0...v0.15.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* adds deterministic ordering of object fields ([ddb96d6](https://github.com/JenspederM/kedro-databricks/commit/ddb96d638d637ddabfea0be85ed5551647864df7))
+
 ## [0.15.0](https://github.com/JenspederM/kedro-databricks/compare/0.14.1...v0.15.0) (2026-04-15)
 
 
