@@ -56,7 +56,7 @@ def destroy_project(metadata: ProjectMetadata, cli_runner: CliRunner):
     destroy_cmd = ["databricks", "destroy", "--", "--auto-approve"]
     result = cli_runner.invoke(commands, destroy_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
-    wait_for_job_deletion([])
+    wait_for_job_deletion(metadata)
     wait_for_volume_deletion(metadata)
 
 
@@ -77,10 +77,10 @@ def reset_bundle(metadata):
     shutil.rmtree(bundle_dir, ignore_errors=True)
 
 
-def wait_for_job_deletion(args) -> None:
+def wait_for_job_deletion(metadata: ProjectMetadata) -> None:
     def _gather_jobs():
         jobs = subprocess.run(  # noqa: F821
-            ["databricks", "jobs", "list", "--output", "json"] + args,
+            ["databricks", "jobs", "list", "--output", "json"],
             check=True,
             capture_output=True,
             text=True,
@@ -95,13 +95,13 @@ def wait_for_job_deletion(args) -> None:
                 "name": job["settings"]["name"],
             }
             for job in job_list
-            if "develop_eggs" in job["settings"]["name"]
+            if metadata.package_name in job["settings"]["name"]
         ]
 
     def _delete_jobs(job_list):
         for j in job_list:
             res = subprocess.run(
-                ["databricks", "jobs", "delete", str(j["job_id"])] + args,
+                ["databricks", "jobs", "delete", str(j["job_id"])],
                 check=False,
                 capture_output=True,
                 text=True,

@@ -17,7 +17,11 @@ from dotenv import load_dotenv
 from kedro.framework.cli.starters import create_cli as kedro_cli
 from kedro.framework.startup import bootstrap_project
 
-from tests.utils import DEFAULT_PIPELINE_REGISTRY
+from tests.utils import (
+    DEFAULT_PIPELINE_REGISTRY,
+    wait_for_job_deletion,
+    wait_for_volume_deletion,
+)
 
 load_dotenv()
 logging.basicConfig(
@@ -84,4 +88,12 @@ def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()
     metadata = bootstrap_project(project_path)
-    return metadata
+    yield metadata
+    try:
+        wait_for_job_deletion(metadata)
+    except Exception:
+        pass
+    try:
+        wait_for_volume_deletion(metadata)
+    except Exception:
+        pass

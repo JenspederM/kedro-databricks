@@ -11,6 +11,7 @@ from kedro_databricks.commands.init import (
     _create_target_configs,
     _prepare_template,
     _substitute_file_path,
+    _transform_spark_hook,
     _update_gitignore,
     _write_databricks_run_script,
 )
@@ -343,3 +344,62 @@ y_pred:
   filepath: ${_file_path}/data/03_primary/y_pred.parquet
 """
     assert _substitute_file_path(catalog) == expected
+
+
+def test_transform_spark_hook(tmp_path_factory):
+    # Arrange
+    tmpdir = tmp_path_factory.mktemp("kedro-databricks")
+    hook_file = tmpdir / "spark_hook.py"
+    hook_file.write_text(
+        """from kedro.framework.hooks import hook_impl
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+
+
+class SparkHooks:
+
+    @hook_impl
+    def after_context_created(self, context) -> None:
+        \"\"\"Initialises a SparkSession using the config
+        defined in project's conf folder.
+        \"\"\"
+
+        # Load the spark configuration in spark.yaml using the config loader
+        parameters = context.config_loader["spark"]
+        spark_conf = SparkConf().setAll(parameters.items())
+
+        # Initialise the spark session
+        spark_session_conf = (
+            SparkSession.builder.appName(context.project_path.name)
+            .enableHiveSupport()
+            .config(conf=spark_conf)
+        )
+        _spark_session = spark_session_conf.getOrCreate()
+        _spark_session.sparkContext.setLogLevel("WARN")
+"""
+    )
+
+    # Act
+    _transform_spark_hook(hook_file.as_posix())
+
+    # Assert
+    expected = """from kedro.framework.hooks import hook_impl
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+
+class SparkHooks:
+
+    @hook_impl
+    def after_context_created(self, context) -> None:
+        \"\"\"Initialises a SparkSession using the config
+        defined in project's conf folder.
+        \"\"\"
+        if context.env != 'local':
+            return
+        parameters = context.config_loader['spark']
+        spark_conf = SparkConf().setAll(parameters.items())
+        spark_session_conf = SparkSession.builder.appName(context.project_path.name).enableHiveSupport().config(conf=spark_conf)
+        _spark_session = spark_session_conf.getOrCreate()
+        _spark_session.sparkContext.setLogLevel('WARN')"""
+
+    assert hook_file.read_text() == expected
