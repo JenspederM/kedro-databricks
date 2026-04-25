@@ -44,7 +44,7 @@ def test_run():
         metadata = bootstrap_project(project_path)
         # Arrange
         reset_project(metadata)
-        init_project(metadata, runner)
+        init_project(metadata, runner, with_catalog=False)
         bundle_project(metadata, runner)
         deploy_project(metadata, runner)
 

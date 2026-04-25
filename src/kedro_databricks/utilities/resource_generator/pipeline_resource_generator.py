@@ -16,6 +16,9 @@ from kedro_databricks.utilities.resource_generator.abstract_resource_generator i
 class PipelineResourceGenerator(AbstractResourceGenerator):
     """Generate a job with a single task for the whole pipeline."""
 
+    def can_handle_memory_datasets(self) -> bool:
+        return True
+
     def _create_job_dict(
         self,
         name: str,

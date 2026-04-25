@@ -18,13 +18,18 @@ from kedro_databricks.plugin import commands
 from kedro_databricks.utilities.common import require_databricks_run_script
 
 
-def init_project(metadata: ProjectMetadata, cli_runner: CliRunner):
+def init_project(
+    metadata: ProjectMetadata, cli_runner: CliRunner, with_catalog: bool = True
+):
     init_cmd = ["databricks", "init"]
     result = cli_runner.invoke(commands, init_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
     assert metadata.project_path.exists(), "Project path not created"
     assert metadata.project_path.is_dir(), "Project path is not a directory"
     assert metadata.project_path / "databricks.yml", "Databricks config not created"
+
+    if with_catalog:
+        write_catalog(metadata, DEFAULT_ENV)
 
     databricks_config = _read_databricks_config(metadata.project_path)
     targets = _get_targets(databricks_config)
@@ -208,6 +213,28 @@ def validate_bundle(
             tasks = job.get("tasks")
             assert tasks is not None, f"Tasks not found in job {file}"
             task_validator(tasks)
+
+
+def write_catalog(metadata: ProjectMetadata, env: str):
+    datasets = [
+        "output_6_output_6_1",
+        "output2",
+        "output3",
+        "output",
+        "output4",
+        "output_5_output_5_1",
+        "intermediate",
+        "output_7_output_7_1",
+        "input",
+    ]
+
+    with open(metadata.project_path / "conf" / env / "catalog.yml", "w") as f:
+        for d in datasets:
+            f.write(f"""
+{d}:
+    type: pandas.CSVDataset
+    filepath: data/01_raw/{d}.csv
+""")
 
 
 def identity(arg):

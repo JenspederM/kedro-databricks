@@ -18,6 +18,9 @@ from kedro_databricks.utilities.resource_generator.abstract_resource_generator i
 class NodeResourceGenerator(AbstractResourceGenerator):
     """Generate a job with one Databricks task per Kedro node."""
 
+    def can_handle_memory_datasets(self) -> bool:
+        return False
+
     def _create_job_dict(
         self, name: str, pipeline: Pipeline, pipeline_name: str
     ) -> dict[str, Any]:  # noqa: ARG002
