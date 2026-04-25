@@ -76,6 +76,8 @@ class AbstractResourceGenerator(ABC):
                 raise ValueError("Expected pipeline of type Pipeline, got", type(p))
             p = cast(Pipeline, p)
             for d in p.datasets():
+                if d == "parameters" or d.startswith("params:"):
+                    continue
                 entry = None
                 try:
                     if hasattr(catalog, "_get_dataset"):
