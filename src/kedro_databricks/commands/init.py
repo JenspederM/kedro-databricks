@@ -3,6 +3,8 @@ import json
 import re
 import shutil
 import tempfile
+from functools import reduce
+from operator import add
 from pathlib import Path
 
 import click
@@ -325,12 +327,18 @@ def _make_target_file_path(
 
 def _substitute_file_path(string: str) -> str:
     """Substitute the file path in the catalog"""
-    match = re.sub(
-        r"(.*:)\s*(?!https?://)(?:/[^/\s]+)*/?(data(?:/[^/\s]+)+)\s*$",
-        r"\g<1> ${_file_path}/\g<2>",
-        string,
-    )
-    return match
+    lines = string.splitlines(keepends=True)
+    new_lines = []
+    for line in lines:
+        new_lines.append(
+            re.sub(
+                r"(.*:)\s*(?!https?://)(?:/[^/\s]+)*/?(data(?:/[^/\s]+)+).*",
+                r"\g<1> ${_file_path}/\g<2>",
+                line,
+            )
+        )
+    sub = reduce(add, new_lines)
+    return sub
 
 
 def _save_target_catalog(
