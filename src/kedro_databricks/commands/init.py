@@ -326,8 +326,8 @@ def _make_target_file_path(
 def _substitute_file_path(string: str) -> str:
     """Substitute the file path in the catalog"""
     match = re.sub(
-        r"(.*:)(.*)(data/.*)",
-        r"\g<1> ${_file_path}/\g<3>",
+        r"(.*:)\s*(?!https?://)(?:/[^/\s]+)*/?(data(?:/[^/\s]+)+)\s*$",
+        r"\g<1> ${_file_path}/\g<2>",
         string,
     )
     return match
