@@ -15,7 +15,7 @@ from typing import Any, cast
 from kedro.framework.project import pipelines
 from kedro.framework.session.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
-from kedro.io import MemoryDataset
+from kedro.io import DatasetNotFoundError, MemoryDataset
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
@@ -76,9 +76,15 @@ class AbstractResourceGenerator(ABC):
                 raise ValueError("Expected pipeline of type Pipeline, got", type(p))
             p = cast(Pipeline, p)
             for d in p.datasets():
+                entry = None
                 try:
-                    entry = catalog[d]  # ty: ignore
-                except KeyError:
+                    if hasattr(catalog, "_get_dataset"):
+                        # Before version 1.0.0
+                        entry = catalog._get_dataset(d)  # type: ignore
+                    elif hasattr(catalog, "get"):
+                        # After version 1.0.0
+                        entry = catalog.get(d)  # type: ignore
+                except DatasetNotFoundError:
                     entry = None
                 if not entry or isinstance(entry, MemoryDataset):
                     memory_datasets.append(d)
