@@ -70,8 +70,24 @@ def test_write_databricks_run_script(metadata):
             "file_path: ${_file_path}/data/012_raw/file.csv",
         ),
         (
+            "file_path:data/012_raw/file.csv",
+            "file_path: ${_file_path}/data/012_raw/file.csv",
+        ),
+        (
             "file_path: /custom/path/data/01_raw/file.csv",
             "file_path: ${_file_path}/data/01_raw/file.csv",
+        ),
+        (
+            "file_path: /custom/path/data/01_raw/file.json",
+            "file_path: ${_file_path}/data/01_raw/file.json",
+        ),
+        (
+            "file_path: https://website.com/data/file.csv",
+            "file_path: https://website.com/data/file.csv",
+        ),
+        (
+            "file_path: https://website.com/data/file.json",
+            "file_path: https://website.com/data/file.json",
         ),
         ("data/01_raw/file.csv", "data/01_raw/file.csv"),
     ],
