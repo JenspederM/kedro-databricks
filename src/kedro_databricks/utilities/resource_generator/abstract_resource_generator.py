@@ -69,14 +69,17 @@ class AbstractResourceGenerator(ABC):
         Returns:
             set[str]: A unique list of dataset names of type MemoryDataset
         """
-        catalog = self.context.catalog  # ty: ignore
+        catalog = self.context.catalog
         memory_datasets = []
         for p in self.pipelines.values():
             if not isinstance(p, Pipeline):  # pragma: no cover
                 raise ValueError("Expected pipeline of type Pipeline, got", type(p))
             p = cast(Pipeline, p)
             for d in p.datasets():
-                entry = catalog.get(d)  # ty: ignore
+                try:
+                    entry = catalog[d]
+                except KeyError:
+                    entry = None
                 if not entry or isinstance(entry, MemoryDataset):
                     memory_datasets.append(d)
         return set(memory_datasets)
