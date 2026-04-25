@@ -135,3 +135,211 @@ def test_prepare_template(metadata):
     except Exception as e:
         raise ValueError(f"Failed to load template params: {e} - {params}")
     shutil.rmtree(assets_dir)
+
+
+def test_substitute_catalog():
+    catalog = """
+_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+# Here you can define all your data sets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+#
+# We support interacting with a variety of data stores including local file systems, cloud, network and HDFS
+#
+# An example data set definition can look as follows:
+#
+#bikes:
+#  type: pandas.CSVDataset
+#  filepath: "data/01_raw/bikes.csv"
+#
+#weather:
+#  type: spark.SparkDatasetV2
+#  filepath: s3a://your_bucket/data/01_raw/weather*
+#  file_format: csv
+#  credentials: dev_s3
+#  load_args:
+#    header: True
+#    inferSchema: True
+#  save_args:
+#    sep: '|'
+#    header: True
+#
+#scooters:
+#  type: pandas.SQLTableDataset
+#  credentials: scooters_credentials
+#  table_name: scooters
+#  load_args:
+#    index_col: ['name']
+#    columns: ['name', 'gear']
+#  save_args:
+#    if_exists: 'replace'
+#    # if_exists: 'fail'
+#    # if_exists: 'append'
+#
+# The Data Catalog supports being able to reference the same file using two different Dataset implementations
+# (transcoding), templating and a way to reuse arguments that are frequently repeated. See more here:
+# https://docs.kedro.org/en/stable/data/data_catalog.html
+#
+# This is a data set used by the iris classification example pipeline provided with this starter
+# template. Please feel free to remove it once you remove the example pipeline.
+
+example_iris_data:
+  type: spark.SparkDatasetV2
+  filepath: /dbfs/FileStore/develop_eggs/data/01_raw/iris.csv
+  file_format: csv
+  load_args:
+    header: True
+    inferSchema: True
+  save_args:
+    header: True
+
+# We need to set mode to 'overwrite' in save_args so when saving the dataset it is replaced each time it is run
+# for all SparkDatasetV2s.
+X_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/X_train.parquet
+  save_args:
+    mode: overwrite
+
+X_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/X_train.parquet
+
+X_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/X_test.parquet
+  save_args:
+    mode: overwrite
+
+X_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/X_test.parquet
+
+y_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/y_train.parquet
+  save_args:
+    mode: overwrite
+
+y_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/y_train.parquet
+
+y_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/y_test.parquet
+  save_args:
+    mode: overwrite
+
+y_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: /dbfs/FileStore/develop_eggs/data/02_intermediate/y_test.parquet
+
+y_pred:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/03_primary/y_pred.parquet
+"""
+    expected = """
+_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+# Here you can define all your data sets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+#
+# We support interacting with a variety of data stores including local file systems, cloud, network and HDFS
+#
+# An example data set definition can look as follows:
+#
+#bikes:
+#  type: pandas.CSVDataset
+#  filepath: "data/01_raw/bikes.csv"
+#
+#weather:
+#  type: spark.SparkDatasetV2
+#  filepath: s3a://your_bucket/data/01_raw/weather*
+#  file_format: csv
+#  credentials: dev_s3
+#  load_args:
+#    header: True
+#    inferSchema: True
+#  save_args:
+#    sep: '|'
+#    header: True
+#
+#scooters:
+#  type: pandas.SQLTableDataset
+#  credentials: scooters_credentials
+#  table_name: scooters
+#  load_args:
+#    index_col: ['name']
+#    columns: ['name', 'gear']
+#  save_args:
+#    if_exists: 'replace'
+#    # if_exists: 'fail'
+#    # if_exists: 'append'
+#
+# The Data Catalog supports being able to reference the same file using two different Dataset implementations
+# (transcoding), templating and a way to reuse arguments that are frequently repeated. See more here:
+# https://docs.kedro.org/en/stable/data/data_catalog.html
+#
+# This is a data set used by the iris classification example pipeline provided with this starter
+# template. Please feel free to remove it once you remove the example pipeline.
+
+example_iris_data:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/01_raw/iris.csv
+  file_format: csv
+  load_args:
+    header: True
+    inferSchema: True
+  save_args:
+    header: True
+
+# We need to set mode to 'overwrite' in save_args so when saving the dataset it is replaced each time it is run
+# for all SparkDatasetV2s.
+X_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/X_train.parquet
+  save_args:
+    mode: overwrite
+
+X_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/X_train.parquet
+
+X_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/X_test.parquet
+  save_args:
+    mode: overwrite
+
+X_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/X_test.parquet
+
+y_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/y_train.parquet
+  save_args:
+    mode: overwrite
+
+y_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/y_train.parquet
+
+y_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/y_test.parquet
+  save_args:
+    mode: overwrite
+
+y_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/y_test.parquet
+
+y_pred:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/03_primary/y_pred.parquet
+"""
+    assert _substitute_file_path(catalog) == expected

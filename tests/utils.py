@@ -216,6 +216,7 @@ def validate_bundle(
 
 
 def write_catalog(metadata: ProjectMetadata, env: str):
+    (metadata.project_path / "conf" / env).mkdir(parents=True, exist_ok=True)
     datasets = [
         "output_6_output_6_1",
         "output2",
@@ -228,7 +229,7 @@ def write_catalog(metadata: ProjectMetadata, env: str):
         "input",
     ]
 
-    with open(metadata.project_path / "conf" / env / "catalog.yml", "w") as f:
+    with open(metadata.project_path / "conf" / env / "catalog.yml", "w+") as f:
         for d in datasets:
             f.write(f"""
 {d}:
