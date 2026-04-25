@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Any
 
 import click
@@ -21,10 +22,24 @@ from kedro_databricks.constants import (
     DEFAULT_ENV,
 )
 from kedro_databricks.utilities.logger import get_logger
-from kedro_databricks.utilities.resource_generator import RESOURCE_GENERATOR_RESOLVER
+from kedro_databricks.utilities.resource_generator import (
+    RESOURCE_GENERATOR_RESOLVER,
+    AbstractResourceGenerator,
+)
 from kedro_databricks.utilities.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
 
 log = get_logger("bundle")
+
+
+class MemoryDatasetError(Exception):
+    def __init__(
+        self, klass: AbstractResourceGenerator, undeclared_datasets: Iterable[str]
+    ) -> None:
+        resource_line = ", ".join(undeclared_datasets)
+        msg = f"""Resource Generator of type {klass.__class__.__name__} does not support MemoryDatasets.
+The following inputs/outputs are not specified in your catalog: {resource_line}
+If This is intentional, you can use --resource-generator='pipeline' to generate a single job"""
+        super().__init__(msg)
 
 
 @click.command()
@@ -83,12 +98,17 @@ def command(
     overwrite: bool,
 ):
     """Databricks Asset Bundle commands"""
+    local_config_dir = metadata.project_path / conf_source / env
+
+    # If the configuration directory does not exist, Kedro will not load any configuration
+    if not local_config_dir.exists():
+        log.warning(f"Creating {local_config_dir.relative_to(metadata.project_path)}")
+        local_config_dir.mkdir(parents=True)
+
     if default_key.startswith("_"):  # pragma: no cover
         raise ValueError(
             "Default key cannot start with `_` as this is not recognized by OmegaConf."
         )
-
-    ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator)
 
     if not (metadata.project_path / conf_source / env / "databricks.yml").exists():
         raise FileNotFoundError(
@@ -96,49 +116,62 @@ def command(
             f"in '{conf_source}/{env}/databricks.yml'."
         )
 
-    overrides = _load_kedro_env_config(metadata, config_dir=conf_source, env=env)
-    if "resources" not in overrides:
-        raise KeyError(
-            f"'resources' key not found in the 'databricks' configuration for environment '{env}'."
-        )
-
-    g = ResourceGenerator(metadata, env, conf_source, params)
-    all_resources = {"jobs": g.generate_jobs(pipeline)}
-    overridden_resources = {}
-    for resource_type, resource_override_items in overrides["resources"].items():
-        overridden_resources[resource_type] = {}
-        resource_items = all_resources.get(resource_type, {})
-        overrider = RESOURCE_OVERRIDER_RESOLVER.resolve(resource_type)()
-        default_overrides = resource_override_items.pop(default_key, {})
-        regex_overrides = overrider.get_regex_overrides(
-            resource_key=default_key, overrides=resource_override_items
-        )
-        resource_overrides = {
-            k: v
-            for k, v in resource_override_items.items()
-            if not k.startswith("re:") and k != default_key
-        }
-        all_keys = set(resource_items.keys()).union(set(resource_overrides.keys()))
-        for key in all_keys:
-            resource = resource_items.get(key, {})
-            overrides = {
-                default_key: default_overrides,
-                **regex_overrides,
-                **resource_overrides,
-            }
-            overridden_resources[resource_type][key] = overrider.override(
-                resource_key=key,
-                default_key=default_key,
-                resource=resource,
-                overrides=overrides,
+    with KedroSession.create(project_path=metadata.project_path, env=env) as session:
+        overrides = _load_kedro_env_config(session=session)
+        if "resources" not in overrides:
+            raise KeyError(
+                f"'resources' key not found in the 'databricks' configuration for environment '{env}'."
             )
 
-    save_resources(
-        metadata=metadata,
-        env=env,
-        resources=overridden_resources,
-        overwrite=overwrite,
-    )
+        ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator)
+
+        g = ResourceGenerator(
+            session=session,
+            metadata=metadata,
+            conf_source=conf_source,
+            params=params,
+        )
+
+        undeclared_datasets = g.get_memory_datasets()
+        if len(undeclared_datasets) > 0 and not g.can_handle_memory_datasets():
+            raise MemoryDatasetError(g, undeclared_datasets)
+
+        all_resources = {"jobs": g.generate_jobs(pipeline)}
+        overridden_resources = {}
+        for resource_type, resource_override_items in overrides["resources"].items():
+            overridden_resources[resource_type] = {}
+            resource_items = all_resources.get(resource_type, {})
+            overrider = RESOURCE_OVERRIDER_RESOLVER.resolve(resource_type)()
+            default_overrides = resource_override_items.pop(default_key, {})
+            regex_overrides = overrider.get_regex_overrides(
+                resource_key=default_key, overrides=resource_override_items
+            )
+            resource_overrides = {
+                k: v
+                for k, v in resource_override_items.items()
+                if not k.startswith("re:") and k != default_key
+            }
+            all_keys = set(resource_items.keys()).union(set(resource_overrides.keys()))
+            for key in all_keys:
+                resource = resource_items.get(key, {})
+                overrides = {
+                    default_key: default_overrides,
+                    **regex_overrides,
+                    **resource_overrides,
+                }
+                overridden_resources[resource_type][key] = overrider.override(
+                    resource_key=key,
+                    default_key=default_key,
+                    resource=resource,
+                    overrides=overrides,
+                )
+
+        save_resources(
+            metadata=metadata,
+            env=env,
+            resources=overridden_resources,
+            overwrite=overwrite,
+        )
 
 
 def save_resources(
@@ -189,9 +222,7 @@ def save_resources(
                     log.info(f"Wrote {relative_path}")
 
 
-def _load_kedro_env_config(
-    metadata: ProjectMetadata, config_dir: str, env: str
-) -> dict[str, Any]:
+def _load_kedro_env_config(session: KedroSession) -> dict[str, Any]:
     """Load the Databricks configuration for the given environment.
 
     Args:
@@ -202,38 +233,30 @@ def _load_kedro_env_config(
     Returns:
         dict[str, Any]: The Databricks configuration for the given environment
     """
-    local_config_dir = metadata.project_path / config_dir / env
+    config_loader = session._get_config_loader()
+    # Backwards compatibility for ConfigLoader that does not support `config_patterns`
+    if not hasattr(config_loader, "config_patterns"):
+        return config_loader.get("databricks*", "databricks/**")
 
-    # If the configuration directory does not exist, Kedro will not load any configuration
-    if not local_config_dir.exists():
-        log.warning(f"Creating {local_config_dir.relative_to(metadata.project_path)}")
-        local_config_dir.mkdir(parents=True)
+    if not isinstance(config_loader, OmegaConfigLoader):
+        raise TypeError(
+            "Only OmegaConfigLoader is supported to load Databricks configuration."
+        )
 
-    with KedroSession.create(project_path=metadata.project_path, env=env) as session:
-        config_loader = session._get_config_loader()
-        # Backwards compatibility for ConfigLoader that does not support `config_patterns`
-        if not hasattr(config_loader, "config_patterns"):
-            return config_loader.get("databricks*", "databricks/**")
+    # Set the default pattern for `databricks` if not provided in `settings.py`
+    if "databricks" not in config_loader.config_patterns.keys():
+        config_loader.config_patterns.update(
+            {"databricks": ["databricks*", "databricks/**"]}
+        )
 
-        if not isinstance(config_loader, OmegaConfigLoader):
-            raise TypeError(
-                "Only OmegaConfigLoader is supported to load Databricks configuration."
-            )
+    if "databricks" not in config_loader.config_patterns.keys():
+        log.warning(
+            "No Databricks configuration found. "
+            "Please ensure that `databricks` is included in your config patterns."
+        )
 
-        # Set the default pattern for `databricks` if not provided in `settings.py`
-        if "databricks" not in config_loader.config_patterns.keys():
-            config_loader.config_patterns.update(
-                {"databricks": ["databricks*", "databricks/**"]}
-            )
-
-        if "databricks" not in config_loader.config_patterns.keys():
-            log.warning(
-                "No Databricks configuration found. "
-                "Please ensure that `databricks` is included in your config patterns."
-            )
-
-        try:
-            return config_loader["databricks"]
-        except MissingConfigException:
-            log.warning("No Databricks configuration found.")
-            return {}
+    try:
+        return config_loader["databricks"]
+    except MissingConfigException:
+        log.warning("No Databricks configuration found.")
+        return {}

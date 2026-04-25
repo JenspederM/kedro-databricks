@@ -10,10 +10,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, MutableMapping
-from typing import Any
+from typing import Any, cast
 
 from kedro.framework.project import pipelines
+from kedro.framework.session.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
+from kedro.io import MemoryDataset
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
@@ -47,16 +49,42 @@ class AbstractResourceGenerator(ABC):
 
     def __init__(
         self,
+        session: KedroSession,
         metadata: ProjectMetadata,
-        env: str,
         conf_source: str = "conf",
         params: str | None = None,
     ) -> None:
         self.metadata = metadata
-        self.env = env
+        self.context = session.load_context()
         self.pipelines: MutableMapping = pipelines
         self.remote_conf_dir = f"/${{workspace.file_path}}/{conf_source}"
         self.params = params
+
+    def get_memory_datasets(self) -> set[str]:
+        """Get the names of inputs/outputs of type MemoryDataset
+
+        If a dataset has not been specified in the catalog, it will automatically
+        be added with type MemoryDataset.
+
+        Returns:
+            set[str]: A unique list of dataset names of type MemoryDataset
+        """
+        catalog = self.context.catalog
+        memory_datasets = []
+        for p in self.pipelines.values():
+            if not isinstance(p, Pipeline):  # pragma: no cover
+                raise ValueError("Expected pipeline of type Pipeline, got", type(p))
+            p = cast(Pipeline, p)
+            for d in p.datasets():
+                entry = catalog.get(d)
+                if not entry or isinstance(entry, MemoryDataset):
+                    memory_datasets.append(d)
+        return set(memory_datasets)
+
+    @abstractmethod
+    def can_handle_memory_datasets(self) -> bool:
+        """Determines if the generator can handle MemoryDataset"""
+        ...
 
     def generate_jobs(
         self, pipeline_name: str | None = None

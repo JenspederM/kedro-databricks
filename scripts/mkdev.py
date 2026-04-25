@@ -86,6 +86,8 @@ def new(project_name: str, project_path: Path, overwrite: bool = False):
             "databricks-iris",
             "--name",
             project_name,
+            "--checkout",
+            "main",
         ],
         check=False,
     )
