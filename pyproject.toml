@@ -27,7 +27,7 @@ test = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook",
-    "kedro-datasets[spark, pandas, spark.SparkDataset, pandas.ParquetDataset]>=3.0",
+    "kedro-datasets[spark, pandas, spark.SparkDatasetV2, pandas.ParquetDataset]>=9.1",
     "numpy~=1.21",
 ]
 docs = [
