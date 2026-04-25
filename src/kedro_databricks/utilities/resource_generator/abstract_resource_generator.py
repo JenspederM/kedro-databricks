@@ -77,7 +77,7 @@ class AbstractResourceGenerator(ABC):
             p = cast(Pipeline, p)
             for d in p.datasets():
                 try:
-                    entry = catalog[d]
+                    entry = catalog[d]  # ty: ignore
                 except KeyError:
                     entry = None
                 if not entry or isinstance(entry, MemoryDataset):
