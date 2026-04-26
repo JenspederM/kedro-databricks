@@ -12,6 +12,21 @@
 
 -  [`dbb82ea`](https://github.com/JenspederM/kedro-databricks/commit/dbb82eac2c9371390d84f354f2cb7eaecf4a9ddf):  update uv lock to latest
 
+## [0.16.0](https://github.com/JenspederM/kedro-databricks/compare/v0.15.1...v0.16.0) (2026-04-26)
+
+
+### Features
+
+* check for MemoryDataset when bundling resources ([5cfa6a1](https://github.com/JenspederM/kedro-databricks/commit/5cfa6a1b4d674a7d7b8247990f3581414a769107))
+
+
+### Bug Fixes
+
+* file path substitution on multiline strings ([e52721e](https://github.com/JenspederM/kedro-databricks/commit/e52721e6218692d69f7ad0b8d4257e7fd5439ea5))
+* handle old versions of kedro ([08cc70d](https://github.com/JenspederM/kedro-databricks/commit/08cc70d95230a87a3cc03eb82fd53d4caea9a213))
+* parameters and params: are special case inputs ([4c2b8f9](https://github.com/JenspederM/kedro-databricks/commit/4c2b8f9660b9d72b10cd7a8d7ec0a7579b3dbd21))
+* replacing urls cause APIDataset to fail ([534ac40](https://github.com/JenspederM/kedro-databricks/commit/534ac40b92210640de40ab52e2212a28f8c9a81a))
+
 ## [0.15.1](https://github.com/JenspederM/kedro-databricks/compare/v0.15.0...v0.15.1) (2026-04-20)
 
 
