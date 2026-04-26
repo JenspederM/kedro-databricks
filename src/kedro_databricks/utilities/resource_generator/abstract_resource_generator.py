@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, MutableMapping
-from typing import Any, cast
+from typing import Any
 
 from kedro.framework.project import pipelines
 from kedro.framework.session.session import KedroSession
@@ -60,7 +60,7 @@ class AbstractResourceGenerator(ABC):
         self.remote_conf_dir = f"/${{workspace.file_path}}/{conf_source}"
         self.params = params
 
-    def get_memory_datasets(self) -> set[str]:
+    def get_memory_datasets(self) -> dict[str, set[str]]:
         """Get the names of inputs/outputs of type MemoryDataset
 
         If a dataset has not been specified in the catalog, it will automatically
@@ -70,11 +70,12 @@ class AbstractResourceGenerator(ABC):
             set[str]: A unique list of dataset names of type MemoryDataset
         """
         catalog = self.context.catalog
-        memory_datasets = []
-        for p in self.pipelines.values():
+        memory_datasets: dict[str, set[str]] = {}
+
+        for name, p in self.pipelines.items():
             if not isinstance(p, Pipeline):  # pragma: no cover
                 raise ValueError("Expected pipeline of type Pipeline, got", type(p))
-            p = cast(Pipeline, p)
+
             for d in p.datasets():
                 if d == "parameters" or d.startswith("params:"):
                     continue
@@ -89,8 +90,10 @@ class AbstractResourceGenerator(ABC):
                 except DatasetNotFoundError:
                     entry = None
                 if not entry or isinstance(entry, MemoryDataset):
-                    memory_datasets.append(d)
-        return set(memory_datasets)
+                    memory_datasets.setdefault(name, set())
+                    memory_datasets[name].add(d)
+
+        return memory_datasets
 
     @abstractmethod
     def can_handle_memory_datasets(self) -> bool:

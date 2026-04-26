@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import Any
 
 import click
@@ -24,22 +23,11 @@ from kedro_databricks.constants import (
 from kedro_databricks.utilities.logger import get_logger
 from kedro_databricks.utilities.resource_generator import (
     RESOURCE_GENERATOR_RESOLVER,
-    AbstractResourceGenerator,
 )
+from kedro_databricks.utilities.resource_generator.exceptions import MemoryDatasetError
 from kedro_databricks.utilities.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
 
 log = get_logger("bundle")
-
-
-class MemoryDatasetError(Exception):
-    def __init__(
-        self, klass: AbstractResourceGenerator, undeclared_datasets: Iterable[str]
-    ) -> None:
-        resource_line = ", ".join(undeclared_datasets)
-        msg = f"""Resource Generator of type {klass.__class__.__name__} does not support MemoryDatasets.
-The following inputs/outputs are not specified in your catalog: {resource_line}
-If This is intentional, you can use --resource-generator='pipeline' to generate a single job"""
-        super().__init__(msg)
 
 
 @click.command()
