@@ -6,6 +6,5 @@ coverage:
       default:
         # basic
         target: auto #default
-        threshold: "5"
         paths:
           - "src/"
