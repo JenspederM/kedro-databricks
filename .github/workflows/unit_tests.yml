@@ -24,12 +24,12 @@ jobs:
         uses: jdx/mise-action@v3
       - name: Sync kedro-databricks
         run: |
-          if [ "${{ matrix.kedro_version }}" = "latest" ]; then
-            uv add "kedro"
-          else
-            uv add "kedro==${{ matrix.kedro_version }}"
-          fi
           uv sync --group unit --python ${{ matrix.python-version }}
+          if [ "${{ matrix.kedro_version }}" = "latest" ]; then
+            uv pip install "kedro"
+          else
+            uv pip install "kedro==${{ matrix.kedro_version }}"
+          fi
       - name: Check kedro-databricks
         run: just check
       - name: Test kedro-databricks
