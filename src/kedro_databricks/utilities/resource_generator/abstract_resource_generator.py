@@ -60,7 +60,7 @@ class AbstractResourceGenerator(ABC):
         self.remote_conf_dir = f"/${{workspace.file_path}}/{conf_source}"
         self.params = params
 
-    def get_memory_datasets(self) -> dict[str, set[str]]:
+    def _get_memory_datasets(self) -> dict[str, set[str]]:
         """Get the names of inputs/outputs of type MemoryDataset
 
         If a dataset has not been specified in the catalog, it will automatically
@@ -94,11 +94,6 @@ class AbstractResourceGenerator(ABC):
                     memory_datasets[name].add(d)
 
         return memory_datasets
-
-    @abstractmethod
-    def can_handle_memory_datasets(self) -> bool:
-        """Determines if the generator can handle MemoryDataset"""
-        ...
 
     def generate_jobs(
         self, pipeline_name: str | None = None

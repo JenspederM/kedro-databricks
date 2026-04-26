@@ -24,7 +24,6 @@ from kedro_databricks.utilities.logger import get_logger
 from kedro_databricks.utilities.resource_generator import (
     RESOURCE_GENERATOR_RESOLVER,
 )
-from kedro_databricks.utilities.resource_generator.exceptions import MemoryDatasetError
 from kedro_databricks.utilities.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
 
 log = get_logger("bundle")
@@ -119,10 +118,6 @@ def command(
             conf_source=conf_source,
             params=params,
         )
-
-        undeclared_datasets = g.get_memory_datasets()
-        if len(undeclared_datasets) > 0 and not g.can_handle_memory_datasets():
-            raise MemoryDatasetError(g, undeclared_datasets)
 
         all_resources = {"jobs": g.generate_jobs(pipeline)}
         overridden_resources = {}

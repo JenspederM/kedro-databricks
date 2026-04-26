@@ -18,6 +18,30 @@ from kedro_databricks.plugin import commands
 from kedro_databricks.utilities.common import require_databricks_run_script
 
 
+def create_catalog(metadata: ProjectMetadata, env: str):
+    dataset = [
+        "intermediate",
+        "output3",
+        "output",
+        "output4",
+        "output2",
+        "output_5_output_5_1",
+        "output_6_output_6_1",
+        "output_7_output_7_1",
+        "input",
+    ]
+    catalog_lines = []
+    for d in dataset:
+        catalog_lines.append(f"""
+{d}:
+    type: pandas.ParquetDataset
+    filepath: myfile.csv
+""")
+    base_conf_path = metadata.project_path / "conf" / env
+    base_conf_path.mkdir(parents=True, exist_ok=True)
+    (base_conf_path / "catalog.yml").write_text("\n".join(catalog_lines))
+
+
 def init_project(
     metadata: ProjectMetadata, cli_runner: CliRunner, with_catalog: bool = True
 ):

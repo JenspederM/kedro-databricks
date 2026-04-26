@@ -7,19 +7,31 @@ with appropriate dependencies derived from the pipeline graph.
 from collections.abc import Iterable
 from typing import Any
 
+from kedro.framework.session import KedroSession
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+from kedro_telemetry.plugin import ProjectMetadata
 
 from kedro_databricks.utilities.resource_generator.abstract_resource_generator import (
     AbstractResourceGenerator,
 )
+from kedro_databricks.utilities.resource_generator.exceptions import MemoryDatasetError
 
 
 class NodeResourceGenerator(AbstractResourceGenerator):
     """Generate a job with one Databricks task per Kedro node."""
 
-    def can_handle_memory_datasets(self) -> bool:
-        return False
+    def __init__(
+        self,
+        session: KedroSession,
+        metadata: ProjectMetadata,
+        conf_source: str = "conf",
+        params: str | None = None,
+    ) -> None:
+        super().__init__(session, metadata, conf_source, params)
+        undeclared_datasets = self._get_memory_datasets()
+        if len(undeclared_datasets) > 0:
+            raise MemoryDatasetError(self, undeclared_datasets)
 
     def _create_job_dict(
         self, name: str, pipeline: Pipeline, pipeline_name: str
