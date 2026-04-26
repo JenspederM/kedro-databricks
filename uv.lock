@@ -2215,7 +2215,7 @@ docs = [
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
 ]
-test = [
+integration = [
     { name = "ipython", version = "8.39.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "ipython", version = "9.12.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -2224,12 +2224,21 @@ test = [
     { name = "notebook" },
     { name = "numpy" },
 ]
+unit = [
+    { name = "ipython", version = "8.39.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "ipython", version = "9.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "ipython", version = "9.12.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "jupyterlab" },
+    { name = "kedro-datasets", extra = ["pandas", "pandas-parquetdataset"] },
+    { name = "notebook" },
+    { name = "numpy" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "databricks-sdk", specifier = ">=0.36.0" },
     { name = "fuso", specifier = ">=0.2.4" },
-    { name = "kedro", specifier = ">=0.19.8" },
+    { name = "kedro", specifier = ">=0.19.7" },
     { name = "packaging", specifier = ">=21.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "tomlkit", specifier = ">=0.13.0" },
@@ -2251,10 +2260,17 @@ docs = [
     { name = "mkdocs-material", specifier = ">=9.6.14" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.29.1" },
 ]
-test = [
+integration = [
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },
     { name = "kedro-datasets", extras = ["spark", "pandas", "spark-sparkdatasetv2", "pandas-parquetdataset"], specifier = ">=9.1" },
+    { name = "notebook" },
+    { name = "numpy", specifier = "~=1.21" },
+]
+unit = [
+    { name = "ipython", specifier = ">=8.10" },
+    { name = "jupyterlab", specifier = ">=3.0" },
+    { name = "kedro-datasets", extras = ["pandas", "pandas-parquetdataset"], specifier = ">=3.0" },
     { name = "notebook" },
     { name = "numpy", specifier = "~=1.21" },
 ]

@@ -8,10 +8,10 @@ run-dev *args:
     uv run ./scripts/dev_flow.py {{ args }}
 
 unittest:
-    uv run --group test pytest tests/unit
+    uv run --group unit pytest tests/unit
 
 test:
-    uv run --group test pytest tests
+    uv run --group integration pytest tests
 
 [parallel]
 check: lint format types

@@ -2,7 +2,9 @@
   // Editor settings
   "editor.formatOnSave": true,
   "editor.tabSize": 4,
-  "editor.rulers": [88],
+  "editor.rulers": [
+    88
+  ],
   "search.exclude": {
     "**/.git": true,
     "**/.cache": true,
@@ -21,8 +23,9 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit", // Organize imports on save
       "source.fixAll": "explicit" // Run the Ruff formatter on save
-    }
+    },
   },
+  "yaml.format.printWidth": 1000,
   // Python settings
   "python.languageServer": "Pylance", // Use Pylance as the language server
   "python.testing.pytestEnabled": true,
