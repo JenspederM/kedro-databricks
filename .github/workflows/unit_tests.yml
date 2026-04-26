@@ -21,7 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install lxml dependencies
-        run: sudo apt-get build-dep python3-lxml
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt1-dev
       - name: Install dependencies
         uses: jdx/mise-action@v3
       - name: Sync kedro-databricks
