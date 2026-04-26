@@ -1,17 +1,3 @@
-## 0.14.1 (2025-12-11)
-
-### Fix
-
--  [`2256163`](https://github.com/JenspederM/kedro-databricks/commit/2256163d131575449776c2a239ebad4e2d5918dc):  there is no tomlkit>0.14
-
-### Ci
-
--  [`a68c44f`](https://github.com/JenspederM/kedro-databricks/commit/a68c44f5415b212349a60f92ffa5ee6030204264):  always try to publish when pushed to main
-
-### Other Changes
-
--  [`dbb82ea`](https://github.com/JenspederM/kedro-databricks/commit/dbb82eac2c9371390d84f354f2cb7eaecf4a9ddf):  update uv lock to latest
-
 ## [0.16.0](https://github.com/JenspederM/kedro-databricks/compare/v0.15.1...v0.16.0) (2026-04-26)
 
 
@@ -56,6 +42,20 @@
 
 * add docstrings to common ([c4fc48e](https://github.com/JenspederM/kedro-databricks/commit/c4fc48e58e6cfd7836756e80ca5a14c37c794f60))
 * we no longer have gen_changelog ([4fdac03](https://github.com/JenspederM/kedro-databricks/commit/4fdac03ac87386a1fbcef4f694371d70635c4147))
+
+## 0.14.1 (2025-12-11)
+
+### Fix
+
+-  [`2256163`](https://github.com/JenspederM/kedro-databricks/commit/2256163d131575449776c2a239ebad4e2d5918dc):  there is no tomlkit>0.14
+
+### Ci
+
+-  [`a68c44f`](https://github.com/JenspederM/kedro-databricks/commit/a68c44f5415b212349a60f92ffa5ee6030204264):  always try to publish when pushed to main
+
+### Other Changes
+
+-  [`dbb82ea`](https://github.com/JenspederM/kedro-databricks/commit/dbb82eac2c9371390d84f354f2cb7eaecf4a9ddf):  update uv lock to latest
 
 ## 0.14.0 (2025-12-11)
 
