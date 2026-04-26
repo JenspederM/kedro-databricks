@@ -20,6 +20,8 @@ jobs:
         kedro_version: [ "0.19.7", "0.19.8", "latest" ]
     steps:
       - uses: actions/checkout@v4
+      - name: Install lxml dependencies
+        run: sudo apt-get build-dep python3-lxml
       - name: Install dependencies
         uses: jdx/mise-action@v3
       - name: Sync kedro-databricks
