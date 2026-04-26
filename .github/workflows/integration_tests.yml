@@ -1,4 +1,5 @@
 name: Integration Tests
+concurrency: "integration"
 
 on:
   push:
