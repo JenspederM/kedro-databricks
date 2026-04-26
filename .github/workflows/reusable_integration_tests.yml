@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         uses: jdx/mise-action@v3
       - name: Sync kedro-databricks
-        run: uv sync --all-groups
+        run: uv sync --group integration
       - name: Check kedro-databricks
         run: just check
       - name: Test kedro-databricks
