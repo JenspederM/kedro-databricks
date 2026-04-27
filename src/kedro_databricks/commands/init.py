@@ -20,7 +20,6 @@ from kedro_databricks.constants import (
     DEFAULT_ENV,
     DEFAULT_SCHEMA,
     DEFAULT_SCHEMA_HELP,
-    GITIGNORE,
     TEMPLATES,
 )
 from kedro_databricks.utilities.common import (
@@ -119,8 +118,20 @@ def _update_gitignore(metadata: ProjectMetadata):
     if not gitignore_path.exists():
         gitignore_path.touch()
     current_gitignore = gitignore_path.read_text()
-    with open(gitignore_path, "w") as f:
-        f.write(f"{GITIGNORE}\n{current_gitignore}")
+    lines_to_add = []
+    ignore_lines = [".databricks", f"conf/{DEFAULT_ENV}/**!conf/{DEFAULT_ENV}/.gitkeep"]
+    for ignore_line in ignore_lines:
+        found = False
+        for line in current_gitignore.splitlines():
+            if ignore_line in line:
+                found = True
+                break
+        if not found:
+            lines_to_add.append(ignore_line)
+    if lines_to_add:
+        GITIGNORE = "\n".join(["# added by `kedro-databricks`"] + lines_to_add)
+        with open(gitignore_path, "w") as f:
+            f.write(f"{GITIGNORE}\n{current_gitignore}")
 
 
 def _write_databricks_run_script(metadata: ProjectMetadata):
