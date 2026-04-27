@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.1](https://github.com/JenspederM/kedro-databricks/compare/v0.16.0...v0.16.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* email_notifications are a list of strings ([22da170](https://github.com/JenspederM/kedro-databricks/commit/22da170a45ad9dbae0f72285f0849ee5a7062d83))
+* preserve user specified ordering ([1dadd44](https://github.com/JenspederM/kedro-databricks/commit/1dadd445225d383946a4eab42cb4cc42cbae1f7c))
+
 ## [0.16.0](https://github.com/JenspederM/kedro-databricks/compare/v0.15.1...v0.16.0) (2026-04-26)
 
 
