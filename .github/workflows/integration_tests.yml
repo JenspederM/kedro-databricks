@@ -3,8 +3,6 @@ concurrency: "integration"
 
 on:
   push:
-    paths:
-      - .github/workflows/reusable_integration_tests.yml
     branches:
       - release-please--branches--main
 
