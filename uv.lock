@@ -1377,11 +1377,11 @@ wheels = [
 
 [[package]]
 name = "fuso"
-version = "0.3.3"
+version = "0.3.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3d/7c/2e67106f39d792fe2ab2f5e873a85d6026c080dce66df054509dad8b019f/fuso-0.3.3.tar.gz", hash = "sha256:8c1bd02f1bfde57e88a581d833bbf0667b379ac63296facc34b9bd5cff42bda2", size = 4843, upload-time = "2026-04-27T11:44:57.742Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/c3/140956c1fbd8aabf5a0a1cf045b3260f2550fa3f928729c29e4193dfc561/fuso-0.3.4.tar.gz", hash = "sha256:e9dbfe0fbee6a8ab218f1726b72682694dd3d1d6f21d184dd4e2941c10de32b5", size = 4863, upload-time = "2026-04-27T12:05:37.883Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/38/2ca093ab0cb28359c16d203e93b58af66dacb3af2fa3a862dba92c4a1fc9/fuso-0.3.3-py3-none-any.whl", hash = "sha256:b4f7451bc47baaa13f757cea8c0cba64729d95fdf8f4c9831441b335af8e5010", size = 5515, upload-time = "2026-04-27T11:44:57.012Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/02/ec36841c78474fe5432cbdd0dce7663eb0d47718d18fda3e829ab529b4b2/fuso-0.3.4-py3-none-any.whl", hash = "sha256:b00dd104d29029a20abf241a2f2c06fc6c8a2f0c66c1c7cda3f52a6c2d6c3966", size = 5538, upload-time = "2026-04-27T12:05:36.969Z" },
 ]
 
 [[package]]
