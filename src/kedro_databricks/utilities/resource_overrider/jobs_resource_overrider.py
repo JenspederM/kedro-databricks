@@ -1,7 +1,8 @@
 import copy
+from functools import reduce
 from typing import Any
 
-from fuso import merge_dict, merge_list_of_dicts_by_key, to_dotpath
+from fuso import merge_list_of_dicts_by_key, to_dotpath
 from fuso.merge import create_merge_factory
 
 from kedro_databricks.constants import DEFAULT_CONFIG_KEY
@@ -155,34 +156,47 @@ def _libraries_overrider(old: list[dict], new: list[dict]) -> list[dict]:
     )
 
 
-def _tasks_overrider(old: list[dict], new: list[dict], defaults: dict) -> list[dict]:
+_task_overrider = create_merge_factory(
+    merge_functions={
+        "depends_on": lambda old, new: merge_list_of_dicts_by_key(
+            old or [], new or [], key="task_key"
+        ),
+        "email_notifications": _notification_overrider,
+        "webhook_notifications": _notification_overrider,
+        "health.rules": lambda old, new: merge_list_of_dicts_by_key(
+            old, new, key="metric"
+        ),
+        "libraries": _libraries_overrider,
+    },
+    key_order=TASK_KEY_ORDER,
+)
+
+
+def _tasks_overrider(old: list[dict], new: list[dict], default_key: str) -> list[dict]:
     old = old or []
     new = new or []
-    old_dict = {o.get("task_key"): o for o in old if o.get("task_key")}
-    new_dict = {n.get("task_key"): n for n in new if n.get("task_key")}
-    all_task_keys = set(list(old_dict.keys()) + list(new_dict.keys()))
-    tasks = []
+    tasks = {o.pop("task_key"): o for o in old if o.get("task_key")}
+    overrides = {n.pop("task_key"): n for n in new if n.get("task_key")}
+    default_task = overrides.pop(default_key, {})
+    all_task_keys = set(list(tasks.keys()) + list(overrides.keys()))
+    overriden_tasks = []
     for task_key in all_task_keys:
-        old_task = old_dict.get(task_key, {})
-        new_task = {**defaults, **new_dict.get(task_key, {})}
-        merged_task = merge_dict(
-            old_task,
-            new_task,
-            merge_functions={
-                "depends_on": lambda old, new: merge_list_of_dicts_by_key(
-                    old or [], new or [], key="task_key"
+        task = tasks.get(task_key, {})
+        task_overrides = overrides.get(task_key, {})
+        overriden_tasks.append(
+            {
+                "task_key": task_key,
+                **reduce(
+                    _task_overrider,
+                    [
+                        task,
+                        default_task,
+                        task_overrides,
+                    ],
                 ),
-                "email_notifications": _notification_overrider,
-                "webhook_notifications": _notification_overrider,
-                "health.rules": lambda old, new: merge_list_of_dicts_by_key(
-                    old, new, key="metric"
-                ),
-                "libraries": _libraries_overrider,
-            },
-            key_order=TASK_KEY_ORDER,
+            }
         )
-        tasks.append(merged_task)
-    return sorted(tasks, key=lambda x: x.get("task_key", ""))
+    return sorted(overriden_tasks, key=lambda x: x.get("task_key", ""))
 
 
 def _post_processor(resource: dict[str, Any]) -> dict[str, Any]:
@@ -198,19 +212,6 @@ def _post_processor(resource: dict[str, Any]) -> dict[str, Any]:
 
 class JobsResourceOverrider(AbstractResourceOverrider):
     """Override a Databricks jobs resource with the default key."""
-
-    def _get_default_task(self, overrides, default_key):
-        if "tasks" not in overrides:
-            return {}
-        default_task = [
-            t for t in overrides.get("tasks", []) if t.get("task_key") == default_key
-        ]
-        default_task = default_task[0] if default_task else {}
-        default_task.pop("task_key", None)
-        overrides["tasks"] = [
-            t for t in overrides.get("tasks", []) if t.get("task_key") != default_key
-        ]
-        return default_task
 
     def override(
         self,
@@ -240,19 +241,10 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             raise ValueError(f"resource must be a dictionary not {type(resource)}")
         if not isinstance(overrides, dict):
             raise ValueError(f"overrides must be a dictionary not {type(overrides)}")
-        copied_overrides = copy.deepcopy(overrides)
-        default_overrides = copied_overrides.pop(default_key, {})
-        job_overrides = copied_overrides.pop(resource_key, {})
-        regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
-        default_task = self._get_default_task(job_overrides, default_key)
-        if not default_task:
-            default_task = self._get_default_task(regex_overrides, default_key)
-        if not default_task:
-            default_task = self._get_default_task(default_overrides, default_key)
         overrider = create_merge_factory(
             merge_functions={
                 "tasks": lambda old, new: _tasks_overrider(
-                    old, new, defaults=default_task
+                    old, new, default_key=default_key
                 ),
                 "environments": lambda old, new: merge_list_of_dicts_by_key(
                     old or [], new or [], key="environment_key"
@@ -273,5 +265,17 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             key_order=JOB_KEY_ORDER,
             post_processor=_post_processor,
         )
-        all_overrides = {**default_overrides, **regex_overrides, **job_overrides}
-        return overrider(resource, all_overrides)
+        copied_overrides = copy.deepcopy(overrides)
+        default_overrides = copied_overrides.pop(default_key, {})
+        regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
+        resource_overrides = copied_overrides.pop(resource_key, {})
+        overriden = reduce(
+            overrider,
+            [
+                resource,
+                default_overrides,
+                regex_overrides,
+                resource_overrides,
+            ],
+        )
+        return overriden
