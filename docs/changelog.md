@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.0](https://github.com/JenspederM/kedro-databricks/compare/v0.16.1...v0.17.0) (2026-04-27)
+
+
+### Features
+
+* allows reinitializing ([8c88105](https://github.com/JenspederM/kedro-databricks/commit/8c88105fb2fb1b4dbd0f6fe801838407c7c5e678))
+* allows users to use regexes to apply task overrides ([3d8d59c](https://github.com/JenspederM/kedro-databricks/commit/3d8d59ce61bb0d050e9d3ac6f82f0f7c0ea63ba0))
+
+
+### Bug Fixes
+
+* do not add to gitignore if already present ([8abaff8](https://github.com/JenspederM/kedro-databricks/commit/8abaff8fa41642fa0524724ce933d705d4c8f3ca))
+* skip regex and default overrides ([ccfa5f3](https://github.com/JenspederM/kedro-databricks/commit/ccfa5f38bca5fdf65e43a9b2c8bd3aaa5fe42937))
+
 ## [0.16.1](https://github.com/JenspederM/kedro-databricks/compare/v0.16.0...v0.16.1) (2026-04-27)
 
 
