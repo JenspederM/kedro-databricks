@@ -1,3 +1,5 @@
+# Changelog
+
 ## [0.16.0](https://github.com/JenspederM/kedro-databricks/compare/v0.15.1...v0.16.0) (2026-04-26)
 
 
