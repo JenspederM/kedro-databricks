@@ -28,7 +28,3 @@ for path in sorted([f for f in src.rglob("*.py") if f.name != "databricks_run.py
         print("::: " + identifier, file=fd)
 
     mkdocs_gen_files.set_edit_path(full_doc_path, path.relative_to(root))
-
-with mkdocs_gen_files.open("CHANGELOG.md", "w") as fd:
-    print(changelog_path.read_text(), file=fd)
-mkdocs_gen_files.set_edit_path("CHANGELOG.md", changelog_path.relative_to(root))
