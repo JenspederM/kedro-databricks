@@ -184,7 +184,7 @@ def _tasks_overrider(old: list[dict], new: list[dict], default_key: str) -> list
     all_task_keys = set(list(tasks.keys()) + list(overrides.keys()))
     overriden_tasks = []
     for task_key in all_task_keys:
-        if task_key.startswith("re:"):
+        if task_key == default_key or task_key.startswith("re:"):
             continue
         task = tasks.get(task_key, {})
         task_overrides = overrides.get(task_key, {})

@@ -125,18 +125,19 @@ def command(
         for resource_type, resource_override_items in overrides["resources"].items():
             overridden_resources[resource_type] = {}
             resource_items = all_resources.get(resource_type, {})
-            resource_overrides = overrides.get(resource_type, {})
             overrider = RESOURCE_OVERRIDER_RESOLVER.resolve(resource_type)()
             all_keys = set(resource_items.keys()).union(
                 set(resource_override_items.keys())
             )
             for key in all_keys:
+                if key == default_key or key.startswith("re:"):
+                    continue
                 resource = resource_items.get(key, {})
                 overridden_resources[resource_type][key] = overrider.override(
                     resource_key=key,
-                    default_key=default_key,
                     resource=resource,
-                    overrides=copy.deepcopy(resource_overrides),
+                    overrides=copy.deepcopy(resource_override_items),
+                    default_key=default_key,
                 )
 
         save_resources(
