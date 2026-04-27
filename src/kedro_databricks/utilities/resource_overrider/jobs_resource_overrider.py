@@ -161,7 +161,6 @@ _task_overrider = create_merge_factory(
         "depends_on": lambda old, new: merge_list_of_dicts_by_key(
             old or [], new or [], key="task_key"
         ),
-        "email_notifications": _notification_overrider,
         "webhook_notifications": _notification_overrider,
         "health": lambda old, new: merge(
             old,
@@ -246,7 +245,6 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                     old or [], new or [], key="job_cluster_key"
                 ),
                 "access_control_list": _access_control_list_overrider,
-                "email_notifications": _notification_overrider,
                 "webhook_notifications": _notification_overrider,
                 "health": lambda old, new: merge(
                     old,
