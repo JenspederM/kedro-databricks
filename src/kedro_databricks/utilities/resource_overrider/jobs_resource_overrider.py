@@ -1,4 +1,3 @@
-import copy
 from functools import reduce
 from typing import Any
 
@@ -6,6 +5,7 @@ from fuso import merge, merge_list_of_dicts_by_key
 from fuso.merge import create_merge_factory
 
 from kedro_databricks.constants import DEFAULT_CONFIG_KEY
+from kedro_databricks.utilities.common import get_regex_values
 from kedro_databricks.utilities.logger import get_logger
 from kedro_databricks.utilities.resource_overrider.abstract_resource_overrider import (
     AbstractResourceOverrider,
@@ -180,12 +180,15 @@ def _tasks_overrider(old: list[dict], new: list[dict], default_key: str) -> list
     new = new or []
     tasks = {o.pop("task_key"): o for o in old if o.get("task_key")}
     overrides = {n.pop("task_key"): n for n in new if n.get("task_key")}
-    default_task = overrides.pop(default_key, {})
+    default_overrides = overrides.pop(default_key, {})
     all_task_keys = set(list(tasks.keys()) + list(overrides.keys()))
     overriden_tasks = []
     for task_key in all_task_keys:
+        if task_key.startswith("re:"):
+            continue
         task = tasks.get(task_key, {})
         task_overrides = overrides.get(task_key, {})
+        regex_overrides = get_regex_values(task_key, overrides)
         overriden_tasks.append(
             {
                 "task_key": task_key,
@@ -193,7 +196,8 @@ def _tasks_overrider(old: list[dict], new: list[dict], default_key: str) -> list
                     _task_overrider,
                     [
                         task,
-                        default_task,
+                        default_overrides,
+                        regex_overrides,
                         task_overrides,
                     ],
                 ),
@@ -261,10 +265,9 @@ class JobsResourceOverrider(AbstractResourceOverrider):
             },
             key_order=JOB_KEY_ORDER,
         )
-        copied_overrides = copy.deepcopy(overrides)
-        default_overrides = copied_overrides.pop(default_key, {})
-        regex_overrides = self.get_regex_overrides(resource_key, copied_overrides)
-        resource_overrides = copied_overrides.pop(resource_key, {})
+        default_overrides = overrides.pop(default_key, {})
+        regex_overrides = get_regex_values(resource_key, overrides)
+        resource_overrides = overrides.pop(resource_key, {})
         overriden = reduce(
             overrider,
             [

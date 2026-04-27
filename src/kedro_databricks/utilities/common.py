@@ -13,6 +13,30 @@ from kedro_databricks.utilities.logger import get_logger
 log = get_logger("utilities.common")
 
 
+def get_regex_values(
+    lookup_key: str,
+    values: dict[str, Any],
+    regex_prefix: str = "re:",
+) -> dict[str, Any]:
+    """Get values matching a regex
+
+    Args:
+        lookup_key (str): key to match regexes to
+        values (dict[str, Any]): The overrides to apply.
+        regex_prefix (str): prefix that identifies a key as a regex
+
+    Returns:
+        dict[str, Any]: values where lookup key matches the regex
+    """
+    matched_values = {}
+    for key, value in values.items():
+        if key.startswith(regex_prefix):
+            pattern = key[len(regex_prefix) :]
+            if re.match(pattern, lookup_key):
+                return value
+    return matched_values
+
+
 def require_databricks_run_script(_version=KEDRO_VERSION) -> bool:
     """Check if the current Kedro version is less than 0.19.8.
 
