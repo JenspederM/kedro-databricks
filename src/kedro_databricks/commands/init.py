@@ -51,6 +51,13 @@ log = get_logger("init")
     default=DEFAULT_SCHEMA,
     help=DEFAULT_SCHEMA_HELP,
 )
+@click.option(
+    "--overwrite",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Overwrite existing initialization",
+)
 @click.argument(
     "databricks_args",
     nargs=-1,
@@ -62,12 +69,18 @@ def command(
     default_key: str,
     catalog: str,
     schema: str,
+    overwrite: bool,
     databricks_args: tuple[str, ...],
 ):
     """Initialize a Kedro project for Databricks Asset Bundles."""
     log.info("Initializing Databricks Asset Bundle...")
     dbcli = DatabricksCli(metadata, additional_args=list(databricks_args))
     assets_dir, template_params = _prepare_template(metadata)
+    config_path = metadata.project_path / "databricks.yml"
+    if config_path.exists() and not overwrite:
+        raise FileExistsError(f"`databricks.yml` already exist at {config_path}")
+    elif config_path.exists() and overwrite:
+        config_path.unlink(missing_ok=True)
     validated_conf = dbcli.init(assets_dir, template_params)
     log.info(f"Initialized Databricks Asset Bundle in {metadata.project_path}")
     _create_target_configs(
