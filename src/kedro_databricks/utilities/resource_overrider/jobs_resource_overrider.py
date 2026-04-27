@@ -2,7 +2,7 @@ import copy
 from functools import reduce
 from typing import Any
 
-from fuso import merge_list_of_dicts_by_key, to_dotpath
+from fuso import merge, merge_list_of_dicts_by_key
 from fuso.merge import create_merge_factory
 
 from kedro_databricks.constants import DEFAULT_CONFIG_KEY
@@ -163,8 +163,12 @@ _task_overrider = create_merge_factory(
         ),
         "email_notifications": _notification_overrider,
         "webhook_notifications": _notification_overrider,
-        "health.rules": lambda old, new: merge_list_of_dicts_by_key(
-            old, new, key="metric"
+        "health": lambda old, new: merge(
+            old,
+            new,
+            merge_functions={
+                "rules": lambda o, n: merge_list_of_dicts_by_key(o, n, key="metric")
+            },
         ),
         "libraries": _libraries_overrider,
     },
@@ -197,17 +201,6 @@ def _tasks_overrider(old: list[dict], new: list[dict], default_key: str) -> list
             }
         )
     return sorted(overriden_tasks, key=lambda x: x.get("task_key", ""))
-
-
-def _post_processor(resource: dict[str, Any]) -> dict[str, Any]:
-    clusters = resource.get("job_clusters", [])
-    if clusters:
-        for cluster in clusters:
-            spark_conf = cluster.get("new_cluster", {}).get("spark_conf")
-            if spark_conf:
-                cluster["new_cluster"]["spark_conf"] = to_dotpath(spark_conf)
-        resource["job_clusters"] = clusters
-    return resource
 
 
 class JobsResourceOverrider(AbstractResourceOverrider):
@@ -255,15 +248,20 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                 "access_control_list": _access_control_list_overrider,
                 "email_notifications": _notification_overrider,
                 "webhook_notifications": _notification_overrider,
-                "health.rules": lambda old, new: merge_list_of_dicts_by_key(
-                    old, new, key="metric"
+                "health": lambda old, new: merge(
+                    old,
+                    new,
+                    merge_functions={
+                        "rules": lambda o, n: merge_list_of_dicts_by_key(
+                            o, n, key="metric"
+                        )
+                    },
                 ),
                 "parameters": lambda old, new: merge_list_of_dicts_by_key(
                     old, new, key="name"
                 ),
             },
             key_order=JOB_KEY_ORDER,
-            post_processor=_post_processor,
         )
         copied_overrides = copy.deepcopy(overrides)
         default_overrides = copied_overrides.pop(default_key, {})
