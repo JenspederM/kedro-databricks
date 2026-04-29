@@ -1,9 +1,12 @@
+import tomlkit
+
 from kedro_databricks.commands.init import (
     _get_bundle_name,
     _get_targets,
     _read_databricks_config,
     command,
 )
+from kedro_databricks.config import config
 from tests.utils import reset_init
 
 
@@ -69,7 +72,7 @@ def test_bundle_init_overwrite(cli_runner, metadata):
         )
 
 
-def test_init_arg(cli_runner, metadata):
+def test_init_default(cli_runner, metadata):
     # Arrange
     reset_init(metadata)
 
@@ -103,3 +106,12 @@ def test_init_arg(cli_runner, metadata):
         assert override_path.exists(), (
             f"Resource Overrides at {override_path} does not exist"
         )
+
+    pyproject_path = metadata.project_path / "pyproject.toml"
+    assert pyproject_path.exists()
+    with open(pyproject_path) as f:
+        pyproject = tomlkit.load(f)
+        pyconfig = pyproject.get("tool", {}).get("kedro-databricks")
+        assert pyconfig
+        for k, v in config.model_dump().items():
+            assert pyconfig.get(k) == v

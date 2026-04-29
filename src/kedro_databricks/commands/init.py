@@ -11,6 +11,7 @@ import click
 import tomlkit
 import yaml
 from kedro.framework.startup import ProjectMetadata
+from tomlkit.items import Table
 
 import kedro_databricks.commands._options as option
 from kedro_databricks.config import config
@@ -58,6 +59,7 @@ def command(
         default_schema=schema,
         validated_conf=validated_conf,
     )
+    _update_pyproject(metadata)
     _update_gitignore(metadata)
     hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
     if hooks_path.exists():
@@ -92,6 +94,21 @@ def _prepare_template(metadata: ProjectMetadata):
     params_file.touch()
     params_file.write_text(json.dumps(config))
     return assets_dir, params_file
+
+
+def _update_pyproject(metadata: ProjectMetadata):
+    pyproject_path = metadata.project_path / "pyproject.toml"
+    with open(pyproject_path) as f:
+        pyproject = tomlkit.load(f)
+    tool_table = pyproject.get("tool")
+    if not tool_table:
+        tool_table = tomlkit.table()
+    elif not isinstance(tool_table, Table):
+        raise TypeError(f"Unexpected tool table type: {type(tool_table)}")
+    tool_table.update({"kedro-databricks": config.model_dump()})
+    pyproject.update({"tool": tool_table})
+    with open(pyproject_path, "w") as f:
+        tomlkit.dump(pyproject, f)
 
 
 def _update_gitignore(metadata: ProjectMetadata):
