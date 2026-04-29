@@ -50,12 +50,16 @@ def test_run():
 
         # Act
         result = runner.invoke(run_command, [], obj=metadata)
-        # Assert
-        assert result.exit_code == 0, (
-            result.exit_code,
-            result.stdout,
-            result.exception,
-        )
 
-        # Cleanup
-        destroy_project(metadata, runner)
+        # Assert
+        try:
+            assert result.exit_code == 0, (
+                result.exit_code,
+                result.stdout,
+                result.exception,
+            )
+        except AssertionError as e:
+            raise e
+        finally:
+            # Cleanup
+            destroy_project(metadata, runner)

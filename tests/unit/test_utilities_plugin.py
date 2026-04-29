@@ -9,7 +9,7 @@ def test_plugin_list_commands(cli_runner, metadata):
     cmds = [
         p
         for p in commands_path.iterdir()
-        if p.is_file() and p.suffix == ".py" and p.stem != "__init__"
+        if p.is_file() and p.suffix == ".py" and not p.stem.startswith("_")
     ]
 
     # Act

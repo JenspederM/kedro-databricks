@@ -14,7 +14,7 @@ class Plugin(click.Group):
     def list_commands(self, ctx):
         cmds = []
         for cmd_file in self.commands_dir.glob("*.py"):
-            if cmd_file.stem != "__init__":
+            if not cmd_file.stem.startswith("_"):
                 cmds.append(cmd_file.stem)
         cmds.sort()
         return cmds
