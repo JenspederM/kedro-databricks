@@ -15,7 +15,7 @@ from kedro_databricks.commands.init import (
     _update_gitignore,
     _write_databricks_run_script,
 )
-from kedro_databricks.constants import DEFAULT_CATALOG, DEFAULT_SCHEMA
+from kedro_databricks.config import config
 
 
 def test_update_gitignore(metadata):
@@ -119,8 +119,8 @@ def test_create_target_configs(metadata, monkeypatch):
     _create_target_configs(
         metadata,
         "test",
-        DEFAULT_CATALOG,
-        DEFAULT_SCHEMA,
+        config.init_catalog,
+        config.init_schema,
         {"workspace": {"current_user": {"short_name": "test_user"}}},
     )
 
@@ -140,7 +140,7 @@ def test_prepare_template(metadata):
 
 def test_substitute_catalog():
     catalog = """
-_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+_file_path: /Volumes/workspace/default/volume/develop_eggs
 # Here you can define all your data sets by using simple YAML syntax.
 #
 # Documentation for this file format can be found in "The Data Catalog"
@@ -242,7 +242,7 @@ y_pred:
   filepath: ${_file_path}/data/03_primary/y_pred.parquet
 """
     expected = """
-_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+_file_path: /Volumes/workspace/default/volume/develop_eggs
 # Here you can define all your data sets by using simple YAML syntax.
 #
 # Documentation for this file format can be found in "The Data Catalog"

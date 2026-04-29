@@ -2,6 +2,8 @@ from importlib import metadata, resources
 
 from packaging.version import Version
 
+from kedro_databricks.config import config
+
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
 
 KEDRO_VERSION = Version(metadata.version("kedro"))
@@ -13,57 +15,72 @@ MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
 MAX_TASK_KEY_LENGTH = 100
 """Maximum number of characters in a task key in Databricks jobs."""
 
-TASK_KEY_ORDER = [
-    "task_key",
-    "job_cluster_key",
-    "new_cluster",
-    "depends_on",
-    "spark_python_task",
-    "python_wheel_task",
-]
-"""Order of keys in the task configuration for Databricks jobs."""
-
 JOB_KEY_ORDER = [
     "name",
-    "tags",
-    "access_control_list",
-    "email_notifications",
-    "schedule",
-    "max_concurrent_runs",
+    "description",
+    "parameters",
+    "environments",
     "job_clusters",
     "tasks",
+    "access_control_list",
+    "budget_policy_id",
+    "continuous",
+    "deployment",
+    "edit_mode",
+    "email_notifications",
+    "format",
+    "git_source",
+    "health",
+    "max_concurrent_runs",
+    "notification_settings",
+    "performance_target",
+    "queue",
+    "run_as",
+    "schedule",
+    "tags",
+    "timeout_seconds",
+    "trigger",
+    "webhook_notifications",
 ]
 """Order of keys in the job configuration for Databricks jobs."""
 
-DEFAULT_CATALOG = "workspace"
-"""Default catalog for Databricks targets."""
-
-DEFAULT_CATALOG_HELP = "Set the catalog for Databricks targets"
-"""Help text for the default catalog option."""
-
-DEFAULT_SCHEMA = "default"
-"""Default schema for Databricks targets."""
-
-DEFAULT_SCHEMA_HELP = "Set the schema for Databricks targets"
-"""Help text for the default schema option."""
-
-DEFAULT_ENV = "dev"
-"""Default target environment for Databricks configurations."""
-
-DEFAULT_CONF_FOLDER = "conf"
-"""Default folder for Kedro configurations."""
-
-DEFAULT_CONFIG_KEY = "default"
-"""Default configuration key for Databricks jobs."""
-
-DEFAULT_CONFIG_KEY_HELP = "Set the key for the default configuration"
-"""Help text for the default configuration key option."""
-
-DEFAULT_CONFIG_GENERATOR = "node"
-"""Default resource generator for Databricks Asset Bundle."""
-
-DEFAULT_CONFIG_GENERATOR_HELP = "Generator used to create resources. Options are 'node' (create a job for each node) or 'pipeline' (create a single job for the entire pipeline)."
-"""Help text for the resource generator option."""
+TASK_KEY_ORDER = [
+    "task_key",
+    "description",
+    "depends_on",
+    "environment_key",
+    "job_cluster_key",
+    "existing_cluster_id",
+    "libraries",
+    "new_cluster",
+    "compute",
+    "disable_auto_optimization",
+    "health",
+    "run_if",
+    "max_retries",
+    "min_retry_interval_millis",
+    "retry_on_timeout",
+    "timeout_seconds",
+    "notification_settings",
+    "email_notifications",
+    "webhook_notifications",
+    "alert_task",
+    "clean_rooms_notebook_task",
+    "condition_task",
+    "dashboard_task",
+    "dbt_task",
+    "for_each_task",
+    "notebook_task",
+    "pipeline_task",
+    "power_bi_task",
+    "python_wheel_task",
+    "run_job_task",
+    "spark_jar_task",
+    "spark_python_task",
+    "spark_submit_task",
+    "sql_task",
+]
+"""Order of keys in the task configuration for Databricks jobs."""
 
 INVALID_CONFIG_MSG = """
 No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
@@ -79,7 +96,7 @@ kedro databricks init
 GITIGNORE = f"""
 # Kedro Databricks
 .databricks
-conf/{DEFAULT_ENV}/**
-!conf/{DEFAULT_ENV}/.gitkeep
+conf/{config.default_env}/**
+!conf/{config.default_env}/.gitkeep
 """.strip()
 """Content to be added to `.gitignore` for Kedro Databricks configurations."""

@@ -12,16 +12,9 @@ import tomlkit
 import yaml
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.constants import (
-    DEFAULT_CATALOG,
-    DEFAULT_CATALOG_HELP,
-    DEFAULT_CONFIG_KEY,
-    DEFAULT_CONFIG_KEY_HELP,
-    DEFAULT_ENV,
-    DEFAULT_SCHEMA,
-    DEFAULT_SCHEMA_HELP,
-    TEMPLATES,
-)
+import kedro_databricks.commands._options as option
+from kedro_databricks.config import config
+from kedro_databricks.constants import TEMPLATES
 from kedro_databricks.utilities.common import (
     get_value_from_dotpath,
     require_databricks_run_script,
@@ -33,42 +26,17 @@ log = get_logger("init")
 
 
 @click.command()
-@click.option(
-    "--default-key",
-    type=str,
-    default=DEFAULT_CONFIG_KEY,
-    help=DEFAULT_CONFIG_KEY_HELP,
-)
-@click.option(
-    "--catalog",
-    type=str,
-    default=DEFAULT_CATALOG,
-    help=DEFAULT_CATALOG_HELP,
-)
-@click.option(
-    "--schema",
-    type=str,
-    default=DEFAULT_SCHEMA,
-    help=DEFAULT_SCHEMA_HELP,
-)
-@click.option(
-    "--overwrite",
-    default=False,
-    is_flag=True,
-    show_default=True,
-    help="Overwrite existing initialization",
-)
-@click.argument(
-    "databricks_args",
-    nargs=-1,
-    type=click.UNPROCESSED,
-)
+@option.catalog
+@option.schema
+@option.default_key
+@option.overwrite
+@option.databricks_args
 @click.pass_obj
 def command(
     metadata: ProjectMetadata,
-    default_key: str,
     catalog: str,
     schema: str,
+    default_key: str,
     overwrite: bool,
     databricks_args: tuple[str, ...],
 ):
@@ -132,7 +100,10 @@ def _update_gitignore(metadata: ProjectMetadata):
         gitignore_path.touch()
     current_gitignore = gitignore_path.read_text()
     lines_to_add = []
-    ignore_lines = [".databricks", f"conf/{DEFAULT_ENV}/**!conf/{DEFAULT_ENV}/.gitkeep"]
+    ignore_lines = [
+        ".databricks",
+        f"conf/{config.default_env}/**!conf/{config.default_env}/.gitkeep",
+    ]
     for ignore_line in ignore_lines:
         found = False
         for line in current_gitignore.splitlines():
@@ -193,7 +164,9 @@ def _create_target_configs(
             catalog_name=default_catalog,
             schema_name=default_schema,
             volume_name=_create_volume_name(target_name, bundle_name, validated_conf),
-            target_name=target_name if target_name != DEFAULT_ENV else bundle_name,
+            target_name=target_name
+            if target_name != config.default_env
+            else bundle_name,
         )
         _save_target_catalog(conf_dir, target_conf_dir, target_file_path)
         log.info(f"Created target config for {target_name} at {target_conf_dir}")
@@ -277,7 +250,7 @@ def _transform_spark_hook(path: str):
 def _create_volume_name(
     target_name: str, bundle_name: str, validated_conf: dict
 ) -> str:
-    if target_name == DEFAULT_ENV:
+    if target_name == config.default_env:
         short_name = get_value_from_dotpath(
             validated_conf, "workspace.current_user.short_name"
         )
@@ -297,7 +270,7 @@ def _create_target_config(
 ) -> dict:
     volume_name = (
         "\\${workspace.current_user.short_name}"
-        if target_name == DEFAULT_ENV
+        if target_name == config.default_env
         else bundle_name
     )
     return {

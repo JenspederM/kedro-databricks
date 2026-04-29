@@ -1,6 +1,6 @@
 from typing import Any
 
-from kedro_databricks.constants import DEFAULT_CONFIG_KEY
+from kedro_databricks.config import config
 from kedro_databricks.utilities.common import sort_dict
 from kedro_databricks.utilities.resource_overrider import AbstractResourceOverrider
 
@@ -13,7 +13,7 @@ class DefaultResourceOverrider(AbstractResourceOverrider):
         resource_key: str,
         resource: dict[str, Any],
         overrides: dict[str, Any],
-        default_key: str = DEFAULT_CONFIG_KEY,
+        default_key: str = config.workflow_default_key,
     ) -> dict[str, Any]:
         """Return the overrides unchanged.
 

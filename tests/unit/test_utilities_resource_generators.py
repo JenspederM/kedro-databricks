@@ -2,7 +2,7 @@ import pytest
 from kedro.framework.session import KedroSession
 from kedro.pipeline import Pipeline
 
-from kedro_databricks.constants import DEFAULT_ENV
+from kedro_databricks.config import config
 from kedro_databricks.utilities.common import require_databricks_run_script
 from kedro_databricks.utilities.resource_generator import (
     NodeResourceGenerator,
@@ -20,27 +20,29 @@ from tests.utils import (
 
 
 def test_create_job(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         assert g._create_job("job1", pipeline, "__default__") == JOB
 
 
 def test_create_job_pipeline(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = PipelineResourceGenerator(session=session, metadata=metadata)
         assert g._create_job("job1", pipeline, "__default__") is not None
 
 
 def test_create_job_pipeline_fails(metadata):
-    (metadata.project_path / "conf" / DEFAULT_ENV).mkdir(parents=True, exist_ok=True)
+    (metadata.project_path / "conf" / config.default_env).mkdir(
+        parents=True, exist_ok=True
+    )
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = PipelineResourceGenerator(session=session, metadata=metadata)
         with pytest.raises(
@@ -51,9 +53,9 @@ def test_create_job_pipeline_fails(metadata):
 
 
 def test_create_task(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         expected_task = _generate_task("task", ["a", "b"])
@@ -77,9 +79,9 @@ def test_create_task(metadata):
 
 
 def test_create_pipeline_task(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = PipelineResourceGenerator(session=session, metadata=metadata)
         pipeline_name = "pipeline_task"
@@ -111,9 +113,9 @@ def test_create_pipeline_task(metadata):
 
 
 def test_create_task_with_runtime_params(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(
             session=session, metadata=metadata, params="key1=value1,key2=value2"
@@ -141,9 +143,9 @@ def test_create_task_with_runtime_params(metadata):
 
 
 def test_generate_resources(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         g.pipelines = {"__default__": Pipeline([])}
@@ -164,9 +166,9 @@ def test_generate_resources(metadata):
 
 
 def test_generate_resources_non_existent_pipeline(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         g.pipelines = {"__default__": Pipeline([])}
@@ -184,9 +186,9 @@ def test_generate_resources_non_existent_pipeline(metadata):
 
 
 def test_generate_resources_another_conf(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(
             session=session, metadata=metadata, conf_source="sub_conf"
@@ -207,9 +209,9 @@ def test_generate_resources_another_conf(metadata):
 
 
 def test_generate_resources_in_a_sorted_manner(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         g.pipelines = {
@@ -232,9 +234,9 @@ def test_generate_resources_in_a_sorted_manner(metadata):
 
 
 def test_generate_resources_for_a_single_pipeline(metadata):
-    create_catalog(metadata, DEFAULT_ENV)
+    create_catalog(metadata, config.default_env)
     with KedroSession.create(
-        project_path=metadata.project_path, env=DEFAULT_ENV
+        project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(session=session, metadata=metadata)
         g.pipelines = {

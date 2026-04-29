@@ -12,6 +12,7 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "packaging>=21.2",
     "fuso>=0.2.4",
+    "pydantic-settings>=2.14.0",
 ]
 
 [dependency-groups]

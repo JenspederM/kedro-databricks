@@ -3,7 +3,7 @@ import shutil
 from click.testing import Result
 
 from kedro_databricks.commands.deploy import command
-from kedro_databricks.constants import DEFAULT_ENV
+from kedro_databricks.config import config
 from tests.utils import (
     bundle_project,
     destroy_project,
@@ -108,8 +108,12 @@ def test_deploy_with_conf(metadata, cli_runner):
     init_project(metadata, cli_runner)
     bundle_project(metadata, cli_runner)
     CONF_KEY = "custom_conf"
-    default_path = metadata.project_path / "conf" / DEFAULT_ENV / "databricks.yml"
-    override_path = metadata.project_path / CONF_KEY / DEFAULT_ENV / "databricks.yml"
+    default_path = (
+        metadata.project_path / "conf" / config.default_env / "databricks.yml"
+    )
+    override_path = (
+        metadata.project_path / CONF_KEY / config.default_env / "databricks.yml"
+    )
     override_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(default_path, override_path)
     settings = metadata.project_path / "src" / metadata.package_name / "settings.py"
