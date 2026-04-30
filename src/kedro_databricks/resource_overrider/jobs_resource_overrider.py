@@ -6,11 +6,11 @@ from fuso.merge import create_merge_factory
 
 from kedro_databricks.config import config
 from kedro_databricks.constants import JOB_KEY_ORDER, TASK_KEY_ORDER
-from kedro_databricks.utilities.common import get_regex_values
-from kedro_databricks.utilities.logger import get_logger
-from kedro_databricks.utilities.resource_overrider.abstract_resource_overrider import (
+from kedro_databricks.resource_overrider.abstract_resource_overrider import (
     AbstractResourceOverrider,
 )
+from kedro_databricks.utilities.common import get_regex_values
+from kedro_databricks.utilities.logger import get_logger
 
 log = get_logger("JobsResourceOverrider")
 
