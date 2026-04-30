@@ -6,19 +6,19 @@ generator via `RESOURCE_GENERATORS` to produce resources at node or pipeline
 granularity.
 """
 
+from kedro_databricks.resource_generator.abstract_resource_generator import (
+    AbstractResourceGenerator,
+)
+from kedro_databricks.resource_generator.node_resource_generator import (
+    NodeResourceGenerator,
+)
+from kedro_databricks.resource_generator.pipeline_resource_generator import (
+    PipelineResourceGenerator,
+)
 from kedro_databricks.utilities.resolver_generics import (
     CompositeResourceResolver,
     ModuleResourceResolver,
     RegistryResourceResolver,
-)
-from kedro_databricks.utilities.resource_generator.abstract_resource_generator import (
-    AbstractResourceGenerator,
-)
-from kedro_databricks.utilities.resource_generator.node_resource_generator import (
-    NodeResourceGenerator,
-)
-from kedro_databricks.utilities.resource_generator.pipeline_resource_generator import (
-    PipelineResourceGenerator,
 )
 
 RESOURCE_GENERATOR_RESOLVER = CompositeResourceResolver[

@@ -13,7 +13,7 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline, node
 
 from kedro_databricks.commands.init import _get_targets, _read_databricks_config
-from kedro_databricks.constants import DEFAULT_ENV
+from kedro_databricks.config import config
 from kedro_databricks.plugin import commands
 from kedro_databricks.utilities.common import require_databricks_run_script
 
@@ -53,7 +53,7 @@ def init_project(
     assert metadata.project_path / "databricks.yml", "Databricks config not created"
 
     if with_catalog:
-        write_catalog(metadata, DEFAULT_ENV)
+        write_catalog(metadata, config.default_env)
 
     databricks_config = _read_databricks_config(metadata.project_path)
     targets = _get_targets(databricks_config)
@@ -65,7 +65,7 @@ def init_project(
 
 
 def bundle_project(metadata: ProjectMetadata, cli_runner: CliRunner):
-    bundle_cmd = ["databricks", "bundle", "--env", DEFAULT_ENV]
+    bundle_cmd = ["databricks", "bundle", "--env", config.default_env]
     result = cli_runner.invoke(commands, bundle_cmd, obj=metadata)
     assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
 

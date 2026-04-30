@@ -8,10 +8,8 @@ from pathlib import Path
 import yaml
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.constants import (
-    DEFAULT_ENV,
-    MINIMUM_DATABRICKS_VERSION,
-)
+from kedro_databricks.config import config
+from kedro_databricks.constants import MINIMUM_DATABRICKS_VERSION
 from kedro_databricks.utilities.common import get_arg_value, version_to_str
 from kedro_databricks.utilities.logger import get_logger
 
@@ -22,7 +20,7 @@ class DatabricksCli:
     def __init__(
         self,
         metadata: ProjectMetadata,
-        env: str = DEFAULT_ENV,
+        env: str = config.default_env,
         additional_args: list[str] | None = None,
     ):
         """Initialize the Databricks CLI command collection.

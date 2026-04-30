@@ -5,8 +5,10 @@ import shutil
 from pathlib import Path
 
 import pytest
+import tomlkit
 import yaml
 
+import kedro_databricks.commands.init
 from kedro_databricks.commands.init import (
     _create_target_configs,
     _prepare_template,
@@ -14,8 +16,97 @@ from kedro_databricks.commands.init import (
     _transform_spark_hook,
     _update_gitignore,
     _write_databricks_run_script,
+    command,
 )
-from kedro_databricks.constants import DEFAULT_CATALOG, DEFAULT_SCHEMA
+from kedro_databricks.config import config
+
+
+@pytest.fixture
+def mock_dbcli_init(monkeypatch: pytest.MonkeyPatch, metadata):
+    class MockCli:
+        def __init__(self, metadata, additional_args):
+            self.metadata = metadata
+
+        def init(self, _: Path, __: Path):
+            conf = {
+                "bundle": {"name": "test"},
+                "targets": {"dev": {}, "prod": {}},
+                "workspace": {"current_user": {"short_name": "test-user"}},
+            }
+            with open(metadata.project_path / "databricks.yml", "w") as f:
+                yaml.safe_dump(conf, f)
+            return conf
+
+    monkeypatch.setattr
+    monkeypatch.setattr(kedro_databricks.commands.init, "DatabricksCli", MockCli)
+
+
+def test_init_mocked(metadata, cli_runner, mock_dbcli_init):
+    result = cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
+    assert result.exit_code == 0, (
+        result.exit_code,
+        result.stdout,
+        result.exception,
+    )
+
+
+def test_init_mocked_overwrite(metadata, cli_runner, mock_dbcli_init):
+    cli_runner.invoke(
+        command,
+        [],
+        obj=metadata,
+    )
+    result = cli_runner.invoke(
+        command,
+        ["--overwrite"],
+        obj=metadata,
+    )
+    assert result.exit_code == 0, (
+        result.exit_code,
+        result.stdout,
+        result.exception,
+    )
+
+
+def test_init_mocked_custom_init(metadata, cli_runner, mock_dbcli_init):
+    p = metadata.project_path / "databricks.yml"
+    if p.exists():
+        p.unlink()
+    result = cli_runner.invoke(
+        command,
+        [
+            "--catalog",
+            "test",
+            "--schema",
+            "test",
+            "--default-key",
+            "test",
+            "--env",
+            "test",
+            "--conf-source",
+            "test",
+            "--resource-generator",
+            "test",
+            "--regex-prefix",
+            "test:",
+        ],
+        obj=metadata,
+    )
+    assert result.exit_code == 0, (
+        result.exit_code,
+        result.stdout,
+        result.exception,
+    )
+
+    pyproject_path = metadata.project_path / "pyproject.toml"
+    with open(pyproject_path) as f:
+        pyproject = tomlkit.load(f)
+        for k, v in pyproject.get("tool", {}).get("kedro-databricks", {}).items():
+            assert v.startswith("test"), f"{k} does not start with test"
 
 
 def test_update_gitignore(metadata):
@@ -119,8 +210,8 @@ def test_create_target_configs(metadata, monkeypatch):
     _create_target_configs(
         metadata,
         "test",
-        DEFAULT_CATALOG,
-        DEFAULT_SCHEMA,
+        config.init_catalog,
+        config.init_schema,
         {"workspace": {"current_user": {"short_name": "test_user"}}},
     )
 
@@ -140,7 +231,7 @@ def test_prepare_template(metadata):
 
 def test_substitute_catalog():
     catalog = """
-_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+_file_path: /Volumes/workspace/default/volume/develop_eggs
 # Here you can define all your data sets by using simple YAML syntax.
 #
 # Documentation for this file format can be found in "The Data Catalog"
@@ -242,7 +333,7 @@ y_pred:
   filepath: ${_file_path}/data/03_primary/y_pred.parquet
 """
     expected = """
-_file_path: /Volumes/workspace/default/jenspederm/develop_eggs
+_file_path: /Volumes/workspace/default/volume/develop_eggs
 # Here you can define all your data sets by using simple YAML syntax.
 #
 # Documentation for this file format can be found in "The Data Catalog"

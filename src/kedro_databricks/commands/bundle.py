@@ -1,115 +1,68 @@
 import copy
+from pathlib import Path
 from typing import Any
 
 import click
 import yaml
 from kedro.config import MissingConfigException, OmegaConfigLoader
-from kedro.framework.cli.project import (
-    CONF_SOURCE_HELP,
-    PARAMS_ARG_HELP,
-    PIPELINE_ARG_HELP,
-)
-from kedro.framework.cli.utils import ENV_HELP
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 
-from kedro_databricks.constants import (
-    DEFAULT_CONF_FOLDER,
-    DEFAULT_CONFIG_GENERATOR,
-    DEFAULT_CONFIG_GENERATOR_HELP,
-    DEFAULT_CONFIG_KEY,
-    DEFAULT_CONFIG_KEY_HELP,
-    DEFAULT_ENV,
-)
-from kedro_databricks.utilities.logger import get_logger
-from kedro_databricks.utilities.resource_generator import (
+import kedro_databricks.commands._options as option
+from kedro_databricks.config import config
+from kedro_databricks.resource_generator import (
     RESOURCE_GENERATOR_RESOLVER,
 )
-from kedro_databricks.utilities.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
+from kedro_databricks.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
+from kedro_databricks.utilities.logger import get_logger
 
 log = get_logger("bundle")
 
 
+class NoOverridesError(Exception):
+    def __init__(self, conf_source: Path) -> None:
+        msg = f"Could not find any override definitions in {conf_source}"
+        super().__init__(msg)
+
+
+class NoResourcesKeyError(Exception):
+    def __init__(self, env: str) -> None:
+        msg = f"'resources' key not found in the 'databricks' configuration for environment '{env}'."
+        super().__init__(msg)
+
+
 @click.command()
-@click.option(
-    "-d",
-    "--default-key",
-    default=DEFAULT_CONFIG_KEY,
-    help=DEFAULT_CONFIG_KEY_HELP,
-)
-@click.option(
-    "-g",
-    "--resource-generator",
-    default=DEFAULT_CONFIG_GENERATOR,
-    help=DEFAULT_CONFIG_GENERATOR_HELP,
-)
-@click.option(
-    "-e",
-    "--env",
-    default=DEFAULT_ENV,
-    help=ENV_HELP,
-)
-@click.option(
-    "-c",
-    "--conf-source",
-    default=DEFAULT_CONF_FOLDER,
-    help=CONF_SOURCE_HELP,
-)
-@click.option(
-    "-p",
-    "--pipeline",
-    default=None,
-    help=PIPELINE_ARG_HELP,
-)
-@click.option(
-    "-r",
-    "--params",
-    default=None,
-    help=PARAMS_ARG_HELP,
-)
-@click.option(
-    "--overwrite",
-    default=False,
-    is_flag=True,
-    show_default=True,
-    help="Overwrite the existing resources",
-)
+@option.default_key
+@option.overwrite
+@option.resource_generator
+@option.env
+@option.conf_source
+@option.pipeline
+@option.params
 @click.pass_obj
 def command(
     metadata: ProjectMetadata,
     default_key: str,
+    overwrite: bool,
     resource_generator: str,
     env: str,
     conf_source: str,
     pipeline: str | None,
     params: str | None,
-    overwrite: bool,
 ):
     """Databricks Asset Bundle commands"""
-    local_config_dir = metadata.project_path / conf_source / env
-
     # If the configuration directory does not exist, Kedro will not load any configuration
+    local_config_dir = metadata.project_path / conf_source / env
     if not local_config_dir.exists():
         log.warning(f"Creating {local_config_dir.relative_to(metadata.project_path)}")
         local_config_dir.mkdir(parents=True)
 
-    if default_key.startswith("_"):  # pragma: no cover
-        raise ValueError(
-            "Default key cannot start with `_` as this is not recognized by OmegaConf."
-        )
-
-    if not (metadata.project_path / conf_source / env / "databricks.yml").exists():
-        raise FileNotFoundError(
-            f"Databricks configuration for environment '{env}' not found "
-            f"in '{conf_source}/{env}/databricks.yml'."
-        )
-
     with KedroSession.create(project_path=metadata.project_path, env=env) as session:
         overrides = _load_kedro_env_config(session=session)
-        if "resources" not in overrides:
-            raise KeyError(
-                f"'resources' key not found in the 'databricks' configuration for environment '{env}'."
-            )
+        if not overrides:
+            raise NoOverridesError(Path(conf_source))
+        elif "resources" not in overrides:
+            raise NoResourcesKeyError(env)
 
         ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator)
 
@@ -130,7 +83,7 @@ def command(
                 set(resource_override_items.keys())
             )
             for key in all_keys:
-                if key == default_key or key.startswith("re:"):
+                if key == default_key or key.startswith(config.regex_prefix):
                     continue
                 resource = resource_items.get(key, {})
                 overridden_resources[resource_type][key] = overrider.override(
@@ -209,21 +162,21 @@ def _load_kedro_env_config(session: KedroSession) -> dict[str, Any]:
     """
     config_loader = session._get_config_loader()
     # Backwards compatibility for ConfigLoader that does not support `config_patterns`
-    if not hasattr(config_loader, "config_patterns"):
+    if not hasattr(config_loader, "config_patterns"):  # pragma: no cover
         return config_loader.get("databricks*", "databricks/**")
 
-    if not isinstance(config_loader, OmegaConfigLoader):
+    if not isinstance(config_loader, OmegaConfigLoader):  # pragma: no cover
         raise TypeError(
             "Only OmegaConfigLoader is supported to load Databricks configuration."
         )
 
     # Set the default pattern for `databricks` if not provided in `settings.py`
-    if "databricks" not in config_loader.config_patterns.keys():
+    if "databricks" not in config_loader.config_patterns.keys():  # pragma: no cover
         config_loader.config_patterns.update(
             {"databricks": ["databricks*", "databricks/**"]}
         )
 
-    if "databricks" not in config_loader.config_patterns.keys():
+    if "databricks" not in config_loader.config_patterns.keys():  # pragma: no cover
         log.warning(
             "No Databricks configuration found. "
             "Please ensure that `databricks` is included in your config patterns."

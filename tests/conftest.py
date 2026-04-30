@@ -88,12 +88,16 @@ def metadata(kedro_project):
     # cwd() depends on ^ the isolated filesystem, created by CliRunner()
     project_path = kedro_project.resolve()
     metadata = bootstrap_project(project_path)
-    yield metadata
     try:
-        wait_for_job_deletion(metadata)
+        yield metadata
     except Exception:
         pass
-    try:
-        wait_for_volume_deletion(metadata)
-    except Exception:
-        pass
+    finally:
+        try:
+            wait_for_job_deletion(metadata)
+        except Exception:
+            pass
+        try:
+            wait_for_volume_deletion(metadata)
+        except Exception:
+            pass

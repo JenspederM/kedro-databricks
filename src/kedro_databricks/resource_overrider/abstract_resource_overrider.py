@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from kedro_databricks.constants import DEFAULT_CONFIG_KEY
+from kedro_databricks.config import config
 
 
 class AbstractResourceOverrider(ABC):
@@ -13,5 +13,5 @@ class AbstractResourceOverrider(ABC):
         resource_key: str,
         resource: dict[str, Any],
         overrides: dict[str, Any],
-        default_key: str = DEFAULT_CONFIG_KEY,
+        default_key: str = config.workflow_default_key,
     ) -> dict[str, Any]: ...
