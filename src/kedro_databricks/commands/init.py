@@ -14,7 +14,7 @@ from kedro.framework.startup import ProjectMetadata
 from tomlkit.items import Table
 
 import kedro_databricks.commands._options as option
-from kedro_databricks.config import config
+from kedro_databricks.config import Config, config
 from kedro_databricks.constants import TEMPLATES
 from kedro_databricks.utilities.common import (
     get_value_from_dotpath,
@@ -30,6 +30,10 @@ log = get_logger("init")
 @option.catalog
 @option.schema
 @option.default_key
+@option.env
+@option.conf_source
+@option.resource_generator
+@option.regex_prefix
 @option.overwrite
 @option.databricks_args
 @click.pass_obj
@@ -38,6 +42,10 @@ def command(
     catalog: str,
     schema: str,
     default_key: str,
+    env: str,
+    conf_source: str,
+    resource_generator: str,
+    regex_prefix: str,
     overwrite: bool,
     databricks_args: tuple[str, ...],
 ):
@@ -59,8 +67,19 @@ def command(
         default_schema=schema,
         validated_conf=validated_conf,
     )
-    _update_pyproject(metadata)
     _update_gitignore(metadata)
+    _update_pyproject(
+        metadata,
+        Config(
+            init_catalog=catalog,
+            init_schema=schema,
+            default_env=env,
+            conf_source=conf_source,
+            workflow_default_key=default_key,
+            workflow_generator=resource_generator,
+            regex_prefix=regex_prefix,
+        ),
+    )
     hooks_path = metadata.project_path / "src" / metadata.package_name / "hooks.py"
     if hooks_path.exists():
         _transform_spark_hook(hooks_path.as_posix())
@@ -96,7 +115,7 @@ def _prepare_template(metadata: ProjectMetadata):
     return assets_dir, params_file
 
 
-def _update_pyproject(metadata: ProjectMetadata):
+def _update_pyproject(metadata: ProjectMetadata, init_config: Config):
     pyproject_path = metadata.project_path / "pyproject.toml"
     with open(pyproject_path) as f:
         pyproject = tomlkit.load(f)
@@ -105,7 +124,7 @@ def _update_pyproject(metadata: ProjectMetadata):
         tool_table = tomlkit.table()
     elif not isinstance(tool_table, Table):
         raise TypeError(f"Unexpected tool table type: {type(tool_table)}")
-    tool_table.update({"kedro-databricks": config.model_dump()})
+    tool_table.update({"kedro-databricks": init_config.model_dump()})
     pyproject.update({"tool": tool_table})
     with open(pyproject_path, "w") as f:
         tomlkit.dump(pyproject, f)
@@ -377,7 +396,10 @@ def _save_gitkeep_file(target_conf_dir: Path):
 
 
 def _read_databricks_config(project_path: Path) -> dict:
-    with open(project_path / "databricks.yml") as f:
+    p = project_path / "databricks.yml"
+    if not p.exists():
+        raise FileNotFoundError(p)
+    with open(p) as f:
         conf = yaml.safe_load(f)
     return conf
 

@@ -68,7 +68,7 @@ params = click.option(
 runtime_params = click.option(
     "--runtime-params",
     default=None,
-    help=PARAMS_ARG_HELP + " (forwarded to the bundle command).",
+    help=PARAMS_ARG_HELP + " (forwarded to the bundle command). Renamed to `--params`",
     deprecated=True,
 )
 
@@ -91,6 +91,12 @@ bundle = click.option(
     "--bundle/--no-bundle",
     default=False,
     help="Bundle the project before deploying",
+)
+
+regex_prefix = click.option(
+    "--regex-prefix",
+    default=config.regex_prefix,
+    help="Prefix to use for discovering regex workflow or task overrides. Must end in ':'",
 )
 
 pipeline_arg = click.argument(
