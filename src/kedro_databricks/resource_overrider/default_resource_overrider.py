@@ -1,8 +1,8 @@
 from typing import Any
 
 from kedro_databricks.config import config
+from kedro_databricks.resource_overrider import AbstractResourceOverrider
 from kedro_databricks.utilities.common import sort_dict
-from kedro_databricks.utilities.resource_overrider import AbstractResourceOverrider
 
 
 class DefaultResourceOverrider(AbstractResourceOverrider):

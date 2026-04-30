@@ -10,11 +10,11 @@ from kedro.framework.startup import ProjectMetadata
 
 import kedro_databricks.commands._options as option
 from kedro_databricks.config import config
-from kedro_databricks.utilities.logger import get_logger
-from kedro_databricks.utilities.resource_generator import (
+from kedro_databricks.resource_generator import (
     RESOURCE_GENERATOR_RESOLVER,
 )
-from kedro_databricks.utilities.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
+from kedro_databricks.resource_overrider import RESOURCE_OVERRIDER_RESOLVER
+from kedro_databricks.utilities.logger import get_logger
 
 log = get_logger("bundle")
 

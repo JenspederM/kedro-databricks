@@ -12,10 +12,10 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from kedro_telemetry.plugin import ProjectMetadata
 
-from kedro_databricks.utilities.resource_generator.abstract_resource_generator import (
+from kedro_databricks.resource_generator.abstract_resource_generator import (
     AbstractResourceGenerator,
 )
-from kedro_databricks.utilities.resource_generator.exceptions import MemoryDatasetError
+from kedro_databricks.resource_generator.exceptions import MemoryDatasetError
 
 
 class NodeResourceGenerator(AbstractResourceGenerator):

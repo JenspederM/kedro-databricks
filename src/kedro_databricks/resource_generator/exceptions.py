@@ -1,4 +1,4 @@
-from kedro_databricks.utilities.resource_generator.abstract_resource_generator import (
+from kedro_databricks.resource_generator.abstract_resource_generator import (
     AbstractResourceGenerator,
 )
 

@@ -3,11 +3,11 @@ from kedro.framework.session import KedroSession
 from kedro.pipeline import Pipeline
 
 from kedro_databricks.config import config
-from kedro_databricks.utilities.common import require_databricks_run_script
-from kedro_databricks.utilities.resource_generator import (
+from kedro_databricks.resource_generator import (
     NodeResourceGenerator,
     PipelineResourceGenerator,
 )
+from kedro_databricks.utilities.common import require_databricks_run_script
 from tests.utils import (
     JOB,
     _generate_task,

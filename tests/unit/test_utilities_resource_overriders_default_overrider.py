@@ -1,6 +1,6 @@
 import pytest
 
-from kedro_databricks.utilities.resource_overrider import DefaultResourceOverrider
+from kedro_databricks.resource_overrider import DefaultResourceOverrider
 
 
 @pytest.mark.parametrize(
