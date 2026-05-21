@@ -5,7 +5,7 @@ import kedro_databricks.commands._options as option
 from kedro_databricks.utilities.databricks_cli import DatabricksCli
 
 
-@click.command()
+@click.command(name="destroy")
 @option.env
 @option.databricks_args
 @click.pass_obj
