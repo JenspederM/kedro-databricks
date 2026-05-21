@@ -91,19 +91,23 @@ def _libraries_overrider(old: list[dict], new: list[dict]) -> list[dict]:
     )
 
 
+def _health_overrider(old: dict, new: dict) -> dict:
+    return merge_dict(
+        old,
+        new,
+        merge_functions={
+            "rules": lambda o, n: merge_list_of_dicts_by_key(o, n, key="metric")
+        },
+    )
+
+
 _task_overrider = create_merge_factory(
     merge_functions={
         "depends_on": lambda old, new: merge_list_of_dicts_by_key(
             old or [], new or [], key="task_key"
         ),
         "webhook_notifications": _notification_overrider,
-        "health": lambda old, new: merge_dict(
-            old,
-            new,
-            merge_functions={
-                "rules": lambda o, n: merge_list_of_dicts_by_key(o, n, key="metric")
-            },
-        ),
+        "health": _health_overrider,
         "libraries": _libraries_overrider,
     },
     key_order=TASK_KEY_ORDER,
@@ -185,15 +189,7 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                 ),
                 "access_control_list": _access_control_list_overrider,
                 "webhook_notifications": _notification_overrider,
-                "health": lambda old, new: merge_dict(
-                    old,
-                    new,
-                    merge_functions={
-                        "rules": lambda o, n: merge_list_of_dicts_by_key(
-                            o, n, key="metric"
-                        )
-                    },
-                ),
+                "health": _health_overrider,
                 "parameters": lambda old, new: merge_list_of_dicts_by_key(
                     old, new, key="name"
                 ),
