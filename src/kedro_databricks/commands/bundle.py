@@ -93,7 +93,7 @@ def command(
                     default_key=default_key,
                 )
 
-        save_resources(
+        _save_resources(
             metadata=metadata,
             env=env,
             resources=overridden_resources,
@@ -101,7 +101,7 @@ def command(
         )
 
 
-def save_resources(
+def _save_resources(
     metadata: ProjectMetadata,
     env: str,
     resources: dict[str, dict[str, Any]],

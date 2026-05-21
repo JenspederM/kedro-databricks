@@ -209,7 +209,7 @@ def _create_target_configs(
         log.info(f"Created target config for {target_name} at {target_conf_dir}")
 
 
-ENV_CHECK = ast.If(
+_ENV_CHECK = ast.If(
     test=ast.Compare(
         left=ast.Attribute(
             value=ast.Name(id="context", ctx=ast.Load()),
@@ -224,7 +224,7 @@ ENV_CHECK = ast.If(
 )
 
 
-class InjectEnvCheck(ast.NodeTransformer):
+class _InjectEnvCheck(ast.NodeTransformer):
     """AST transformer to inject an environment check into the SparkHooks class."""
 
     def visit_ClassDef(self, node):
@@ -263,7 +263,7 @@ class InjectEnvCheck(ast.NodeTransformer):
                     item.body[insert_pos], ast.If
                 ):
                     return node
-                item.body.insert(insert_pos, ENV_CHECK)
+                item.body.insert(insert_pos, _ENV_CHECK)
             new_body.append(item)
 
         node.body = new_body
@@ -275,7 +275,7 @@ def _transform_spark_hook(path: str):
         source = f.read()
 
     tree = ast.parse(source)
-    tree = InjectEnvCheck().visit(tree)
+    tree = _InjectEnvCheck().visit(tree)
     ast.fix_missing_locations(tree)
     new_source = ast.unparse(tree)
 
