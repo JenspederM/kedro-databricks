@@ -9,15 +9,24 @@
 [![PyPI Version](https://badge.fury.io/py/kedro-databricks.svg)](https://pypi.org/project/kedro-databricks/)
 [![Read the Docs](https://app.readthedocs.org/projects/kedro-databricks/badge/?version=latest)](https://kedro-databricks.readthedocs.io/)
 
-Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to provide the ultimate developer experience when using Kedro on Databricks.
+Kedro plugin to develop Kedro pipelines for Databricks. This plugin strives to provide an excellent developer experience when using Kedro on Databricks.
 
 ## Key Features
 
 1. **Initialization**: Transform your local Kedro project into a Databricks Asset Bundle.
-2. **Generation**: Generate Asset Bundle resources definition based from your kedro pipelines.
+2. **Generation**: Generate Asset Bundle resource definitions from your Kedro pipelines.
 3. **Deployment**: Deploy your Kedro pipelines to Databricks as Jobs.
 4. **Execution**: Run your Kedro pipelines on Databricks straight from the command line.
 5. **Cleanup**: Remove all Databricks resources created by the plugin.
+
+## Additional Capabilities
+
+- Generate resources per node or per pipeline (`--resource-generator`).
+- Extend generation with custom resource generator classes.
+- Apply default, targeted, and regex-based overrides in `conf/<env>/databricks.yml`.
+- Include non-job Databricks resources (for example volumes) in generated bundle resources.
+- Forward raw Databricks CLI args via `-- ...` for advanced workflows.
+- Automatically upload local `data/` during deploy when target catalog `_file_path` is configured.
 
 ## Documentation & Contributing
 

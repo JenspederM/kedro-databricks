@@ -204,7 +204,7 @@ def sanitize_name(node: Node | str) -> str:
     return _name
 
 
-def get_value_from_dotpath(ddict, dotpath):
+def get_value_from_dotpath(ddict, dotpath) -> Any:
     """Get a value from a dictionary using a dotpath.
 
     Args:

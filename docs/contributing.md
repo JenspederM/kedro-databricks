@@ -1,23 +1,12 @@
-# Contribute
+# Contributing
 
 Thank you for your interest in contributing to kedro-databricks! This document provides guidelines and instructions for contributing to this project.
-
-## Table of Contents
-
-- [Getting Started](#getting-started)
-- [Development Environment Setup](#development-environment-setup)
-- [Development Workflow](#development-workflow)
-- [Code Standards](#code-standards)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Submitting Changes](#submitting-changes)
-- [Release Process](#release-process)
 
 ## Getting Started
 
 kedro-databricks is a Kedro plugin that enables running Kedro pipelines on Databricks. Before contributing, please:
 
-1. Read the [README.md](README.md) to understand the project's purpose and features
+1. Read the [README.md](https://github.com/JenspederM/kedro-databricks) to understand the project's purpose and features
 2. Check the [documentation](https://kedro-databricks.readthedocs.io/) for detailed usage instructions
 3. Look at existing [issues](https://github.com/JenspederM/kedro-databricks/issues) and [pull requests](https://github.com/JenspederM/kedro-databricks/pulls)
 
@@ -228,17 +217,17 @@ def test_deploy_command_with_valid_config(cli_runner, tmp_path):
 
 ### Building Documentation
 
-The project uses [MkDocs](https://www.mkdocs.org/) with Material theme:
+The project uses [Zensical](https://zensical.org/) for documentation generation and local previews:
 
 ```bash
 # Install documentation dependencies
 uv sync --extra docs
 
 # Serve documentation locally
-mkdocs serve
+uv run zensical serve
 
 # Build documentation
-mkdocs build
+uv run zensical build
 ```
 
 ### Documentation Standards

@@ -37,6 +37,11 @@ repos:
         language: system
         entry: bash -c "uv run ty check"
         files: \.py$
+      - id: gen-example-page
+        name: Generate example page
+        language: system
+        entry: bash -c "uv run scripts/gen-example-pages"
+        files: ^examples/.*
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
     hooks:

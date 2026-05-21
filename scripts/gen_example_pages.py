@@ -1,23 +1,21 @@
 from pathlib import Path
 
-import mkdocs_gen_files
-
-mkdocs_gen_files.log.info("Generating example pages...")
 root = Path(__file__).parent.parent
 examples_dir = root / "examples"
+examples_doc = root / "docs" / "examples.md"
 
 
 def main():
     """Generate the code reference pages."""
-    for p in sorted(examples_dir.iterdir()):
-        if not p.is_dir() or p.name.startswith("."):
-            continue
+    with open(examples_doc, "w") as f:
+        f.write("# Examples\n\n")
+        for p in sorted(examples_dir.iterdir()):
+            if not p.is_dir() or p.name.startswith("."):
+                continue
 
-        example = _load_example(p)
+            example = _load_example(p)
 
-        with mkdocs_gen_files.open(f"examples/{p.name}.md", "w") as f:
-            f.write("\n".join(example) + "\n")
-    pass
+            f.write(f"## {p.name}\n\n" + "\n".join(example) + "\n")
 
 
 def _load_data(p: Path):
@@ -37,17 +35,17 @@ def _load_example(p: Path) -> list[str]:
     parts = []
     parts.append(description)
     parts.append("")
-    parts.append('=== "conf/[env]/databricks.yml"')
+    parts.append('=== "conf/`[env]`/databricks.yml"')
     parts.append("    ```yaml")
     parts.extend(_add_padding(databricks_config, leftpad=4))
     parts.append("    ```")
     parts.append("")
-    parts.append('=== "Before: resources/<pipeline>.yml"')
+    parts.append('=== "Before: resources/`[pipeline]`.yml"')
     parts.append("    ```yaml")
     parts.extend(_add_padding(resources_config, leftpad=4))
     parts.append("    ```")
     parts.append("")
-    parts.append('=== "After: resources/<pipeline>.yml"')
+    parts.append('=== "After: resources/`[pipeline]`.yml"')
     parts.append(f'    ```yaml hl_lines="{result_highlight}"')
     parts.extend(_add_padding(result_config, leftpad=4))
     parts.append("    ```")

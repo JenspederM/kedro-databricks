@@ -202,7 +202,7 @@
 
 ### Fix
 
--  [`7630ae3`](https://github.com/JenspederM/kedro-databricks/commit/7630ae32f48a80fac480f0e9a842c61e152d2273):  task keys must satisfy ^[\w\-\_]+$ and be less than 100 characters
+-  [`7630ae3`](https://github.com/JenspederM/kedro-databricks/commit/7630ae32f48a80fac480f0e9a842c61e152d2273):  task keys must satisfy `^[\w\-_]+$` and be less than 100 characters
 -  [`9c1c237`](https://github.com/JenspederM/kedro-databricks/commit/9c1c237a165f6859875c8a2fae95a212e6ddfc33):  use default with local storage on aws
 
 ## 0.12.1 (2025-06-17)
