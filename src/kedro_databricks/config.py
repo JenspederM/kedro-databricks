@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from importlib import metadata, resources
 from typing import Annotated
 
-from packaging.version import Version
 from pydantic import AfterValidator, Field
 from pydantic_settings import (
     BaseSettings,
@@ -11,17 +9,6 @@ from pydantic_settings import (
     PyprojectTomlConfigSettingsSource,
     SettingsConfigDict,
 )
-
-TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
-
-KEDRO_VERSION = Version(metadata.version("kedro"))
-"""Kedro version used to build this plugin."""
-
-MINIMUM_DATABRICKS_VERSION = [0, 205, 0]
-"""Minimum Databricks version required for this plugin."""
-
-MAX_TASK_KEY_LENGTH = 100
-"""Maximum number of characters in a task key in Databricks jobs."""
 
 
 def no_dot_in_name(value: str):
