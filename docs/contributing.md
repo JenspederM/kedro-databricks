@@ -70,7 +70,6 @@ The project includes several helpful development scripts in the `scripts/` direc
 
 - `scripts/mkdev.py <project_name>`: Create a new Kedro project for development/testing
 - `scripts/run_lint.sh`: Run linting checks
-- `scripts/validate_codecov.sh`: Validate code coverage configuration
 
 ## Development Workflow
 
@@ -154,7 +153,6 @@ Pre-commit hooks automatically run quality checks before each commit:
 - **YAML/TOML validation**: Ensures configuration files are valid
 - **Trailing whitespace**: Removes trailing spaces
 - **End of file fixer**: Ensures files end with newlines
-- **Codecov validation**: Custom validation for coverage configuration
 
 ## Testing
 
@@ -176,16 +174,12 @@ pytest tests/unit/
 
 # Run only integration tests
 pytest tests/integration/
-
-# Run with coverage
-pytest --cov=kedro_databricks --cov-report=html
 ```
 
 > NOTE: Ensure you have a valid Databricks configuration for integration tests.
 
 ### Test Requirements
 
-- **Coverage**: Minimum 70% code coverage required
 - **Test isolation**: Each test should be independent
 - **Fixtures**: Use pytest fixtures for common test setup (see `tests/conftest.py`)
 - **Mocking**: Mock external dependencies in unit tests
@@ -258,9 +252,6 @@ uv run zensical build
 
    # Run tests
    pytest
-
-   # Check coverage
-   pytest --cov=kedro_databricks --cov-fail-under=70
    ```
 6. **Submit a pull request** with:
    - Clear title and description
@@ -280,7 +271,7 @@ When creating a pull request, include:
 ### Review Process
 
 - All pull requests require review from maintainers
-- CI checks must pass (linting, tests, coverage)
+- CI checks must pass (linting and tests)
 - Address feedback promptly and professionally
 - Maintainers will merge once approved
 
