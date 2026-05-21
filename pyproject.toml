@@ -40,7 +40,6 @@ integration = [
     "kedro-datasets[spark, pandas, spark.SparkDatasetV2, pandas.ParquetDataset]>=9.1",
     "numpy~=1.21",
 ]
-docs = ["mkdocs-awesome-nav>=3.1.2", "mkdocs-gen-files>=0.5.0"]
 
 [project.urls]
 Homepage = "https://github.com/jenspederm/kedro-databricks"
