@@ -138,7 +138,8 @@ def _update_gitignore(metadata: ProjectMetadata):
     lines_to_add = []
     ignore_lines = [
         ".databricks",
-        f"conf/{config.default_env}/**!conf/{config.default_env}/.gitkeep",
+        f"conf/{config.default_env}/**",
+        f"!conf/{config.default_env}/.gitkeep",
     ]
     for ignore_line in ignore_lines:
         found = False

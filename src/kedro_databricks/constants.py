@@ -2,8 +2,6 @@ from importlib import metadata, resources
 
 from packaging.version import Version
 
-from kedro_databricks.config import config
-
 TEMPLATES = resources.files("kedro_databricks").joinpath("templates")
 
 KEDRO_VERSION = Version(metadata.version("kedro"))
@@ -81,22 +79,3 @@ TASK_KEY_ORDER = [
     "sql_task",
 ]
 """Order of keys in the task configuration for Databricks jobs."""
-
-INVALID_CONFIG_MSG = """
-No `databricks.yml` file found. Maybe you forgot to initialize the Databricks bundle?
-
-You can initialize the Databricks bundle by running:
-
-```
-kedro databricks init
-```
-"""
-"""Message displayed when no `databricks.yml` file is found in the project."""
-
-GITIGNORE = f"""
-# Kedro Databricks
-.databricks
-conf/{config.default_env}/**
-!conf/{config.default_env}/.gitkeep
-""".strip()
-"""Content to be added to `.gitignore` for Kedro Databricks configurations."""
