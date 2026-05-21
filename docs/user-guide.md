@@ -133,7 +133,7 @@ The table below maps common capabilities to where they are documented and where 
 
 | Capability | Main command/options | Primary docs | Example directory |
 |---|---|---|---|
-| Initialize bundle scaffold | `kedro databricks init` | Getting Started | `develop-eggs/` |
+| Initialize bundle scaffold | `kedro databricks init` | Getting Started | n/a |
 | Reinitialize existing project | `kedro databricks init --overwrite` | Getting Started | n/a |
 | Generate node-level jobs | `kedro databricks bundle -g node` | User Guide | `examples/individual_task/` |
 | Generate pipeline-level jobs | `kedro databricks bundle -g pipeline` | User Guide | `examples/individual_workflows/` |
