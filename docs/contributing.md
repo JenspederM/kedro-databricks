@@ -68,7 +68,7 @@ kedro-databricks is a Kedro plugin that enables running Kedro pipelines on Datab
 
 The project includes several helpful development scripts in the `scripts/` directory:
 
-- `scripts/mkdev.sh <project_name>`: Create a new Kedro project for development/testing
+- `scripts/mkdev.py <project_name>`: Create a new Kedro project for development/testing
 - `scripts/run_lint.sh`: Run linting checks
 - `scripts/validate_codecov.sh`: Validate code coverage configuration
 

@@ -77,7 +77,7 @@ This command will create the following files:
 │       └── catalog.yml    # Catalog overrides
 ```
 
-The `databricks.yml` file is the main configuration file for the Databricks Asset Bundle. The `conf/base/databricks.yml` file is used to override the Kedro resource configuration for Databricks.
+The `databricks.yml` file is the main configuration file for the Databricks Asset Bundle. Environment-specific overrides are defined in `conf/<env>/databricks.yml` (for example `conf/dev/databricks.yml`).
 
 Override the Kedro resource configuration for Databricks in the `conf/<env>/databricks.yml` file:
 
@@ -122,7 +122,13 @@ resources:
       volume_type: MANAGED
 ```
 
-The plugin loads all configuration named according to `conf/databricks*` or `conf/databricks/*`.
+The plugin loads Databricks config patterns from your Kedro config loader using `databricks*` and `databricks/**`.
+
+In practice, this means files like these are discovered:
+
+- `conf/base/databricks.yml`
+- `conf/<env>/databricks.yml`
+- `conf/<env>/databricks/<name>.yml`
 
 Useful options for initialization:
 
