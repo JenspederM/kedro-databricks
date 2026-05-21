@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.18.0](https://github.com/JenspederM/kedro-databricks/compare/v0.17.0...v0.18.0) (2026-05-21)
+
+
+### Features
+
+* allow customization through [tool.kedro-databricks] in pyproject.toml ([82860a7](https://github.com/JenspederM/kedro-databricks/commit/82860a77d860597fbc3857b43c2450f7c364b72a))
+* write default config to pyproject.toml on init ([2457d44](https://github.com/JenspederM/kedro-databricks/commit/2457d443cc43fac7a25b610566057a6a4d6d4be8))
+
+
+### Bug Fixes
+
+* init inputs should influence config written to pyproject.toml ([bc0bdf0](https://github.com/JenspederM/kedro-databricks/commit/bc0bdf0c2e1608f8d2af1d12a4eef0c0eaed43a8))
+
+
+### Documentation
+
+* fix readthedocs build and remove dependency-group ([16a8b21](https://github.com/JenspederM/kedro-databricks/commit/16a8b216227787faea4261506dfe68628da1d36f))
+* migrate to zensical docs ([74e537d](https://github.com/JenspederM/kedro-databricks/commit/74e537dbbc6e87a4163d548d355e46b5947e0039))
+* remove coverage from contributing ([154374e](https://github.com/JenspederM/kedro-databricks/commit/154374e2b6f0719febee8487adc960ab88dcf590))
+* small changes ([e344659](https://github.com/JenspederM/kedro-databricks/commit/e344659288632ddbae3765c373cd585be427e27c))
+
 ## [0.17.0](https://github.com/JenspederM/kedro-databricks/compare/v0.16.1...v0.17.0) (2026-04-27)
 
 
