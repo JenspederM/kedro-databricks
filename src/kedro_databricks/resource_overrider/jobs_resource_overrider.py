@@ -1,8 +1,7 @@
 from functools import reduce
 from typing import Any
 
-from fuso import merge, merge_list_of_dicts_by_key
-from fuso.merge import create_merge_factory
+from fuso import create_merge_factory, merge_dict, merge_list_of_dicts_by_key
 
 from kedro_databricks.config import config
 from kedro_databricks.constants import JOB_KEY_ORDER, TASK_KEY_ORDER
@@ -98,7 +97,7 @@ _task_overrider = create_merge_factory(
             old or [], new or [], key="task_key"
         ),
         "webhook_notifications": _notification_overrider,
-        "health": lambda old, new: merge(
+        "health": lambda old, new: merge_dict(
             old,
             new,
             merge_functions={
@@ -186,7 +185,7 @@ class JobsResourceOverrider(AbstractResourceOverrider):
                 ),
                 "access_control_list": _access_control_list_overrider,
                 "webhook_notifications": _notification_overrider,
-                "health": lambda old, new: merge(
+                "health": lambda old, new: merge_dict(
                     old,
                     new,
                     merge_functions={
