@@ -30,4 +30,10 @@ class Plugin(click.Group):
             raise ImportError(f"Cannot find spec for module {cmd_name}")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        return module.command
+        cmd = module.command
+        if not isinstance(cmd, click.Command):
+            raise TypeError(
+                f"Expected 'command' to be of type click.Command, got {type(cmd)}"
+            )
+        cmd.name = cmd_name
+        return cmd

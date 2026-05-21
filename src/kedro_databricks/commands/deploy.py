@@ -15,7 +15,7 @@ log = get_logger("deploy")
 option.params
 
 
-@click.command()
+@click.command(name="deploy")
 @option.env
 @option.bundle
 @option.default_key

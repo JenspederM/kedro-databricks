@@ -26,7 +26,7 @@ from kedro_databricks.utilities.logger import get_logger
 log = get_logger("init")
 
 
-@click.command()
+@click.command(name="init")
 @option.catalog
 @option.schema
 @option.default_key

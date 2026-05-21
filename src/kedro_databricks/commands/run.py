@@ -8,7 +8,7 @@ from kedro_databricks.utilities.logger import get_logger
 log = get_logger("init")
 
 
-@click.command()
+@click.command(name="run")
 @option.pipeline_arg
 @option.env
 @option.databricks_args

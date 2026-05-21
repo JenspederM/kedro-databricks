@@ -31,7 +31,7 @@ class NoResourcesKeyError(Exception):
         super().__init__(msg)
 
 
-@click.command()
+@click.command(name="bundle")
 @option.default_key
 @option.overwrite
 @option.resource_generator
