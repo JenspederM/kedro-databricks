@@ -21,7 +21,6 @@ dev = [
     "pytest-cov>=6.0.0",
     "pre-commit>=4.0.1",
     "ruff>=0.7.2",
-    "commitizen>=3.30.0",
     "ty>=0.0.29",
 ]
 unit = [
@@ -105,50 +104,6 @@ lint.ignore = ["E501", "PLR0913"] # Black takes care of line-too-long
 
 [tool.ruff.lint.per-file-ignores]
 "{tests,features}/*" = ["T201", "PLR2004", "PLR0915", "PLW1510"]
-
-[tool.commitizen]
-name = "cz_customize"
-tag_format = "$version"
-version_scheme = "pep440"
-version_provider = "pep621"
-update_changelog_on_bump = true
-major_version_zero = true
-template = "scripts/CHANGELOG.md.j2"
-version_files = ["pyproject.toml", "src/kedro_databricks/__init__.py"]
-
-
-[tool.commitizen.customize]
-message_template = "{{change_type}}:{% if show_message %} {{message}}{% endif %}"
-bump_pattern = "^(break|feat|new|fix|hotfix)"
-bump_map = { "break" = "MAJOR", "new" = "MINOR", "feat" = "MINOR", "fix" = "PATCH", "hotfix" = "PATCH" }
-change_type_order = [
-    "BREAKING CHANGE",
-    "feat",
-    "fix",
-    "refactor",
-    "perf",
-    "docs",
-    "ci",
-    "chore",
-    "style",
-    "test",
-]
-commit_parser = "^(?P<change_type>feat|feature|bug fix|fix|hotfix|refactor|docs|ci|bundle|build|project|chore|Merge pull request)(:| #(?P<issue>\\d+) from)(?P<message>.*)?"
-
-[tool.commitizen.customize.change_type_map]
-"feature" = "1. Feat"
-"feat" = "1. Feat"
-"bug fix" = "2. Fix"
-"fix" = "2. Fix"
-"hotfix" = "2. Fix"
-"refactor" = "3. Refactor"
-"refact" = "3. Refactor"
-"docs" = "4. Docs"
-"ci" = "5. CI"
-"build" = "6. Other Changes"
-"project" = "6. Other Changes"
-"chore" = "6. Other Changes"
-"Merge pull request" = "7. Pull Requests"
 
 [tool.ty.src]
 include = ["src", "tests"]
