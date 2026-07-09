@@ -31,14 +31,14 @@ unit = [
     "jupyterlab>=3.0",
     "notebook",
     "kedro-datasets[pandas, pandas.ParquetDataset]>=3.0",
-    "numpy~=1.21",
+    "numpy>=1.21,<3.0",
 ]
 integration = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook",
     "kedro-datasets[spark, pandas, spark.SparkDatasetV2, pandas.ParquetDataset]>=9.1",
-    "numpy~=1.21",
+    "numpy>=1.21,<3.0",
 ]
 
 [project.urls]
