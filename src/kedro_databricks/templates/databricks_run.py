@@ -4,6 +4,7 @@
 
 import argparse
 import logging
+from typing import cast
 
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
@@ -28,6 +29,7 @@ def main():
 
     configure_project(package_name)
     with KedroSession.create(env=env, conf_source=conf_source) as session:
+        session = cast(KedroSession, session)
         if len(nodes) > 0:
             session.run(node_names=nodes)
         else:

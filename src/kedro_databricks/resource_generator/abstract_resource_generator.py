@@ -86,7 +86,7 @@ class AbstractResourceGenerator(ABC):
                         entry = catalog._get_dataset(d)  # type: ignore
                     elif hasattr(catalog, "get"):
                         # After version 1.0.0
-                        entry = catalog.get(d)  # type: ignore
+                        entry = catalog.get(d)
                 except DatasetNotFoundError:
                     entry = None
                 if not entry or isinstance(entry, MemoryDataset):
