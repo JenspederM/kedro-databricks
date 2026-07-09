@@ -25,11 +25,11 @@ jobs:
       # Configure a constant location for the uv cache
       UV_CACHE_DIR: /tmp/.uv-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install dependencies
         uses: jdx/mise-action@v4
       - name: Restore uv cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /tmp/.uv-cache
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
@@ -54,7 +54,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage reports to Codecov
         if: ${{ inputs.codecov }}
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Minimize uv cache

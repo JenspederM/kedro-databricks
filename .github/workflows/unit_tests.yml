@@ -22,7 +22,7 @@ jobs:
       # Configure a constant location for the uv cache
       UV_CACHE_DIR: /tmp/.uv-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install lxml dependencies
         run: |
           sudo apt-get update
@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         uses: jdx/mise-action@v4
       - name: Restore uv cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /tmp/.uv-cache
           key: uv-${{ runner.os }}-${{ matrix.kedro_version }}-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
@@ -51,7 +51,7 @@ jobs:
         run: just unittest
       - name: Rename coverage file
         run: mv coverage.junit.xml coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
           path: coverage-${{ matrix.kedro_version }}-${{ matrix.python-version }}.junit.xml
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           pattern: coverage-*
           path: coverage
@@ -78,7 +78,7 @@ jobs:
           ls -la ./pr
 
       - name: Upload PR artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pr
           path: pr/
