@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from kedro.framework.session import KedroSession
 from kedro.pipeline import Pipeline
@@ -24,7 +26,9 @@ def test_create_job(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         assert g._create_job("job1", pipeline, "__default__") == JOB
 
 
@@ -33,7 +37,9 @@ def test_create_job_pipeline(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = PipelineResourceGenerator(session=session, metadata=metadata)
+        g = PipelineResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         assert g._create_job("job1", pipeline, "__default__") is not None
 
 
@@ -44,7 +50,9 @@ def test_create_job_pipeline_fails(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = PipelineResourceGenerator(session=session, metadata=metadata)
+        g = PipelineResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         with pytest.raises(
             ValueError,
             match="Pipeline name must be provided to create a job dict when --pipeline is used.",
@@ -57,7 +65,9 @@ def test_create_task(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         expected_task = _generate_task("task", ["a", "b"])
         node_a = node(identity, ["input"], ["output"], name="a")
         node_b = node(identity, ["input"], ["output"], name="b")
@@ -83,7 +93,9 @@ def test_create_pipeline_task(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = PipelineResourceGenerator(session=session, metadata=metadata)
+        g = PipelineResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         pipeline_name = "pipeline_task"
 
         if require_databricks_run_script():
@@ -118,7 +130,9 @@ def test_create_task_with_runtime_params(metadata):
         project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(
-            session=session, metadata=metadata, params="key1=value1,key2=value2"
+            session=cast(KedroSession, session),
+            metadata=metadata,
+            params="key1=value1,key2=value2",
         )
         expected_task = _generate_task(
             "task", ["a", "b"], runtime_params="key1=value1,key2=value2"
@@ -147,7 +161,9 @@ def test_generate_resources(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         g.pipelines = {"__default__": Pipeline([])}
         assert g.generate_jobs(pipeline_name=None) == {}
         g.pipelines = {
@@ -170,7 +186,9 @@ def test_generate_resources_non_existent_pipeline(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         g.pipelines = {"__default__": Pipeline([])}
         assert g.generate_jobs(pipeline_name=None) == {}
         g.pipelines = {
@@ -191,7 +209,9 @@ def test_generate_resources_another_conf(metadata):
         project_path=metadata.project_path, env=config.default_env
     ) as session:
         g = NodeResourceGenerator(
-            session=session, metadata=metadata, conf_source="sub_conf"
+            session=cast(KedroSession, session),
+            metadata=metadata,
+            conf_source="sub_conf",
         )
         g.pipelines = {
             "__default__": Pipeline(
@@ -213,7 +233,9 @@ def test_generate_resources_in_a_sorted_manner(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         g.pipelines = {
             "__default__": Pipeline(
                 [
@@ -238,7 +260,9 @@ def test_generate_resources_for_a_single_pipeline(metadata):
     with KedroSession.create(
         project_path=metadata.project_path, env=config.default_env
     ) as session:
-        g = NodeResourceGenerator(session=session, metadata=metadata)
+        g = NodeResourceGenerator(
+            session=cast(KedroSession, session), metadata=metadata
+        )
         g.pipelines = {
             "__default__": Pipeline(
                 [

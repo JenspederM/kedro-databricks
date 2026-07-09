@@ -169,7 +169,7 @@ def _write_databricks_run_script(metadata: ProjectMetadata):
     scripts = toml.get("project", {}).get("scripts", {})
     if "databricks_run" not in scripts:
         scripts["databricks_run"] = f"{metadata.package_name}.databricks_run:main"
-        toml["project"]["scripts"] = scripts  # type: ignore
+        toml["project"]["scripts"] = scripts
 
     log.info(f"Added script to {toml_path.relative_to(metadata.project_path)}")
     with open(toml_path, "w") as f:

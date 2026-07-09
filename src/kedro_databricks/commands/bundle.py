@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import click
 import yaml
@@ -58,7 +58,7 @@ def command(
         local_config_dir.mkdir(parents=True)
 
     with KedroSession.create(project_path=metadata.project_path, env=env) as session:
-        overrides = _load_kedro_env_config(session=session)
+        overrides = _load_kedro_env_config(session=cast(KedroSession, session))
         if not overrides:
             raise NoOverridesError(Path(conf_source))
         elif "resources" not in overrides:
@@ -67,7 +67,7 @@ def command(
         ResourceGenerator = RESOURCE_GENERATOR_RESOLVER.resolve(resource_generator)
 
         g = ResourceGenerator(
-            session=session,
+            session=cast(KedroSession, session),
             metadata=metadata,
             conf_source=conf_source,
             params=params,
