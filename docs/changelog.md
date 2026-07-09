@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/JenspederM/kedro-databricks/compare/v0.18.0...v0.18.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* enable dependabot and update dependences ([a7ba022](https://github.com/JenspederM/kedro-databricks/commit/a7ba022dc6cf8e1b35e16977ffa443312fc207db))
+
 ## [0.18.0](https://github.com/JenspederM/kedro-databricks/compare/v0.17.0...v0.18.0) (2026-05-21)
 
 
