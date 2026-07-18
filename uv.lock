@@ -1044,7 +1044,7 @@ wheels = [
 
 [[package]]
 name = "databricks-sdk"
-version = "0.120.0"
+version = "0.121.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-auth" },
@@ -1052,9 +1052,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/49/d6c19f037d8543831fbcfdac48c62bd741b25bca2fd36e9d03aa21e6b9e8/databricks_sdk-0.120.0.tar.gz", hash = "sha256:12c41492e5d6e7105cb06e6d1a0f1bdf11b76b0630f3a7da85aa8db4fe91dee8", size = 1009418, upload-time = "2026-07-02T14:55:50.343Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/bc/29ca88fa3c70c20383a71b91f47bfee6b86945308f66cc40715a8d9d1c3e/databricks_sdk-0.121.0.tar.gz", hash = "sha256:fa2a1b32487007d9c273a449daf6bb7e9dca0a5ef0d34a81a4ed33cad0b4accc", size = 1014184, upload-time = "2026-07-17T13:01:14.837Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/54/83fae982cdf334cb06919ada810ca98c5012f23d1e36c4574a01c0bb963e/databricks_sdk-0.120.0-py3-none-any.whl", hash = "sha256:2d8e19444df30f714123b330fb616d7775f96631f6e36b4dd252adb4f2e010e2", size = 954576, upload-time = "2026-07-02T14:55:48.546Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/ca/0e57e9da387c292723d40f049b92ec865d47faa66f2a40421f5136e29c00/databricks_sdk-0.121.0-py3-none-any.whl", hash = "sha256:98ddcb19d2f4c1beabaac0dc90b0685892f492600b231039fc51b50f31716b63", size = 958765, upload-time = "2026-07-17T13:01:13.207Z" },
 ]
 
 [[package]]
@@ -1191,7 +1191,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -2182,7 +2182,7 @@ wheels = [
 
 [[package]]
 name = "kedro-databricks"
-version = "0.18.0"
+version = "0.18.1"
 source = { editable = "." }
 dependencies = [
     { name = "databricks-sdk" },
@@ -3491,7 +3491,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
