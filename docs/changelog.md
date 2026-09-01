@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.3](https://github.com/JenspederM/kedro-databricks/compare/v0.18.2...v0.18.3) (2026-09-01)
+
+
+### Bug Fixes
+
+* ensure wheel_task parameters are not sorted ([66a10ec](https://github.com/JenspederM/kedro-databricks/commit/66a10ecaac3c09213688f9571ef3fe5febf0467d))
+* fuso now sorts all nested objects ([4e7cca3](https://github.com/JenspederM/kedro-databricks/commit/4e7cca356c4c2a07be2890780b3c03ee60491c96))
+
 ## [0.18.2](https://github.com/JenspederM/kedro-databricks/compare/v0.18.1...v0.18.2) (2026-09-01)
 
 
