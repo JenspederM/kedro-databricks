@@ -28,7 +28,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxml2-dev libxslt1-dev
       - name: Install dependencies
-        uses: jdx/mise-action@v4.2.3
+        uses: jdx/mise-action@v4.3.0
       - name: Restore uv cache
         uses: actions/cache@v6
         with:
