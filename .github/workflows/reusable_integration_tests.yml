@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install dependencies
-        uses: jdx/mise-action@v4.2.3
+        uses: jdx/mise-action@v4.3.0
       - name: Restore uv cache
         uses: actions/cache@v6
         with:
