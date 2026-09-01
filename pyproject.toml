@@ -100,6 +100,7 @@ lint.ignore = ["E501", "PLR0913"] # Black takes care of line-too-long
 
 [tool.ruff.lint.per-file-ignores]
 "{tests,features}/*" = ["T201", "PLR2004", "PLR0915", "PLW1510"]
+"src/kedro_databricks/commands/*" = ["PLR0917"]
 
 [tool.ty.src]
 include = ["src", "tests"]

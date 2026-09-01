@@ -17,6 +17,7 @@
   // Ruff Settings
   "ruff.lineLength": 88,
   "ruff.organizeImports": true,
+  "ruff.configurationPreference": "filesystemFirst",
   "[python]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff",
