@@ -7,13 +7,21 @@ version: 2
 updates:
   - package-ecosystem: "uv"
     directory: "/"
+    open-pull-requests-limit: 5
     commit-message:
       include: scope
-      prefix: "chore:"
+      prefix: "fix(deps):"
     labels:
       - "dependencies"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
