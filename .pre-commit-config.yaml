@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.9.1
+    rev: v4.18.0
     hooks:
       - id: commitizen
   - repo: local
@@ -10,40 +10,37 @@ repos:
         name: Validate Codecov
         language: system
         entry: bash ./scripts/validate_codecov.sh
+      - id: lint-code
+        name: Lint code
+        language: system
+        entry: uv run ruff check --fix
+        files: \.py$
+      - id: format-code
+        name: Format code
+        language: system
+        entry: uv run ruff format
+        files: \.py$
+      - id: type-check-code
+        name: Type check code
+        language: system
+        entry: uv run ty check
+        files: \.py$
+      - id: gen-example-page
+        name: Generate example page
+        language: system
+        entry: uv run scripts/gen_example_pages.py
+        files: ^examples/.*
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
-      - id: trailing-whitespace
       - id: mixed-line-ending
         args:
           - --fix=lf
-  - repo: local
-    hooks:
-      - id: lint-code
-        name: Lint code
-        language: system
-        entry: bash -c "uv run ruff check --fix"
-        files: \.py$
-      - id: format-code
-        name: Format code
-        language: system
-        entry: bash -c "uv run ruff format --check || uv run ruff format"
-        files: \.py$
-      - id: type-check-code
-        name: Type check code
-        language: system
-        entry: bash -c "uv run ty check"
-        files: \.py$
-      - id: gen-example-page
-        name: Generate example page
-        language: system
-        entry: bash -c "uv run scripts/gen-example-pages"
-        files: ^examples/.*
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args: [--format, parsable, -d, relaxed]

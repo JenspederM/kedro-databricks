@@ -19,12 +19,12 @@ dependencies = [
 dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
-    "pre-commit>=4.0.1",
     "ruff>=0.7.2",
     "ty>=0.0.29",
     "zensical>=0.0.43",
     "mkdocstrings[python]>=1.0.4",
     "mkdocs-click>=0.9.0",
+    "prek>=0.5.1",
 ]
 unit = [
     "ipython>=8.10",

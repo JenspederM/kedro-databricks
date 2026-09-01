@@ -7,15 +7,30 @@ examples_doc = root / "docs" / "examples.md"
 
 def main():
     """Generate the code reference pages."""
-    with open(examples_doc, "w") as f:
-        f.write("# Examples\n\n")
-        for p in sorted(examples_dir.iterdir()):
-            if not p.is_dir() or p.name.startswith("."):
-                continue
+    examples = sorted(examples_dir.iterdir())
+    current_example_page = examples_doc.read_text() if examples_doc.exists() else ""
+    new_example_content = ["# Examples\n\n"]
 
-            example = _load_example(p)
+    for p in examples:
+        if not p.is_dir() or p.name.startswith("."):
+            continue
 
-            f.write(f"## {p.name}\n\n" + "\n".join(example) + "\n")
+        example = _load_example(p)
+
+        new_example_content.append(f"## {p.name}\n\n" + "\n".join(example))
+
+        if p != examples[-1]:
+            new_example_content.append("\n\n")
+        else:
+            new_example_content.append("\n")
+
+    new_example_page = "".join(new_example_content)
+    if new_example_page != current_example_page:
+        print(f"Updating {examples_doc}")  # noqa: T201
+        with open(examples_doc, "w") as f:
+            f.write(new_example_page)
+    else:
+        print(f"No changes detected in {examples_doc}")  # noqa: T201
 
 
 def _load_data(p: Path):
@@ -79,7 +94,8 @@ def _parse_file(file_path: Path) -> list[str]:
 def _add_padding(lines: list[str], leftpad: int = 4) -> list[str]:
     """Add padding to each line in the list."""
     padding = " " * leftpad
-    return [padding + line for line in lines]
+    return [padding + line.rstrip() for line in lines]
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -10,16 +10,13 @@ resources:
             num_workers: 2
             spark_env_vars:
               KEDRO_LOGGING_CONFIG: /dbfs/FileStore/<package-name>/conf/logging.yml
-      health:
-        rules:
-          - metric: RUN_DURATION_SECONDS
-            op: GREATER_THAN
-            value: 10
       tasks:
         - task_key: make_predictions
           job_cluster_key: default
           depends_on:
             - task_key: split
+          libraries:
+            - whl: ../dist/*.whl
           python_wheel_task:
             package_name: develop_eggs
             entry_point: develop-eggs
@@ -30,13 +27,13 @@ resources:
               - /${workspace.file_path}/conf
               - --env
               - local
-          libraries:
-            - whl: ../dist/*.whl
         - task_key: report_accuracy
           job_cluster_key: default
           depends_on:
             - task_key: make_predictions
             - task_key: split
+          libraries:
+            - whl: ../dist/*.whl
           python_wheel_task:
             package_name: develop_eggs
             entry_point: develop-eggs
@@ -47,10 +44,10 @@ resources:
               - /${workspace.file_path}/conf
               - --env
               - local
-          libraries:
-            - whl: ../dist/*.whl
         - task_key: split
           job_cluster_key: default
+          libraries:
+            - whl: ../dist/*.whl
           python_wheel_task:
             package_name: develop_eggs
             entry_point: develop-eggs
@@ -61,5 +58,8 @@ resources:
               - /${workspace.file_path}/conf
               - --env
               - local
-          libraries:
-            - whl: ../dist/*.whl
+      health:
+        rules:
+          - metric: RUN_DURATION_SECONDS
+            op: GREATER_THAN
+            value: 10

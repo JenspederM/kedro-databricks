@@ -101,12 +101,20 @@ def _health_overrider(old: dict, new: dict) -> dict:
     )
 
 
+_python_wheel_task_overrider = create_merge_factory(
+    merge_functions={
+        "parameters": lambda old, new: (old or []) + (new or []),
+    },
+    key_order=["package_name", "entry_point", "parameters"],
+)
+
 _task_overrider = create_merge_factory(
     merge_functions={
         "depends_on": lambda old, new: merge_list_of_dicts_by_key(
             old or [], new or [], key="task_key"
         ),
         "webhook_notifications": _notification_overrider,
+        "python_wheel_task": _python_wheel_task_overrider,
         "health": _health_overrider,
         "libraries": _libraries_overrider,
     },
