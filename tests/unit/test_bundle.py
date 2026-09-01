@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+from pathlib import Path
 
 import yaml
 
@@ -19,6 +20,100 @@ def task_validator(tasks):
         env = get_arg_value(params, "--env")
         assert env is not None
         assert env == "${var.environment}"
+
+
+def test_bundle_order(cli_runner, metadata, tmp_path):
+    # Arrange
+    resources_dir = metadata.project_path / "resources"
+    files = {
+        f"target.{config.default_env}.jobs.{metadata.package_name}.yml",
+        f"target.{config.default_env}.jobs.{metadata.package_name}_namespaced_pipeline.yml",
+        f"target.{config.default_env}.jobs.{metadata.package_name}_ds.yml",
+    }
+    reset_project(metadata)
+    write_catalog(metadata, config.default_env)
+    empty_overrides = {"resources": {"jobs": {}}}
+    (metadata.project_path / "conf" / config.default_env).mkdir(
+        parents=True, exist_ok=True
+    )
+    with open(
+        metadata.project_path / "conf" / config.default_env / "databricks.yml",
+        "w",
+    ) as f:
+        yaml.dump(empty_overrides, f)
+
+    # Act
+    result = cli_runner.invoke(
+        commands,
+        [
+            "databricks",
+            "bundle",
+            "--env",
+            config.default_env,
+            "--default-key",
+            config.workflow_default_key,
+            "--resource-generator",
+            config.workflow_generator,
+            "--conf-source",
+            config.conf_source,
+            "--overwrite",
+        ],
+        obj=metadata,
+    )
+
+    # Assert Valid Bundle Target
+    assert result.exit_code == 0, (result.exit_code, result.stdout, result.exception)
+    validate_bundle(
+        metadata=metadata,
+        env=config.default_env,
+        required_files=list(files),
+        task_validator=task_validator,
+    )
+
+    # Copy the first generated files to compare with subsequent runs
+    first_files = {}
+    for f in resources_dir.iterdir():
+        if f.name in files:
+            new_path = tmp_path / f.name
+            shutil.move(f, tmp_path)
+            first_files[f.name] = (
+                new_path.read_text()
+            )  # Add a unique string to ensure the content is different
+
+    assert len(first_files) == len(files), "Not all files were copied to tmp_path"
+    assert all(f in first_files for f in files), "Some files are missing in first_files"
+    assert len(list(resources_dir.iterdir())) == 0, (
+        "resources_dir should be empty after moving files"
+    )
+
+    for _ in range(25):
+        result = cli_runner.invoke(
+            commands,
+            [
+                "databricks",
+                "bundle",
+                "--env",
+                config.default_env,
+                "--default-key",
+                config.workflow_default_key,
+                "--resource-generator",
+                config.workflow_generator,
+                "--conf-source",
+                config.conf_source,
+                "--overwrite",
+            ],
+            obj=metadata,
+        )
+        assert result.exit_code == 0, (
+            result.exit_code,
+            result.stdout,
+            result.exception,
+        )
+        for f in files:
+            assert Path(resources_dir / f).read_text() == first_files[f]
+
+    # Cleanup
+    shutil.rmtree(metadata.project_path / "conf" / config.default_env)
 
 
 def test_bundle(cli_runner, metadata):
