@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/JenspederM/kedro-databricks/compare/v0.18.1...v0.18.2) (2026-09-01)
+
+
+### Bug Fixes
+
+* resources order ([#208](https://github.com/JenspederM/kedro-databricks/issues/208)) ([d8301ce](https://github.com/JenspederM/kedro-databricks/commit/d8301ced6c1e91d5202f79469ae65bcdd4ed321d))
+
 ## [0.18.1](https://github.com/JenspederM/kedro-databricks/compare/v0.18.0...v0.18.1) (2026-07-09)
 
 
