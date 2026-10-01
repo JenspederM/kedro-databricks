@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install dependencies
-        uses: jdx/mise-action@v4.3.0
+        uses: jdx/mise-action@v5.0.0
       - name: Restore uv cache
         uses: actions/cache@v6
         with:
@@ -54,7 +54,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage reports to Codecov
         if: ${{ inputs.codecov }}
-        uses: codecov/codecov-action@v7.0.0
+        uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Minimize uv cache
