@@ -30,7 +30,7 @@ runs:
   using: composite
   steps:
     - name: Check out
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         token: ${{ inputs.github_token }}
         fetch-depth: 0
@@ -52,14 +52,14 @@ runs:
         push: ${{ inputs.push }}
     - name: Find Comment
       if: ${{ inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
-      uses: peter-evans/find-comment@v3
+      uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
       id: fc
       with:
         issue-number: ${{ inputs.pr_number }}
         comment-author: "github-actions[bot]"
     - name: Create bump comment
       if: ${{ inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
-      uses: peter-evans/create-or-update-comment@v4
+      uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
       with:
         comment-id: ${{ steps.fc.outputs.comment-id }}
         issue-number: ${{ inputs.pr_number }}
@@ -67,7 +67,7 @@ runs:
         edit-mode: replace
     - name: Upload Changelog Body
       if: ${{ steps.cz.outputs.version != steps.project.outputs.old_version }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: changelog
         path: body.md
