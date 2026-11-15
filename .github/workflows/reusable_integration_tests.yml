@@ -32,10 +32,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: /tmp/.uv-cache
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: uv-integration-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
-            uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
-            uv-${{ runner.os }}
+            uv-integration-${{ runner.os }}-
       - name: Sync kedro-databricks
         run: uv sync --group integration
       - name: Check kedro-databricks
