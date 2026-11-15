@@ -10,7 +10,7 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       include: scope
-      prefix: "fix(deps):"
+      prefix: "fix"
     labels:
       - "dependencies"
     schedule:
