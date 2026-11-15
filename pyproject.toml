@@ -25,20 +25,21 @@ dev = [
     "mkdocstrings[python]>=1.0.4",
     "mkdocs-click>=0.9.0",
     "prek>=0.5.1",
+    "pymdown-extensions<12.2 ; python_full_version < '3.11'",
 ]
 unit = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook >= 7.4",
     "kedro-datasets[pandas, pandas.ParquetDataset]>=3.0",
-    "numpy~=1.21",
+    "numpy >=1.21, < 2.0",
 ]
 integration = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook >= 7.4",
     "kedro-datasets[spark, pandas, spark.SparkDatasetV2, pandas.ParquetDataset]>=9.1",
-    "numpy~=1.21",
+    "numpy >=1.21, < 2.0",
 ]
 
 [project.urls]
