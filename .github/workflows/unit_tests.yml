@@ -14,6 +14,25 @@ permissions:
   contents: write
 
 jobs:
+  dependency-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        resolution: ["highest", "lowest-direct"]
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies & run tests
+        run: |
+          uv sync --all-extras --dev --resolution=${{ matrix.resolution }}
   test:
     name: Run tests
     runs-on: ubuntu-latest
@@ -85,3 +104,24 @@ jobs:
         with:
           name: pr
           path: pr/
+  valid:
+    name: All checks pass
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - dependency-test
+      - test
+      - build-pr
+    steps:
+      - name: Check job results
+        env:
+          DEPENDENCY_RESULT: ${{ needs.dependency-test.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_PR_RESULT: ${{ needs.build-pr.result }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          echo "Dependency test: $DEPENDENCY_RESULT"
+          echo "Unit tests: $TEST_RESULT"
+          echo "PR artifact: $BUILD_PR_RESULT"
+          [[ "$DEPENDENCY_RESULT" == "success" && "$TEST_RESULT" == "success" ]] &&
+            [[ "$BUILD_PR_RESULT" == "success" || ( "$EVENT_NAME" == "push" && "$BUILD_PR_RESULT" == "skipped" ) ]]
