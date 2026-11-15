@@ -29,14 +29,14 @@ dev = [
 unit = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
-    "notebook",
+    "notebook >= 7.4",
     "kedro-datasets[pandas, pandas.ParquetDataset]>=3.0",
     "numpy~=1.21",
 ]
 integration = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
-    "notebook",
+    "notebook >= 7.4",
     "kedro-datasets[spark, pandas, spark.SparkDatasetV2, pandas.ParquetDataset]>=9.1",
     "numpy~=1.21",
 ]
